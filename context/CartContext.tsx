@@ -4,7 +4,9 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export interface CartItem {
   id: number;
+  cartItemId: string; // Composite ID: e.g., "1", "28-v3510-i3-8", "29-cpu-i5-ram-16"
   name: string;
+  variantName?: string; // Additional string to display, e.g., "(Core i5, 8GB RAM)"
   price: number;
   image: string;
   quantity: number;
@@ -15,8 +17,8 @@ interface CartContextType {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   addToCart: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
-  removeFromCart: (id: number) => void;
-  updateQuantity: (id: number, quantity: number) => void;
+  removeFromCart: (cartItemId: string) => void;
+  updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
   cartTotal: number;
   cartCount: number;
@@ -51,10 +53,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart = (product: Omit<CartItem, 'quantity'>, quantity = 1) => {
     setItems((prev) => {
-      const existingItem = prev.find((item) => item.id === product.id);
+      const existingItem = prev.find((item) => item.cartItemId === product.cartItemId);
       if (existingItem) {
         return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+          item.cartItemId === product.cartItemId ? { ...item, quantity: item.quantity + quantity } : item
         );
       }
       return [...prev, { ...product, quantity }];
@@ -62,17 +64,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsOpen(true); // Auto open cart on add
   };
 
-  const removeFromCart = (id: number) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const removeFromCart = (cartItemId: string) => {
+    setItems((prev) => prev.filter((item) => item.cartItemId !== cartItemId));
   };
 
-  const updateQuantity = (id: number, quantity: number) => {
+  const updateQuantity = (cartItemId: string, quantity: number) => {
     if (quantity < 1) {
-      removeFromCart(id);
+      removeFromCart(cartItemId);
       return;
     }
     setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity } : item))
+      prev.map((item) => (item.cartItemId === cartItemId ? { ...item, quantity } : item))
     );
   };
 

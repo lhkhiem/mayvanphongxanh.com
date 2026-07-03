@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
 import { ProductCard } from '@/components/products/ProductCard';
-import { products } from '@/lib/mockData';
+import { products, Product } from '@/lib/mockData';
 import { ChevronDown, ChevronRight, Search, Home, Filter } from 'lucide-react';
 
 const SORT_OPTIONS = [
@@ -27,6 +27,60 @@ export default function ProductsPage() {
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(100000000);
+
+  // Dynamic attributes state
+  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string[]>>({});
+
+  // Extract all unique attributes from all products & variants that match current category filter
+  const availableAttributes = useMemo(() => {
+    const attrs: Record<string, Set<string>> = {};
+    
+    products.forEach(p => {
+      // Only extract attributes from products matching the category (if category selected)
+      if (selectedCategories.length > 0 && !selectedCategories.includes(p.category)) return;
+
+      // Extract from base attributes
+      if (p.attributes) {
+        Object.entries(p.attributes).forEach(([key, value]) => {
+          if (!attrs[key]) attrs[key] = new Set();
+          attrs[key].add(value);
+        });
+      }
+
+      // Extract from variants
+      if (p.productType === 'pre-packaged' && p.variants) {
+        p.variants.forEach(variant => {
+          if (variant.attributes) {
+            Object.entries(variant.attributes).forEach(([key, value]) => {
+              if (!attrs[key]) attrs[key] = new Set();
+              attrs[key].add(value);
+            });
+          }
+        });
+      }
+
+      // Extract from custom-build options
+      if (p.productType === 'custom-build' && p.customOptions) {
+        p.customOptions.forEach(group => {
+          if (!attrs[group.name]) attrs[group.name] = new Set();
+          group.choices.forEach(choice => {
+            // Removing pricing part to just use the name as an attribute value
+            attrs[group.name].add(choice.name);
+          });
+        });
+      }
+    });
+
+    // Clean up and sort
+    const result: Record<string, string[]> = {};
+    Object.entries(attrs).forEach(([key, valueSet]) => {
+      // Skip generic ones that have their own section
+      if (key !== 'Thương hiệu' && key !== 'Dòng máy' && key !== 'Loại SP') {
+        result[key] = Array.from(valueSet).sort();
+      }
+    });
+    return result;
+  }, [selectedCategories]);
 
   // Calculate dynamic category counts
   const categoryCounts = useMemo(() => {
@@ -53,23 +107,65 @@ export default function ProductsPage() {
     );
   };
 
+  const handleAttributeChange = (attrKey: string, attrValue: string) => {
+    setSelectedAttributes(prev => {
+      const currentVals = prev[attrKey] || [];
+      const newVals = currentVals.includes(attrValue)
+        ? currentVals.filter(v => v !== attrValue)
+        : [...currentVals, attrValue];
+      
+      return {
+        ...prev,
+        [attrKey]: newVals
+      };
+    });
+  };
+
   const clearFilters = () => {
     setSelectedCategories([]);
     setSelectedBrands([]);
     setSearchQuery('');
     setMinPrice(0);
     setMaxPrice(100000000);
+    setSelectedAttributes({});
   };
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(p.category);
-    // Since we don't have brand in mockData yet, we'll pretend it matches if no brand is selected
-    // If brand is selected, we filter out everything (or mock it randomly, but for now just pass if empty)
-    const matchesBrand = selectedBrands.length === 0 || selectedBrands.includes(p.brand || 'HP');
-    const matchesPrice = p.price >= minPrice && p.price <= maxPrice;
     
-    return matchesSearch && matchesCategory && matchesBrand && matchesPrice;
+    // For brand, we check p.brand, or p.attributes['Thương hiệu']
+    const productBrand = p.brand || (p.attributes && p.attributes['Thương hiệu']);
+    const matchesBrand = selectedBrands.length === 0 || selectedBrands.includes(productBrand || 'HP');
+    
+    const matchesPrice = p.price >= minPrice && p.price <= maxPrice;
+
+    // Dynamic Attribute Filtering
+    let matchesAttributes = true;
+    for (const [attrKey, attrSelectedValues] of Object.entries(selectedAttributes)) {
+      if (attrSelectedValues.length === 0) continue; // No filter selected for this attribute
+
+      // A product matches if IT has the attribute, OR ANY of its variants has the attribute
+      let productHasValue = false;
+      
+      if (p.attributes && attrSelectedValues.includes(p.attributes[attrKey])) {
+        productHasValue = true;
+      } else if (p.productType === 'pre-packaged' && p.variants) {
+        productHasValue = p.variants.some(v => v.attributes && attrSelectedValues.includes(v.attributes[attrKey]));
+      } else if (p.productType === 'custom-build' && p.customOptions) {
+        const group = p.customOptions.find(g => g.name === attrKey);
+        if (group && group.choices.some(c => attrSelectedValues.includes(c.name))) {
+          productHasValue = true;
+        }
+      }
+
+      if (!productHasValue) {
+        matchesAttributes = false;
+        break; // Fail early if one attribute filter doesn't match
+      }
+    }
+    
+    return matchesSearch && matchesCategory && matchesBrand && matchesPrice && matchesAttributes;
   });
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -196,7 +292,7 @@ export default function ProductsPage() {
               </div>
 
               {/* Thương Hiệu */}
-              <div className="p-4">
+              <div className="p-4 border-b border-gray-200">
                 <h3 className="font-bold text-gray-800 text-[13px] uppercase mb-3 flex items-center justify-between cursor-pointer">
                   THƯƠNG HIỆU
                   <ChevronDown className="w-4 h-4 text-gray-400" />
@@ -217,6 +313,31 @@ export default function ProductsPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Dynamic Attributes Filters */}
+              {Object.entries(availableAttributes).map(([attrKey, attrValues]) => (
+                <div key={attrKey} className="p-4 border-b border-gray-200 last:border-b-0">
+                  <h3 className="font-bold text-gray-800 text-[13px] uppercase mb-3 flex items-center justify-between cursor-pointer">
+                    {attrKey}
+                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                  </h3>
+                  <div className="space-y-2.5 max-h-[200px] overflow-y-auto custom-scrollbar">
+                    {attrValues.map((value) => (
+                      <label key={value} className="flex items-start gap-2.5 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={(selectedAttributes[attrKey] || []).includes(value)}
+                          onChange={() => handleAttributeChange(attrKey, value)}
+                          className="mt-0.5 rounded border-gray-300 text-primary focus:ring-primary w-3.5 h-3.5"
+                        />
+                        <span className="text-[13px] text-gray-600 group-hover:text-primary flex-1 leading-snug">
+                          {value}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </aside>
 

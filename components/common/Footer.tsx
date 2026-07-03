@@ -17,9 +17,10 @@ const quickLinks = [
 const supportLinks = [
   { label: 'Liên hệ hỗ trợ', href: '/lien-he' },
   { label: 'Tra cứu đơn hàng', href: '/tra-cuu-don-hang' },
+  { label: 'Tra cứu bảo hành', href: '/tra-cuu-bao-hanh' },
   { label: 'Câu hỏi thường gặp', href: '/hoi-dap' },
   { label: 'Trung tâm trợ giúp', href: '/ho-tro' },
-  { label: 'Chính sách bảo hành', href: '/chinh-sach-bao-mat' },
+  { label: 'Chính sách bảo hành', href: '/chinh-sach-bao-mat' }, // assuming we don't have a separate policy page yet
   { label: 'So sánh sản phẩm', href: '/so-sanh' },
 ];
 

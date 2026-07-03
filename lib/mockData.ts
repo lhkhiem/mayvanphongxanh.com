@@ -1,17 +1,86 @@
+export type ProductType = 'standard' | 'pre-packaged' | 'custom-build';
+
+export interface PrePackagedVariant {
+  id: string;
+  name: string;
+  sku?: string;
+  price: number;
+  originalPrice?: number;
+  stock: number;
+  attributes: Record<string, string>;
+}
+
+export interface CustomOptionChoice {
+  id: string;
+  name: string;
+  priceModifier: number;
+}
+
+export interface CustomOptionGroup {
+  name: string;
+  choices: CustomOptionChoice[];
+}
+
+export interface Product {
+  id: number;
+  name: string;
+  brand?: string;
+  category: string;
+  price: number;
+  originalPrice?: number;
+  rating: number;
+  reviews: number;
+  image: string;
+  stock: number;
+  description: string;
+  includedItems?: string[];
+  
+  productType?: ProductType;
+  attributes?: Record<string, string>;
+  variants?: PrePackagedVariant[];
+  basePrice?: number;
+  customOptions?: CustomOptionGroup[];
+}
+
 // Mock product data
-export const products = [
+export const products: Product[] = [
   // Máy in (Printers)
   {
     id: 1,
-    name: "Máy in Laser Đa chức năng Pro",
+    name: "Máy in màu InkJet Gia đình",
+    brand: "HP",
     category: "Máy in",
-    price: 14500000,
-    originalPrice: 18500000,
-    rating: 4.8,
-    reviews: 234,
-    image: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=500&h=500&fit=crop",
-    stock: 18,
-    description: "Máy in laser công suất lớn với chức năng scan và copy."
+    productType: "pre-packaged",
+    price: 3500000,
+    rating: 4.5,
+    reviews: 128,
+    image: "https://images.unsplash.com/photo-1612815154858-60aa4c59eae6?w=500&h=500&fit=crop",
+    stock: 45,
+    description: "Máy in phun màu đa năng dành cho gia đình, tốc độ in nhanh, chất lượng bản in sắc nét.",
+    includedItems: [
+      "Bộ mực in chính hãng (đủ màu)",
+      "Cáp kết nối USB",
+      "Sách hướng dẫn & Đĩa Driver"
+    ],
+    attributes: { "Thương hiệu": "HP", "Loại máy": "Máy in phun màu" },
+    variants: [
+      {
+        id: "inkjet-standard",
+        name: "Bản Tiêu chuẩn",
+        price: 3500000,
+        originalPrice: 4200000,
+        stock: 45,
+        attributes: { "Mực đi kèm": "Mực tiêu chuẩn" }
+      },
+      {
+        id: "inkjet-xl",
+        name: "Bản Kèm Mực XL",
+        price: 4500000,
+        originalPrice: 5200000,
+        stock: 20,
+        attributes: { "Mực đi kèm": "Mực dung lượng cao XL" }
+      }
+    ]
   },
   {
     id: 2,
@@ -352,6 +421,89 @@ export const products = [
       "Ngăn kéo đựng tiền: 01 Ngăn kéo tự động",
       "Hệ thống Wifi: 02 Router Mesh chuẩn AC",
       "Tặng kèm: 50 cuộn giấy in nhiệt + Miễn phí lắp đặt"
+    ]
+  },
+  
+  // Biến thể (Variants)
+  {
+    id: 28,
+    name: "Laptop Dell Vostro 3510 (Pre-packaged)",
+    brand: "Dell",
+    category: "Thiết bị",
+    productType: "pre-packaged",
+    price: 13500000,
+    rating: 4.8,
+    reviews: 56,
+    image: "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=500&h=500&fit=crop",
+    stock: 20,
+    description: "Máy tính xách tay Dell Vostro 3510 dành cho doanh nghiệp và văn phòng.",
+    attributes: { "Thương hiệu": "Dell", "Dòng máy": "Vostro" },
+    variants: [
+      {
+        id: "v3510-i3-8",
+        name: "Dell Vostro 3510 - Core i3 / 8GB / 256GB SSD",
+        sku: "V3510-I3-8-256",
+        price: 13500000,
+        originalPrice: 15000000,
+        stock: 12,
+        attributes: { "CPU": "Core i3", "RAM": "8GB", "SSD": "256GB" }
+      },
+      {
+        id: "v3510-i5-8",
+        name: "Dell Vostro 3510 - Core i5 / 8GB / 512GB SSD",
+        sku: "V3510-I5-8-512",
+        price: 16500000,
+        originalPrice: 18000000,
+        stock: 8,
+        attributes: { "CPU": "Core i5", "RAM": "8GB", "SSD": "512GB" }
+      },
+      {
+        id: "v3510-i5-16",
+        name: "Dell Vostro 3510 - Core i5 / 16GB / 512GB SSD",
+        sku: "V3510-I5-16-512",
+        price: 18500000,
+        stock: 5,
+        attributes: { "CPU": "Core i5", "RAM": "16GB", "SSD": "512GB" }
+      }
+    ]
+  },
+  {
+    id: 29,
+    name: "PC Văn Phòng OEM - Custom Build",
+    brand: "Khác",
+    category: "Thiết bị",
+    productType: "custom-build",
+    price: 5500000, // Hiển thị giá từ
+    basePrice: 5500000,
+    rating: 4.7,
+    reviews: 120,
+    image: "https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=500&h=500&fit=crop",
+    stock: 50,
+    description: "PC Lắp ráp chuyên dụng cho văn phòng, hỗ trợ tùy chọn cấu hình linh hoạt.",
+    attributes: { "Loại SP": "PC Lắp ráp", "Vỏ Case": "Kính cường lực", "CPU": "Core i3", "RAM": "8GB", "SSD": "256GB" }, // Default attributes for filtering
+    customOptions: [
+      {
+        name: "CPU (Vi xử lý)",
+        choices: [
+          { id: "cpu-i3", name: "Intel Core i3-12100", priceModifier: 0 },
+          { id: "cpu-i5", name: "Intel Core i5-12400", priceModifier: 1500000 }
+        ]
+      },
+      {
+        name: "RAM (Bộ nhớ trong)",
+        choices: [
+          { id: "ram-8", name: "8GB DDR4 3200MHz", priceModifier: 0 },
+          { id: "ram-16", name: "16GB DDR4 3200MHz", priceModifier: 600000 },
+          { id: "ram-32", name: "32GB DDR4 3200MHz", priceModifier: 1500000 }
+        ]
+      },
+      {
+        name: "Ổ Cứng",
+        choices: [
+          { id: "ssd-256", name: "SSD 256GB NVMe", priceModifier: 0 },
+          { id: "ssd-512", name: "SSD 512GB NVMe", priceModifier: 500000 }
+        ]
+      }
     ]
   }
 ];

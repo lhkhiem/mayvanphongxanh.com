@@ -18,6 +18,73 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
   const product = products.find(p => p.id === idFromSlug(resolvedParams.slug));
   const [quantity, setQuantity] = useState(1);
   
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
+    product?.productType === 'pre-packaged' && product.variants?.length ? product.variants[0].id : null
+  );
+  
+  const [selectedCustomOptions, setSelectedCustomOptions] = useState<Record<string, string>>(() => {
+    if (product?.productType === 'custom-build' && product.customOptions) {
+      const initial: Record<string, string> = {};
+      product.customOptions.forEach(group => {
+        if (group.choices.length > 0) {
+          initial[group.name] = group.choices[0].id;
+        }
+      });
+      return initial;
+    }
+    return {};
+  });
+
+  const currentVariant = product?.productType === 'pre-packaged' 
+    ? product.variants?.find(v => v.id === selectedVariantId) 
+    : null;
+
+  const currentPrice = () => {
+    if (product?.productType === 'pre-packaged' && currentVariant) return currentVariant.price;
+    if (product?.productType === 'custom-build' && product?.basePrice && product.customOptions) {
+      let total = product.basePrice;
+      product.customOptions.forEach(group => {
+        const choiceId = selectedCustomOptions[group.name];
+        const choice = group.choices.find(c => c.id === choiceId);
+        if (choice) total += choice.priceModifier;
+      });
+      return total;
+    }
+    return product?.price || 0;
+  };
+
+  const currentOriginalPrice = () => {
+    if (product?.productType === 'pre-packaged' && currentVariant) return currentVariant.originalPrice;
+    return product?.originalPrice;
+  };
+
+  const currentStock = () => {
+    if (product?.productType === 'pre-packaged' && currentVariant) return currentVariant.stock;
+    return product?.stock || 0;
+  };
+
+  const currentCartItemId = () => {
+    if (product?.productType === 'pre-packaged' && currentVariant) return `${product.id}-${currentVariant.id}`;
+    if (product?.productType === 'custom-build') {
+      const optionIds = Object.values(selectedCustomOptions).sort().join('-');
+      return `${product.id}-${optionIds}`;
+    }
+    return product?.id.toString() || '';
+  };
+
+  const currentVariantName = () => {
+    if (product?.productType === 'pre-packaged' && currentVariant) return currentVariant.name.replace(`${product.name} - `, '');
+    if (product?.productType === 'custom-build' && product?.customOptions) {
+      const parts: string[] = [];
+      product.customOptions.forEach(group => {
+        const choiceId = selectedCustomOptions[group.name];
+        const choice = group.choices.find(c => c.id === choiceId);
+        if (choice) parts.push(choice.name);
+      });
+      return parts.join(', ');
+    }
+    return undefined;
+  };
   if (!product) {
     notFound();
   }
@@ -52,14 +119,20 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
   const handleAddToCart = () => {
     addToCart({ 
       id: product.id, 
-      name: product.name, 
-      price: product.price, 
+      cartItemId: currentCartItemId(),
+      name: product.name,
+      variantName: currentVariantName(),
+      price: currentPrice(), 
       image: product.image 
     }, quantity);
   };
 
-  const discount = product.originalPrice 
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) 
+  const price = currentPrice();
+  const originalPrice = currentOriginalPrice();
+  const stock = currentStock();
+
+  const discount = originalPrice 
+    ? Math.round(((originalPrice - price) / originalPrice) * 100) 
     : 0;
 
   return (
@@ -129,25 +202,25 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
               <div className="flex items-end flex-wrap gap-x-3 gap-y-1 mb-1">
                 <div className="flex items-baseline">
                   <span className="text-4xl font-bold text-foreground">
-                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
+                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)}
                   </span>
                   <span className="text-sm font-normal text-muted-foreground ml-2">
                     (Đã bao gồm VAT)
                   </span>
                 </div>
               </div>
-              {product.originalPrice && discount > 0 && (
+              {originalPrice && discount > 0 && (
                 <div className="flex items-center gap-2 mb-4 text-sm">
                   <span className="text-muted-foreground">
-                    Giá trước đây: <span className="line-through">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.originalPrice)}</span>
+                    Giá trước đây: <span className="line-through">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(originalPrice)}</span>
                   </span>
                   <span className="text-destructive font-medium bg-destructive/10 px-1.5 py-0.5 rounded text-xs">
                     Tiết kiệm {discount}%
                   </span>
                 </div>
               )}
-              <span className={product.stock > 0 ? "inline-flex items-center gap-1.5 text-sm font-medium text-primary bg-primary/10 px-3 py-1 rounded-full" : "inline-flex items-center gap-1.5 text-sm font-medium text-destructive bg-destructive/10 px-3 py-1 rounded-full"}>
-                {product.stock > 0 ? (
+              <span className={stock > 0 ? "inline-flex items-center gap-1.5 text-sm font-medium text-primary bg-primary/10 px-3 py-1 rounded-full" : "inline-flex items-center gap-1.5 text-sm font-medium text-destructive bg-destructive/10 px-3 py-1 rounded-full"}>
+                {stock > 0 ? (
                   <>
                     <CheckCircle2 className="w-4 h-4" />
                     Có sẵn hàng
@@ -158,8 +231,63 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
               </span>
             </div>
 
+            {/* Variants Selection UI */}
+            {product.productType === 'pre-packaged' && product.variants && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-foreground mb-3">Chọn cấu hình:</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {product.variants.map((variant) => (
+                    <button
+                      key={variant.id}
+                      onClick={() => setSelectedVariantId(variant.id)}
+                      className={`text-left p-3 rounded-lg border-2 transition-all ${
+                        selectedVariantId === variant.id
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <div className="text-sm font-medium text-foreground mb-1 line-clamp-2">
+                        {variant.name.replace(`${product.name} - `, '')}
+                      </div>
+                      <div className="text-primary font-bold">
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(variant.price)}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
-
+            {/* Custom Build Selection UI */}
+            {product.productType === 'custom-build' && product.customOptions && (
+              <div className="mb-6 space-y-4">
+                {product.customOptions.map((group) => (
+                  <div key={group.name} className="bg-secondary/30 p-4 rounded-xl border border-border">
+                    <h3 className="text-sm font-semibold text-foreground mb-3">{group.name}:</h3>
+                    <div className="space-y-2">
+                      {group.choices.map((choice) => (
+                        <label key={choice.id} className="flex items-center gap-3 cursor-pointer group/label">
+                          <input
+                            type="radio"
+                            name={`option-${group.name}`}
+                            value={choice.id}
+                            checked={selectedCustomOptions[group.name] === choice.id}
+                            onChange={() => setSelectedCustomOptions(prev => ({ ...prev, [group.name]: choice.id }))}
+                            className="w-4 h-4 text-primary focus:ring-primary border-border mt-0.5 cursor-pointer"
+                          />
+                          <div className="flex-1 flex justify-between items-center text-sm">
+                            <span className="text-foreground group-hover/label:text-primary transition-colors">{choice.name}</span>
+                            {choice.priceModifier > 0 && (
+                              <span className="text-muted-foreground">+ {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(choice.priceModifier)}</span>
+                            )}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             {/* Included Items for Service Packages */}
             {product.includedItems && product.includedItems.length > 0 && (
               <div className="mb-8 p-6 bg-primary/5 border border-primary/20 rounded-xl">
@@ -191,9 +319,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                     </button>
                     <span className="flex-1 text-center font-semibold">{quantity}</span>
                     <button 
-                      onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                      onClick={() => setQuantity(Math.min(stock, quantity + 1))}
                       className="w-10 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors"
-                      disabled={quantity >= product.stock}
+                      disabled={quantity >= stock}
                     >
                       <Plus className="w-4 h-4" />
                     </button>
@@ -202,7 +330,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
                   <div className="flex flex-1 gap-3">
                     <button 
                       onClick={handleAddToCart}
-                      disabled={product.stock === 0}
+                      disabled={stock === 0}
                       className="flex-1 h-12 bg-primary/10 text-primary rounded-lg font-semibold text-sm hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       <ShoppingCart className="w-4 h-4 hidden sm:block" />
@@ -211,7 +339,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
     
                     <button 
                       onClick={handleAddToCart}
-                      disabled={product.stock === 0}
+                      disabled={stock === 0}
                       className="flex-1 h-12 bg-primary text-primary-foreground rounded-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-sm"
                     >
                       MUA NGAY

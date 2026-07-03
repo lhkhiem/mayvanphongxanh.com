@@ -50,14 +50,19 @@ export function CartDrawer() {
             </div>
           ) : (
             items.map((item) => (
-              <div key={item.id} className="flex gap-4 p-3 bg-card border border-border rounded-lg">
+              <div key={item.cartItemId} className="flex gap-4 p-3 bg-card border border-border rounded-lg">
                 <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0">
                   <Image src={item.image} alt={item.name} fill className="object-cover" />
                 </div>
                 
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-medium text-foreground line-clamp-2 text-sm">{item.name}</h3>
+                    <Link href={`/san-pham/${item.id}`} onClick={() => setIsOpen(false)} className="font-medium text-foreground line-clamp-2 text-sm hover:text-primary transition-colors">
+                      {item.name}
+                    </Link>
+                    {item.variantName && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{item.variantName}</p>
+                    )}
                     <p className="font-bold text-primary text-sm mt-1">
                       {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
                     </p>
@@ -66,14 +71,14 @@ export function CartDrawer() {
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center border border-border rounded-md">
                       <button 
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
                         className="px-2 py-1 hover:bg-secondary text-foreground"
                       >
                         -
                       </button>
                       <span className="px-2 text-sm font-medium w-8 text-center">{item.quantity}</span>
                       <button 
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
                         className="px-2 py-1 hover:bg-secondary text-foreground"
                       >
                         +
@@ -81,7 +86,7 @@ export function CartDrawer() {
                     </div>
                     
                     <button 
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => removeFromCart(item.cartItemId)}
                       className="text-red-500 hover:text-red-600 p-1 rounded-md hover:bg-red-50 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -104,7 +109,7 @@ export function CartDrawer() {
             </div>
             
             <Link 
-              href="/checkout"
+              href="/thanh-toan"
               onClick={() => setIsOpen(false)}
               className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
             >

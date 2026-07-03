@@ -120,7 +120,7 @@ export default function CheckoutPage() {
               
               <div className="space-y-4 mb-6 max-h-[40vh] overflow-y-auto pr-2">
                 {items.map((item) => (
-                  <div key={item.id} className="flex gap-4">
+                  <div key={item.cartItemId} className="flex gap-4">
                     <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 bg-secondary">
                       <Image src={item.image} alt={item.name} fill className="object-cover" />
                       <span className="absolute -top-2 -right-2 bg-primary text-white w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold">
@@ -129,6 +129,9 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex-1">
                       <h4 className="text-sm font-medium text-foreground line-clamp-2">{item.name}</h4>
+                      {item.variantName && (
+                        <p className="text-xs text-muted-foreground mt-0.5">{item.variantName}</p>
+                      )}
                       <p className="text-sm font-semibold text-primary mt-1">
                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.quantity)}
                       </p>

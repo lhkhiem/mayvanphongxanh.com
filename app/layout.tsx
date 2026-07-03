@@ -40,6 +40,7 @@ import { CartProvider } from "@/context/CartContext";
 import { CompareProvider } from "@/context/CompareContext";
 import { FloatingActionButtons } from "@/components/common/FloatingActionButtons";
 import { CompareBar } from "@/components/compare/CompareBar";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function RootLayout({
   children,
@@ -54,6 +55,7 @@ export default function RootLayout({
             {children}
             <FloatingActionButtons />
             <CompareBar />
+            <Toaster position="bottom-right" richColors />
           </CompareProvider>
         </CartProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}

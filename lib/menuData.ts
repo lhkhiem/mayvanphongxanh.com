@@ -30,15 +30,23 @@ export let mockMenus: Menu[] = [
       { id: 'mi-3', label: 'Dịch vụ trọn gói', url: '/danh-muc/goi-dich-vu' },
       { 
         id: 'mi-4', 
-        label: 'Khám phá',
+        label: 'Tra cứu',
         children: [
-          { id: 'mi-4-1', label: 'Dự án triển khai', url: '/du-an' },
-          { id: 'mi-4-2', label: 'Tin tức', url: '/tin-tuc' },
+          { id: 'mi-4-1', label: 'Đơn hàng', url: '/tra-cuu-don-hang' },
+          { id: 'mi-4-2', label: 'Bảo hành', url: '/tra-cuu-bao-hanh' },
         ]
       },
-      { id: 'mi-5', label: 'Đối tác', url: '/doi-tac' },
-      { id: 'mi-6', label: 'Giới thiệu', url: '/gioi-thieu' },
-      { id: 'mi-7', label: 'Liên hệ', url: '/lien-he' },
+      { 
+        id: 'mi-5', 
+        label: 'Khám phá',
+        children: [
+          { id: 'mi-5-1', label: 'Dự án triển khai', url: '/du-an' },
+          { id: 'mi-5-2', label: 'Tin tức', url: '/tin-tuc' },
+        ]
+      },
+      { id: 'mi-6', label: 'Đối tác', url: '/doi-tac' },
+      { id: 'mi-7', label: 'Giới thiệu', url: '/gioi-thieu' },
+      { id: 'mi-8', label: 'Liên hệ', url: '/lien-he' },
     ]
   }
 ];

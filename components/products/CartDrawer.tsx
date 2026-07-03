@@ -1,25 +1,17 @@
 'use client';
 
-import { X, Minus, Plus, Trash2 } from 'lucide-react';
-
-interface CartItem {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-  image?: string;
-}
+import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import Link from 'next/link';
+import { useCart } from '@/context/CartContext';
+import Image from 'next/image';
 
 interface CartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  items?: CartItem[];
 }
 
-export function CartDrawer({ isOpen, onClose, items = [] }: CartDrawerProps) {
-  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const tax = subtotal * 0.1;
-  const total = subtotal + tax;
+export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
+  const { items, cartTotal, updateQuantity, removeFromCart } = useCart();
 
   if (!isOpen) return null;
 
@@ -32,41 +24,58 @@ export function CartDrawer({ isOpen, onClose, items = [] }: CartDrawerProps) {
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 h-screen w-full md:w-96 bg-card border-l border-border shadow-lg z-50 flex flex-col overflow-hidden">
+      <div className="fixed right-0 top-0 h-screen w-full md:w-96 bg-white border-l border-gray-200 shadow-2xl z-50 flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-border">
-          <h2 className="text-xl font-bold text-foreground">Shopping Cart</h2>
+        <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50">
+          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+            <ShoppingBag className="w-5 h-5 text-primary" />
+            Giỏ hàng của bạn
+          </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-secondary rounded-md transition-colors"
+            className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Items */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {items.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Your cart is empty</p>
+            <div className="text-center text-gray-500 py-12 flex flex-col items-center">
+              <ShoppingBag className="w-12 h-12 mb-4 text-gray-300" />
+              <p>Giỏ hàng đang trống</p>
+            </div>
           ) : (
             items.map((item) => (
-              <div key={item.id} className="flex gap-4 border-b border-border pb-4">
-                <div className="w-16 h-16 bg-secondary rounded-md flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="font-semibold text-foreground text-sm mb-1">{item.name}</p>
-                  <p className="text-accent font-bold">${item.price.toFixed(2)}</p>
+              <div key={item.cartItemId} className="flex gap-4 border-b border-gray-100 pb-4">
+                <div className="w-20 h-20 bg-gray-50 rounded-lg flex-shrink-0 relative overflow-hidden border border-gray-100">
+                  <Image src={item.image} alt={item.name} fill className="object-contain p-2" />
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <button className="p-1 hover:bg-secondary rounded transition-colors">
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </button>
-                  <div className="flex items-center gap-2 bg-secondary rounded">
-                    <button className="p-1 hover:opacity-70">
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="px-2 text-sm">{item.quantity}</span>
-                    <button className="p-1 hover:opacity-70">
-                      <Plus className="w-3 h-3" />
+                <div className="flex-1 flex flex-col justify-between">
+                  <div>
+                    <Link href={`/san-pham/${item.id}`} onClick={onClose} className="font-semibold text-gray-800 text-sm hover:text-primary transition-colors line-clamp-2 leading-snug">
+                      {item.name}
+                    </Link>
+                    {item.variantName && (
+                      <p className="text-xs text-gray-500 mt-1">{item.variantName}</p>
+                    )}
+                    <p className="text-primary font-bold text-sm mt-1">
+                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center gap-0 border border-gray-200 rounded-md overflow-hidden bg-white">
+                      <button onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)} className="p-1.5 hover:bg-gray-100 text-gray-600 transition-colors">
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="px-3 text-sm font-medium w-8 text-center">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)} className="p-1.5 hover:bg-gray-100 text-gray-600 transition-colors">
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <button onClick={() => removeFromCart(item.cartItemId)} className="p-1.5 hover:bg-red-50 text-red-400 hover:text-red-500 rounded transition-colors">
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -77,30 +86,29 @@ export function CartDrawer({ isOpen, onClose, items = [] }: CartDrawerProps) {
 
         {/* Footer */}
         {items.length > 0 && (
-          <div className="border-t border-border p-6 space-y-4">
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal:</span>
-                <span className="text-foreground font-medium">${subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Tax (10%):</span>
-                <span className="text-foreground font-medium">${tax.toFixed(2)}</span>
-              </div>
+          <div className="border-t border-gray-100 p-4 bg-gray-50 space-y-4">
+            <div className="flex justify-between items-center text-lg">
+              <span className="font-medium text-gray-600">Tổng tiền:</span>
+              <span className="font-bold text-primary">
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(cartTotal)}
+              </span>
             </div>
-            <div className="border-t border-border pt-4 flex justify-between">
-              <span className="font-bold text-foreground">Total:</span>
-              <span className="font-bold text-lg text-accent">${total.toFixed(2)}</span>
+            <div className="grid grid-cols-2 gap-3">
+              <Link
+                href="/gio-hang"
+                onClick={onClose}
+                className="w-full px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-bold text-center hover:bg-gray-50 transition-colors"
+              >
+                Xem giỏ hàng
+              </Link>
+              <Link
+                href="/thanh-toan"
+                onClick={onClose}
+                className="w-full px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-bold text-center hover:bg-primary/90 transition-colors shadow-sm"
+              >
+                Thanh toán
+              </Link>
             </div>
-            <button className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-md font-semibold hover:opacity-90 transition-opacity">
-              Checkout
-            </button>
-            <button
-              onClick={onClose}
-              className="w-full px-4 py-3 border-2 border-primary text-primary rounded-md font-semibold hover:bg-primary hover:text-primary-foreground transition-all"
-            >
-              Continue Shopping
-            </button>
           </div>
         )}
       </div>

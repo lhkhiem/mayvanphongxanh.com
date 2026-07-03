@@ -10,7 +10,7 @@ export default function LoginPage() {
           </h2>
           <p className="mt-2 text-center text-sm text-muted-foreground">
             Hoặc{' '}
-            <Link href="/register" className="font-medium text-primary hover:text-primary/80 transition-colors">
+            <Link href="/dang-ky" className="font-medium text-primary hover:text-primary/80 transition-colors">
               đăng ký tài khoản mới
             </Link>
           </p>
@@ -57,9 +57,9 @@ export default function LoginPage() {
             </div>
 
             <div className="text-sm">
-              <a href="#" className="font-medium text-primary hover:text-primary/80 transition-colors">
+              <Link href="/quen-mat-khau" className="font-medium text-primary hover:text-primary/80 transition-colors">
                 Quên mật khẩu?
-              </a>
+              </Link>
             </div>
           </div>
 
