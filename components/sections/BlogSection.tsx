@@ -2,12 +2,18 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { blogPosts } from '@/lib/mockData';
-import { ArrowRight, Calendar, Tag, BookOpen } from 'lucide-react';
+import { ArrowRight, Calendar, Tag, BookOpen, ChevronRight } from 'lucide-react';
 
-export function BlogSection() {
-  const featured = blogPosts[0];
-  const rest = blogPosts.slice(1, 4);
+export function BlogSection({ posts = [] }: { posts?: any[] }) {
+  const formattedPosts = posts.map(p => ({
+    ...p,
+    date: new Date(p.publishedAt || p.createdAt).toLocaleDateString('vi-VN'),
+    category: p.category?.name || 'Tin tức'
+  }));
+  const featured = formattedPosts[0];
+  const rest = formattedPosts.slice(1, 4);
+
+  if (!featured) return null;
 
   return (
     <section className="py-8 bg-[#F4F7F6] border-t border-gray-100">

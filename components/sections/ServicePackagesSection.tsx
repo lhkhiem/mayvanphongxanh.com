@@ -1,12 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { products } from '@/lib/mockData';
 import { productSlug } from '@/lib/utils';
 import { ChevronRight, CheckCircle2, Package, ArrowRight } from 'lucide-react';
 
-export function ServicePackagesSection() {
-  const servicePackages = products.filter(p => p.category === 'Gói dịch vụ');
+export function ServicePackagesSection({ products = [] }: { products?: any[] }) {
+  const servicePackages = products;
 
   if (servicePackages.length === 0) return null;
 

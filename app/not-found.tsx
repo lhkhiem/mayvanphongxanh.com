@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Header } from "@/components/common/Header";
 import { Footer } from "@/components/common/Footer";
 
@@ -14,12 +14,12 @@ export default function NotFound() {
           Xin lỗi, trang bạn đang tìm kiếm không tồn tại, đã bị xóa hoặc tạm thời không thể truy cập.
         </p>
         <div className="flex gap-4">
-          <Button asChild>
-            <Link href="/">Về trang chủ</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/danh-muc">Xem sản phẩm</Link>
-          </Button>
+          <Link href="/" className={buttonVariants({ variant: "default" })}>
+            Về trang chủ
+          </Link>
+          <Link href="/danh-muc" className={buttonVariants({ variant: "outline" })}>
+            Xem sản phẩm
+          </Link>
         </div>
       </main>
       <Footer />

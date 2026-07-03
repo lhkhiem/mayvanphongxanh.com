@@ -12,16 +12,15 @@ import { MobileMenu } from './MobileMenu';
 import { useCart } from '@/context/CartContext';
 import { CartDrawer } from './CartDrawer';
 import { useCompare } from '@/context/CompareContext';
-import { products, categories } from '@/lib/mockData';
 import { slugify, productSlug } from '@/lib/utils';
 
 
 // ──────────────────────────────────────────
 // Inline SearchBar (full-width, with category select)
 // ──────────────────────────────────────────
-function InlineSearchBar() {
+function InlineSearchBar({ categories = [] }: { categories?: any[] }) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<typeof products>([]);
+  const [results, setResults] = useState<any[]>([]);
   const [isFocused, setIsFocused] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('Tất cả');
   const [catOpen, setCatOpen] = useState(false);
@@ -31,14 +30,20 @@ function InlineSearchBar() {
 
   useEffect(() => {
     if (query.trim() === '') { setResults([]); return; }
-    const q = query.toLowerCase();
-    let filtered = products.filter(p =>
-      p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
-    );
-    if (selectedCategory !== 'Tất cả') {
-      filtered = filtered.filter(p => p.category === selectedCategory);
+    
+    const fetchResults = async () => {
+      try {
+        const res = await fetch(`/api/products?search=${encodeURIComponent(query)}${selectedCategory !== 'Tất cả' ? `&categoryName=${encodeURIComponent(selectedCategory)}` : ''}`);
+        if (res.ok) {
+          const data = await res.json();
+          setResults(data.slice(0, 6));
+        }
+      } catch (err) {}
     }
-    setResults(filtered.slice(0, 6));
+    
+    // Simple debounce
+    const timeout = setTimeout(fetchResults, 300);
+    return () => clearTimeout(timeout);
   }, [query, selectedCategory]);
 
   useEffect(() => {
@@ -155,7 +160,7 @@ function InlineSearchBar() {
 // ──────────────────────────────────────────
 // Main Header
 // ──────────────────────────────────────────
-export function Header() {
+export function Header({ categories = [] }: { categories?: any[] }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { cartCount, setIsOpen } = useCart();
   const { items: compareItems } = useCompare();
@@ -219,7 +224,7 @@ export function Header() {
 
             {/* Search bar */}
             <div className="w-full md:w-auto md:flex-1 order-3 md:order-none">
-              <InlineSearchBar />
+              <InlineSearchBar categories={categories} />
             </div>
 
             {/* Right actions (Desktop only) */}

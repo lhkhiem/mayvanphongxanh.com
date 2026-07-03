@@ -2,13 +2,12 @@
 
 import { useState, useRef } from 'react';
 import Link from 'next/link';
-import { products, categories } from '@/lib/mockData';
 import { ProductCard } from '@/components/products/ProductCard';
 import { ChevronRight, ChevronLeft, TrendingUp } from 'lucide-react';
 
 const CARD_WIDTH = 228; // px
 
-export function FeaturedProducts() {
+export function FeaturedProducts({ products = [], categories = [] }: { products?: any[], categories?: any[] }) {
   const allCategories = ['Tất cả', ...categories.map(c => c.name)];
   const [activeTab, setActiveTab] = useState('Tất cả');
   const scrollRef = useRef<HTMLDivElement>(null);

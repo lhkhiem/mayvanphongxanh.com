@@ -2,11 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { projects } from '@/lib/mockData';
 import { productSlug } from '@/lib/utils';
 import { Building2, ChevronRight, Briefcase } from 'lucide-react';
 
-export function ProjectsSection() {
+export function ProjectsSection({ projects = [] }: { projects?: any[] }) {
   return (
     <section className="py-8 bg-white border-t border-gray-100">
       <div className="mx-auto max-w-7xl px-4">

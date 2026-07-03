@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Phone, Mail, MapPin, Clock, Share2, PlayCircle, Send, ArrowRight, Shield, Truck, Award } from 'lucide-react';
-import { companyInfo } from '@/lib/mockData';
 
 const quickLinks = [
   { label: 'Trang chủ', href: '/' },
@@ -33,7 +32,11 @@ const categories = [
   { label: 'Gói dịch vụ', href: '/danh-muc/goi-dich-vu' },
 ];
 
-export function Footer() {
+export function Footer({ settings = [] }: { settings?: any[] }) {
+  const getSetting = (key: string) => settings.find(s => s.key === key)?.value;
+  const companyName = getSetting('company_name') || 'Công ty TNHH Máy Văn Phòng Xanh';
+  const companyDescription = getSetting('company_description') || 'Đối tác tin cậy cung cấp thiết bị văn phòng, máy in, giải pháp CNTT...';
+
   return (
     <footer className="bg-[#1a2e1c] text-gray-300">
       {/* Top promo bar */}
@@ -67,7 +70,7 @@ export function Footer() {
             <div className="relative w-40 h-12 mb-4 overflow-hidden mix-blend-screen">
               <Image src="/logo.png" alt="MVPX Logo" fill className="object-contain object-left scale-[3] origin-left invert grayscale brightness-200" />
             </div>
-            <p className="text-xs text-gray-400 leading-relaxed mb-4">{companyInfo.description}</p>
+            <p className="text-xs text-gray-400 leading-relaxed mb-4">{companyDescription}</p>
 
             <div className="space-y-2 text-xs">
               <div className="flex items-start gap-2">
@@ -201,7 +204,7 @@ export function Footer() {
       <div className="border-t border-white/10">
         <div className="mx-auto max-w-7xl px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
           <p className="text-xs text-gray-500">
-            © 2024 {companyInfo.name}. Tất cả quyền được bảo lưu.
+            © 2024 {companyName}. Tất cả quyền được bảo lưu.
           </p>
           <div className="flex gap-4 text-xs text-gray-500">
             <Link href="/chinh-sach-bao-mat" className="hover:text-gray-300 transition-colors">Chính sách bảo mật</Link>

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
-import { categories } from '@/lib/mockData';
 import { slugify } from '@/lib/utils';
 
 // ─────────────────────────────────────────────────
@@ -115,7 +114,7 @@ const sidebarCategories = [
   { icon: '🎁', name: 'Giải pháp trọn gói', slug: 'goi-dich-vu', subs: ['Gói Nhà phố', 'Gói Văn phòng', 'Gói Khai trương', 'Cho thuê thiết bị'] },
 ];
 
-export function HeroSection() {
+export function HeroSection({ categories = [] }: { categories?: any[] }) {
   const [current, setCurrent] = useState(0);
   const [activeSide, setActiveSide] = useState<number | null>(null);
 
@@ -153,10 +152,10 @@ export function HeroSection() {
               </div>
             ))}
 
-            {/* Sub-categories Mega Menu Flyout */}
+            {/* Sub-sidebarCategories Mega Menu Flyout */}
             {activeSide !== null && (
               <div className="absolute top-0 left-full ml-1 w-[550px] min-h-[420px] bg-white border border-gray-200 shadow-2xl rounded-lg z-[60] p-6 pointer-events-auto flex">
-                {/* Left: subcategories */}
+                {/* Left: subsidebarCategories */}
                 <div className="flex-1 pr-6 border-r border-gray-100">
                   <div className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-5 flex items-center gap-2">
                     <span>{sidebarCategories[activeSide].icon}</span> {sidebarCategories[activeSide].name}

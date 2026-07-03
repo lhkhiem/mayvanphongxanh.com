@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { testimonials } from '@/lib/mockData';
 import { Star, Quote, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
 
-export function CustomerReviews() {
+export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] }) {
   const [current, setCurrent] = useState(0);
   const total = testimonials.length;
 

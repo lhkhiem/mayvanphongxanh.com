@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { companyInfo } from '@/lib/mockData';
 import { CheckCircle2, Award, Users, MapPin, Clock } from 'lucide-react';
 
 const features = [
@@ -12,7 +11,24 @@ const features = [
   'Hợp đồng bảo trì định kỳ toàn diện',
 ];
 
-export function CompanyIntro() {
+export function CompanyIntro({ settings = [] }: { settings?: any[] }) {
+  const getSetting = (key: string) => settings.find(s => s.key === key)?.value;
+  const companyName = getSetting('company_name') || 'Công ty TNHH Máy Văn Phòng Xanh';
+  const companyTagline = getSetting('company_tagline') || 'Giải pháp toàn diện cho doanh nghiệp hiện đại';
+  const companyMission = getSetting('company_mission') || 'Cung cấp thiết bị văn phòng chính hãng, giải pháp chuyển đổi số và dịch vụ IT chuyên nghiệp...';
+  const statsString = getSetting('company_stats');
+  let stats = [
+    { value: '15+', label: 'Năm kinh nghiệm' },
+    { value: '5000+', label: 'Khách hàng' },
+    { value: '50+', label: 'Chuyên gia IT' },
+    { value: '24/7', label: 'Hỗ trợ kỹ thuật' },
+  ];
+  if (statsString) {
+    try {
+      stats = JSON.parse(statsString);
+    } catch(e){}
+  }
+
   return (
     <section className="py-10 bg-white border-t border-gray-100">
       <div className="mx-auto max-w-7xl px-4">
@@ -25,10 +41,10 @@ export function CompanyIntro() {
               <span className="text-sm font-bold text-primary uppercase tracking-wide">Về chúng tôi</span>
             </div>
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 leading-snug">
-              {companyInfo.name}
+              {companyName}
             </h2>
-            <p className="text-gray-500 text-sm mb-1">{companyInfo.tagline}</p>
-            <p className="text-gray-600 mb-6 leading-relaxed">{companyInfo.mission}</p>
+            <p className="text-gray-500 text-sm mb-1">{companyTagline}</p>
+            <p className="text-gray-600 mb-6 leading-relaxed">{companyMission}</p>
 
             <div className="space-y-2.5 mb-6">
               {features.map((f, i) => (
@@ -57,7 +73,7 @@ export function CompanyIntro() {
 
           {/* Right: Stats grid */}
           <div className="grid grid-cols-2 gap-4">
-            {companyInfo.stats.map((stat, i) => (
+            {stats.map((stat: any, i: number) => (
               <div
                 key={i}
                 className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-5 text-center hover:shadow-md hover:-translate-y-0.5 transition-all"
