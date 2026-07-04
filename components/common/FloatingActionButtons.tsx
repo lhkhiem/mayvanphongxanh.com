@@ -3,10 +3,14 @@
 import { useState, useEffect } from 'react';
 import { Phone, ArrowUp, MessageCircle, X } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export function FloatingActionButtons() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
+  const pathname = usePathname();
+
+  if (pathname?.startsWith('/admin')) return null;
 
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 400);

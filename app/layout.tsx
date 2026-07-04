@@ -35,11 +35,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: '#f1f8f4',
 }
-
-import { CartProvider } from "@/context/CartContext";
-import { CompareProvider } from "@/context/CompareContext";
-import { FloatingActionButtons } from "@/components/common/FloatingActionButtons";
-import { CompareBar } from "@/components/compare/CompareBar";
 import { Toaster } from "@/components/ui/sonner";
 
 export default function RootLayout({
@@ -50,14 +45,8 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`${inter.variable} ${jetbrainsMono.variable} bg-background`}>
       <body className="font-sans antialiased bg-background text-foreground">
-        <CartProvider>
-          <CompareProvider>
-            {children}
-            <FloatingActionButtons />
-            <CompareBar />
-            <Toaster position="bottom-right" richColors />
-          </CompareProvider>
-        </CartProvider>
+        {children}
+        <Toaster position="bottom-right" richColors />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

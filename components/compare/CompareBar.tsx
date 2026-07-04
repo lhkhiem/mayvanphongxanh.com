@@ -11,8 +11,8 @@ export function CompareBar() {
   const { items, isOpen, setIsOpen, removeCompareItem, clearCompare } = useCompare();
   const pathname = usePathname();
 
-  // Hide on compare page or if no items
-  if (items.length === 0 || pathname === '/compare') return null;
+  // Hide on compare page, admin pages, or if no items
+  if (items.length === 0 || pathname === '/compare' || pathname?.startsWith('/admin')) return null;
 
   return (
     <div className={`fixed bottom-0 left-0 w-full z-50 bg-background border-t shadow-[0_-4px_10px_rgba(0,0,0,0.05)] transition-transform duration-300 ${isOpen ? 'translate-y-0' : 'translate-y-[calc(100%-40px)]'}`}>
