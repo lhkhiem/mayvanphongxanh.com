@@ -2,6 +2,7 @@ import { Inter } from 'next/font/google'
 import './admin.css'
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
+import Script from "next/script";
 
 const inter = Inter({ subsets: ['latin', 'vietnamese'] })
 
@@ -18,19 +19,19 @@ export default function AdminRootLayout({
   return (
     <html lang="vi" className={inter.className} suppressHydrationWarning>
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                  document.documentElement.classList.add('dark')
-                } else {
-                  document.documentElement.classList.remove('dark')
-                }
-              } catch (_) {}
-            `,
-          }}
-        />
+        <Script id="theme-script" strategy="beforeInteractive">
+          {`
+            try {
+              // Admin dùng key 'admin-theme' riêng, không ảnh hưởng trang Public
+              var adminTheme = localStorage.getItem('admin-theme');
+              if (adminTheme === 'dark') {
+                document.documentElement.classList.add('dark')
+              } else {
+                document.documentElement.classList.remove('dark')
+              }
+            } catch (_) {}
+          `}
+        </Script>
       </head>
       <body className="font-sans antialiased bg-background text-foreground">
         <Providers>

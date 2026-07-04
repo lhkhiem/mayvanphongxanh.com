@@ -5,6 +5,7 @@ import './public.css'
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers";
 import { CartProvider } from "@/context/CartContext";
+import Script from "next/script";
 import { CompareProvider } from "@/context/CompareContext";
 import { FloatingActionButtons } from "@/components/common/FloatingActionButtons";
 import { CompareBar } from "@/components/compare/CompareBar";
@@ -41,19 +42,14 @@ export default function PublicRootLayout({
   return (
     <html lang="vi" className={`${inter.variable} ${jetbrainsMono.variable} bg-background`} suppressHydrationWarning>
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                  document.documentElement.classList.add('dark')
-                } else {
-                  document.documentElement.classList.remove('dark')
-                }
-              } catch (_) {}
-            `,
-          }}
-        />
+        <Script id="theme-script" strategy="beforeInteractive">
+          {`
+            try {
+              // Trang Public luôn dùng light mode, không bị ảnh hưởng bởi admin dark mode
+              document.documentElement.classList.remove('dark');
+            } catch (_) {}
+          `}
+        </Script>
       </head>
       <body className="font-sans antialiased bg-background text-foreground">
         <Providers>

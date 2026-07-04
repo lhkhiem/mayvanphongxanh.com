@@ -101,6 +101,11 @@ const sidebarNavItems = [
     icon: Newspaper,
   },
   {
+    title: "Danh mục Bài viết",
+    href: "/admin/post-categories",
+    icon: Tags,
+  },
+  {
     title: "Banner & Media",
     href: "/admin/media",
     icon: ImageIcon,

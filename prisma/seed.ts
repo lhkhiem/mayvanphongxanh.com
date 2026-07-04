@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client'
 import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { products, categories as mockCategories, testimonials, blogPosts, companyInfo, projects } from '../lib/mockData'
+import bcrypt from 'bcryptjs'
 import "dotenv/config"
 
 const connectionString = process.env.DATABASE_URL!
@@ -45,6 +46,29 @@ async function main() {
   await prisma.productVariant.deleteMany()
   await prisma.product.deleteMany()
   await prisma.category.deleteMany()
+  await prisma.user.deleteMany()
+  await prisma.role.deleteMany()
+  await prisma.permission.deleteMany()
+  
+  // 0. Seed Roles and Admin User
+  console.log('Seed Roles and Admin User...')
+  const adminRole = await prisma.role.create({
+    data: {
+      name: 'Admin',
+      description: 'Quản trị viên cấp cao',
+      isSystem: true
+    }
+  })
+  
+  const hashedPassword = await bcrypt.hash('admin', 10)
+  await prisma.user.create({
+    data: {
+      name: 'Admin MVPX',
+      email: 'admin@mvpx.vn',
+      password: hashedPassword,
+      roleId: adminRole.id,
+    }
+  })
   
   // Dọn dẹp CMS
   await prisma.setting.deleteMany()

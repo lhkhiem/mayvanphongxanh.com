@@ -24,7 +24,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   const setTheme = (newTheme: string) => {
     setThemeState(newTheme);
-    localStorage.setItem("theme", newTheme);
+    localStorage.setItem("admin-theme", newTheme);
     if (newTheme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
