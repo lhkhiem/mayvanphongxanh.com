@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { MediaPickerModal } from "@/components/admin/media-picker-modal";
+import { RichTextEditor, type RichTextEditorRef } from "@/components/admin/rich-text-editor";
 import { CategoryFilterDropdown } from "@/components/admin/category-filter-dropdown";
 import { createProduct, updateProduct, type ProductInput, type ProductVariantInput } from "@/app/(admin)/admin/(dashboard)/products/actions";
 import { getPolicies } from "@/app/(admin)/admin/(dashboard)/policies/actions";
@@ -106,7 +107,9 @@ export function ProductForm({
 
   // Media picker state
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerTarget, setPickerTarget] = useState<'product' | 'manuals' | 'drivers' | number>('product'); 
+  const [pickerTarget, setPickerTarget] = useState<'product' | 'manuals' | 'drivers' | 'description' | 'manuals-editor' | number>('product');
+  const editorRef = useRef<RichTextEditorRef>(null);
+  const manualsEditorRef = useRef<RichTextEditorRef>(null);
 
   // Dynamic Tabs Logic
   const isStandard = form.productType === 'standard';
@@ -164,7 +167,7 @@ export function ProductForm({
   }, [form.name]);
 
   // Handlers
-  const openPicker = (target: 'product' | number) => {
+  const openPicker = (target: 'product' | 'description' | 'manuals-editor' | number) => {
     setPickerTarget(target);
     setPickerOpen(true);
   };
@@ -182,6 +185,10 @@ export function ProductForm({
         ...prev,
         drivers: { ...prev.drivers!, files: [...(prev.drivers?.files || []), ...urls] }
       }));
+    } else if (pickerTarget === 'description') {
+      editorRef.current?.insertImages(urls);
+    } else if (pickerTarget === 'manuals-editor') {
+      manualsEditorRef.current?.insertImages(urls);
     } else {
       setVariants((prev) => prev.map((v, i) => i === pickerTarget ? { ...v, images: [...v.images, ...urls] } : v));
     }
@@ -499,8 +506,13 @@ export function ProductForm({
           <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] p-5 shadow-sm space-y-4">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700">Nội dung chi tiết</h2>
             <div>
-              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={16} placeholder="Nhập mô tả chi tiết sản phẩm hoặc mã HTML..." className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm resize-y font-mono" />
-              <p className="text-xs text-gray-400 mt-2">Hỗ trợ nội dung HTML để format bài viết đẹp hơn.</p>
+              <RichTextEditor
+                ref={editorRef}
+                value={form.description}
+                onChange={(val) => setForm({ ...form, description: val })}
+                onImagePickerRequest={() => openPicker('description')}
+                placeholder="Nhập mô tả chi tiết sản phẩm..."
+              />
             </div>
           </div>
         )}
@@ -572,7 +584,13 @@ export function ProductForm({
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Nội dung hướng dẫn (Text/HTML)</label>
-                  <textarea rows={5} value={form.manuals?.content || ''} onChange={(e) => setForm({ ...form, manuals: { ...form.manuals!, content: e.target.value } })} placeholder="Nhập nội dung hướng dẫn sử dụng..." className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm resize-none"></textarea>
+                  <RichTextEditor
+                    ref={manualsEditorRef}
+                    value={form.manuals?.content || ''}
+                    onChange={(val) => setForm({ ...form, manuals: { ...form.manuals!, content: val } })}
+                    onImagePickerRequest={() => openPicker('manuals-editor')}
+                    placeholder="Nhập nội dung hướng dẫn sử dụng..."
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">File tài liệu (PDF, DOCX...)</label>

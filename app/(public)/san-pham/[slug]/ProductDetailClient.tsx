@@ -528,13 +528,7 @@ export default function ProductDetailClient({
             {activeTab === 'desc' && (
               <div className="prose prose-lg text-muted-foreground max-w-none bg-white p-8 rounded-xl border border-border shadow-sm">
                 <h3 className="text-xl font-bold text-foreground mb-4">Chi tiết sản phẩm: {product.name}</h3>
-                <p>{product.description}</p>
-                <p className="mt-4">
-                  Sản phẩm được phân phối chính hãng bởi Máy Văn Phòng Xanh. Quý khách hàng sẽ được trải nghiệm dịch vụ hậu mãi chuyên nghiệp, hỗ trợ kỹ thuật tận nơi và bảo hành nhanh chóng.
-                </p>
-                <div className="mt-6 flex justify-center">
-                   <Image src={product.image} alt={product.name} width={600} height={400} className="rounded-lg border border-border" />
-                </div>
+                <div dangerouslySetInnerHTML={{ __html: product.description }} />
               </div>
             )}
 
@@ -544,9 +538,10 @@ export default function ProductDetailClient({
                   <div className="bg-white p-8 rounded-xl border border-border shadow-sm">
                     <h3 className="text-lg font-bold text-foreground mb-4">Hướng dẫn sử dụng</h3>
                     {product.manuals.content && (
-                      <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap mb-6">
-                        {product.manuals.content}
-                      </div>
+                      <div 
+                        className="prose prose-sm max-w-none text-muted-foreground mb-6" 
+                        dangerouslySetInnerHTML={{ __html: product.manuals.content }} 
+                      />
                     )}
                     {product.manuals.files && product.manuals.files.length > 0 && (
                       <div className="space-y-3">
@@ -570,9 +565,10 @@ export default function ProductDetailClient({
                   <div className="bg-white p-8 rounded-xl border border-border shadow-sm">
                     <h3 className="text-lg font-bold text-foreground mb-4">Driver & Phần mềm</h3>
                     {product.drivers.content && (
-                      <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap mb-6">
-                        {product.drivers.content}
-                      </div>
+                      <div 
+                        className="prose prose-sm max-w-none text-muted-foreground mb-6"
+                        dangerouslySetInnerHTML={{ __html: product.drivers.content }}
+                      />
                     )}
                     {product.drivers.files && product.drivers.files.length > 0 && (
                       <div className="grid gap-4 md:grid-cols-2">
