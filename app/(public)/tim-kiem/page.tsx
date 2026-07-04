@@ -1,14 +1,36 @@
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
 import { ProductCard } from '@/components/products/ProductCard';
-import { products } from '@/lib/mockData';
+import { prisma } from '@/lib/db';
 
-export default function SearchPage() {
-  // In a real app, you would get the query from searchParams
-  // and fetch the filtered products from the backend.
-  // Here we just use a mock display.
-  const searchResults = products.slice(0, 4);
-  const keyword = "máy in";
+export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const resolvedParams = await searchParams;
+  const keyword = resolvedParams.q || "";
+
+  const dbProducts = keyword ? await prisma.product.findMany({
+    where: { 
+      isActive: true,
+      name: { contains: keyword } // simple search
+    },
+    include: { variants: true, category: true }
+  }) : [];
+
+  const searchResults = dbProducts.map(p => {
+    const defaultVariant = p.variants[0];
+    return {
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      category: p.category?.name || 'Khác',
+      brand: p.brand || 'Khác',
+      price: defaultVariant?.price || 0,
+      originalPrice: defaultVariant?.originalPrice,
+      rating: 5,
+      reviews: 120,
+      image: (defaultVariant?.images as string[])?.[0] || '/placeholder.jpg',
+      stock: defaultVariant?.stockQuantity || 0,
+    };
+  });
 
   return (
     <main className="min-h-screen bg-background">
@@ -34,6 +56,8 @@ export default function SearchPage() {
                 reviews={product.reviews}
                 image={product.image}
                 stock={product.stock}
+                slug={product.slug}
+                category={product.category}
               />
             ))}
           </div>

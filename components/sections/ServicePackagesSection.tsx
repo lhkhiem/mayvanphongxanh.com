@@ -95,8 +95,8 @@ export function ServicePackagesSection({ products = [] }: { products?: any[] }) 
                         </p>
                       )}
                     </div>
-                    <Link
-                      href={`/san-pham/${productSlug(pkg.name || pkg.title || '', pkg.id)}`}
+                    <Link 
+                      href={`/san-pham/${pkg.slug || productSlug(pkg.name || pkg.title || '', pkg.id)}`}
                       className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-primary/90 transition-colors group/btn"
                     >
                       Chi tiết

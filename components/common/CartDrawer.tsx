@@ -60,8 +60,21 @@ export function CartDrawer() {
                     <Link href={`/san-pham/${item.id}`} onClick={() => setIsOpen(false)} className="font-medium text-foreground line-clamp-2 text-sm hover:text-primary transition-colors">
                       {item.name}
                     </Link>
-                    {item.variantName && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{item.variantName}</p>
+                    {(item.variantName || item.sku) && (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {item.variantName}
+                        {item.variantName && item.sku && " - "}
+                        {item.sku && `SKU: ${item.sku}`}
+                      </p>
+                    )}
+                    {item.attributes && Object.keys(item.attributes).length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {Object.entries(item.attributes).map(([k, v]) => (
+                          <span key={k} className="text-[10px] px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded">
+                            {k}: {v as string}
+                          </span>
+                        ))}
+                      </div>
                     )}
                     <p className="font-bold text-primary text-sm mt-1">
                       {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}

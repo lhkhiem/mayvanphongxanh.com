@@ -7,6 +7,8 @@ export interface CartItem {
   cartItemId: string; // Composite ID: e.g., "1", "28-v3510-i3-8", "29-cpu-i5-ram-16"
   name: string;
   variantName?: string; // Additional string to display, e.g., "(Core i5, 8GB RAM)"
+  sku?: string;
+  attributes?: Record<string, string>;
   price: number;
   image: string;
   quantity: number;

@@ -39,6 +39,10 @@ model Product {
   productType String    @default("standard") // standard, pre-packaged, custom-build
   isActive    Boolean   @default(true)
   customOptions Json?
+  quickSpecs  Json?
+  specifications Json?
+  manuals     Json?
+  drivers     Json?
 
   // SEO
   metaTitle       String?
@@ -51,9 +55,19 @@ model Product {
 
   category    Category         @relation(fields: [categoryId], references: [id])
   variants    ProductVariant[]
+  policies    ProductPolicy[]
 
   @@index([categoryId])
   @@index([slug])
+}
+
+// 2.5 Chính sách sản phẩm (Ví dụ: Giao hàng miễn phí, Bảo hành...)
+model ProductPolicy {
+  id          Int       @id @default(autoincrement())
+  icon        String    @default("CheckCircle")
+  title       String
+  description String?
+  products    Product[]
 }
 
 // 3. Biến thể Sản phẩm

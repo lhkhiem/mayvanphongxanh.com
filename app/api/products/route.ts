@@ -6,13 +6,15 @@ export async function GET(request: Request) {
   const categoryId = searchParams.get('category')
   const limit = searchParams.get('limit')
   const search = searchParams.get('search')
+  const ids = searchParams.get('ids')
 
   try {
     const products = await prisma.product.findMany({
       where: {
         isActive: true,
         ...(categoryId ? { categoryId: parseInt(categoryId) } : {}),
-        ...(search ? { name: { contains: search, mode: 'insensitive' } } : {})
+        ...(search ? { name: { contains: search, mode: 'insensitive' } } : {}),
+        ...(ids ? { id: { in: ids.split(',').map(id => parseInt(id)) } } : {})
       },
       include: {
         category: true,

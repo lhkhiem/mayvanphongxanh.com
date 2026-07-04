@@ -21,8 +21,9 @@ export function slugify(str: string): string {
 }
 
 /** Tạo slug thân thiện cho sản phẩm/dự án: {slugify(name)}-{id} */
-export function productSlug(name: string, id: number): string {
-  return `${slugify(name)}-${id}`;
+export function productSlug(name: string, id?: number): string {
+  if (id) return `${slugify(name)}-${id}`;
+  return slugify(name);
 }
 
 /** Lấy id từ slug dạng {slugify(name)}-{id} */

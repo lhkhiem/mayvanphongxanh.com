@@ -1,7 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useCompare } from '@/context/CompareContext';
-import { products } from '@/lib/mockData';
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
 import Link from 'next/link';
@@ -15,9 +15,36 @@ export default function ComparePage() {
   const { items, removeCompareItem } = useCompare();
   const { addToCart } = useCart();
   const router = useRouter();
+  const [compareProducts, setCompareProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Get full product details from mock data
-  const compareProducts = items.map(item => products.find(p => p.id === item.id)).filter(Boolean);
+  useEffect(() => {
+    if (items.length === 0) {
+      setCompareProducts([]);
+      setLoading(false);
+      return;
+    }
+
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const ids = items.map(item => item.id).join(',');
+        const res = await fetch(`/api/products?ids=${ids}`);
+        if (res.ok) {
+          const data = await res.json();
+          // Keep the order of items
+          const orderedData = items.map(item => data.find((p: any) => p.id === item.id)).filter(Boolean);
+          setCompareProducts(orderedData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch compare products', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [items]);
 
   const formatPrice = (price?: number) => {
     if (!price) return 'Liên hệ';
@@ -42,7 +69,11 @@ export default function ComparePage() {
           <h1 className="text-3xl font-bold text-foreground">So sánh sản phẩm</h1>
         </div>
 
-        {compareProducts.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-20 bg-card rounded-2xl border border-border shadow-sm">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Đang tải dữ liệu...</h2>
+          </div>
+        ) : compareProducts.length === 0 ? (
           <div className="text-center py-20 bg-card rounded-2xl border border-border shadow-sm">
             <h2 className="text-xl font-semibold text-foreground mb-4">Bạn chưa chọn sản phẩm nào để so sánh</h2>
             <p className="text-muted-foreground mb-8">Hãy duyệt qua các danh mục và chọn sản phẩm bạn muốn so sánh nhé.</p>
@@ -78,7 +109,7 @@ export default function ComparePage() {
                           className="object-contain hover:scale-105 transition-transform duration-300"
                         />
                       </div>
-                      <h3 className="font-bold text-xl text-foreground mb-3 line-clamp-2 hover:text-primary cursor-pointer transition-colors" onClick={() => router.push(`/products/${product!.id}`)}>
+                      <h3 className="font-bold text-xl text-foreground mb-3 line-clamp-2 hover:text-primary cursor-pointer transition-colors" onClick={() => router.push(`/san-pham/${product!.slug || product!.id}`)}>
                         {product!.name}
                       </h3>
                       <div className="flex items-center justify-center gap-1.5 mb-2">

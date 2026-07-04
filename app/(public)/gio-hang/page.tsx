@@ -50,8 +50,21 @@ export default function CartPage() {
                             <Trash2 className="w-5 h-5" />
                           </button>
                         </div>
-                        {item.variantName && (
-                          <p className="text-sm text-gray-500 mt-1">{item.variantName}</p>
+                        {(item.variantName || item.sku) && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            {item.variantName}
+                            {item.variantName && item.sku && " - "}
+                            {item.sku && `SKU: ${item.sku}`}
+                          </p>
+                        )}
+                        {item.attributes && Object.keys(item.attributes).length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {Object.entries(item.attributes).map(([k, v]) => (
+                              <span key={k} className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                                {k}: {v as string}
+                              </span>
+                            ))}
+                          </div>
                         )}
                         <p className="text-xl font-bold text-primary mt-2">
                           {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}

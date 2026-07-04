@@ -20,6 +20,7 @@ export interface ProductCardProps {
   stock: number;
   brand?: string;
   sku?: string;
+  slug?: string;
 }
 
 export function ProductCard({
@@ -33,10 +34,13 @@ export function ProductCard({
   image,
   stock,
   sku,
+  slug,
 }: ProductCardProps) {
   const [showCompareToast, setShowCompareToast] = useState(false);
   const [showCompareErrorToast, setShowCompareErrorToast] = useState('');
   const [imageError, setImageError] = useState(false);
+  
+  const hrefSlug = slug || productSlug(name, id);
   
   const { addToCart } = useCart();
   const { addCompareItem, removeCompareItem, hasItem } = useCompare();
@@ -85,7 +89,7 @@ export function ProductCard({
       {/* Image Container */}
       <div 
         className="relative overflow-hidden bg-white h-48 md:h-52 mb-4 flex items-center justify-center cursor-pointer"
-        onClick={() => router.push(`/san-pham/${productSlug(name, id)}`)}
+        onClick={() => router.push(`/san-pham/${hrefSlug}`)}
       >
         {!imageError ? (
           <img
@@ -104,15 +108,15 @@ export function ProductCard({
 
       {/* Content */}
       <div className="flex-1 flex flex-col">
-        <Link href={`/san-pham/${productSlug(name, id)}`}>
+        <Link href={`/san-pham/${hrefSlug}`}>
           <h3 className="font-bold text-gray-800 mb-2 line-clamp-2 text-[13px] leading-snug hover:text-primary transition-colors min-h-[36px]">
             {name}
           </h3>
         </Link>
 
         {/* Rating and SKU */}
-        <div className="flex items-center gap-1.5 mb-1">
-          <div className="flex gap-0.5">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-0.5">
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
@@ -124,8 +128,8 @@ export function ProductCard({
           </div>
           <span className="text-[11px] text-gray-500">({reviews})</span>
         </div>
-        <div className="text-[11px] text-gray-500 mb-3">
-          Mã SP: <span className="font-medium text-gray-700 uppercase">{sku || `HPT-${id}`}</span>
+        <div className="text-[11px] text-primary/80 font-medium uppercase tracking-wider mb-3 line-clamp-1">
+          {category}
         </div>
 
         {/* Price */}

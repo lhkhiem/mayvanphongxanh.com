@@ -5,13 +5,15 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Save, ArrowLeft, Plus, Trash2, ImageIcon, X,
-  GripVertical, Package, Tag, Globe, Settings2
+  GripVertical, Package, Tag, Globe, Settings2, Minus, Upload
 } from "lucide-react";
 import Link from "next/link";
 import { MediaPickerModal } from "@/components/admin/media-picker-modal";
 import { CategoryFilterDropdown } from "@/components/admin/category-filter-dropdown";
 import { createProduct, updateProduct, type ProductInput, type ProductVariantInput } from "@/app/(admin)/admin/(dashboard)/products/actions";
+import { getPolicies } from "@/app/(admin)/admin/(dashboard)/policies/actions";
 import { cn } from "@/lib/utils";
+import * as LucideIcons from "lucide-react";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function generateSlug(str: string) {
@@ -43,7 +45,7 @@ const PRODUCT_TYPES = [
 ];
 
 const DEFAULT_VARIANT: ProductVariantInput = {
-  sku: '', name: '', price: 0, originalPrice: null, stockQuantity: 0, images: [], attributes: {},
+  sku: '', name: '', price: 0, originalPrice: null, stockQuantity: 0, images: [], attributes: [],
 };
 
 export type CustomOption = {
@@ -80,6 +82,11 @@ export function ProductForm({
     metaTitle: initialData?.metaTitle || '',
     metaDescription: initialData?.metaDescription || '',
     metaKeywords: initialData?.metaKeywords || '',
+    quickSpecs: Array.isArray(initialData?.quickSpecs) ? initialData.quickSpecs : [],
+    specifications: Array.isArray(initialData?.specifications) ? initialData.specifications : [],
+    manuals: initialData?.manuals || { content: '', files: [] },
+    drivers: initialData?.drivers || { content: '', files: [] },
+    policyIds: Array.isArray(initialData?.policies) ? initialData.policies.map((p: any) => p.id) : [],
   });
 
   const [variants, setVariants] = useState<ProductVariantInput[]>(
@@ -87,7 +94,8 @@ export function ProductForm({
       ? initialData.variants.map((v: any) => ({
           id: v.id, sku: v.sku, name: v.name || '', price: v.price,
           originalPrice: v.originalPrice || null, stockQuantity: v.stockQuantity,
-          images: Array.isArray(v.images) ? v.images : [], attributes: v.attributes || {},
+          images: Array.isArray(v.images) ? v.images : [], 
+          attributes: v.attributes ? Object.entries(v.attributes).map(([k, val]) => ({ key: k, value: val as string })) : [],
         }))
       : [{ ...DEFAULT_VARIANT, sku: '' }]
   );
@@ -98,23 +106,32 @@ export function ProductForm({
 
   // Media picker state
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerTarget, setPickerTarget] = useState<'product' | number>('product'); 
+  const [pickerTarget, setPickerTarget] = useState<'product' | 'manuals' | 'drivers' | number>('product'); 
 
   // Dynamic Tabs Logic
   const isStandard = form.productType === 'standard';
   const isCustomBuild = form.productType === 'custom-build';
 
   const [hasVariants, setHasVariants] = useState<boolean>(
-    isStandard && (variants.length > 1 || (variants.length === 1 && Object.keys(variants[0].attributes || {}).length > 0))
+    isStandard && (variants.length > 1 || (variants.length === 1 && variants[0].attributes && variants[0].attributes.length > 0))
   );
 
   const TABS = [
     { id: 'info', label: 'Thông tin', icon: Package },
+    { id: 'desc', label: 'Mô tả sản phẩm', icon: LucideIcons.FileText },
     { id: 'images', label: 'Hình ảnh', icon: ImageIcon },
+    { id: 'docs', label: 'Hướng dẫn & Tài liệu', icon: LucideIcons.FileText },
     ...(isStandard && hasVariants ? [{ id: 'variants', label: 'Biến thể', icon: Tag }] : []),
     ...(isCustomBuild ? [{ id: 'addons', label: 'Tùy chọn (Add-ons)', icon: Settings2 }] : []),
+    { id: 'policies', label: 'Chính sách', icon: LucideIcons.ShieldCheck },
     { id: 'seo', label: 'SEO', icon: Globe },
   ];
+
+  // Fetch policies
+  const [availablePolicies, setAvailablePolicies] = useState<any[]>([]);
+  useEffect(() => {
+    getPolicies().then(setAvailablePolicies).catch(console.error);
+  }, []);
 
   // Auto-switch tab if current tab is hidden
   useEffect(() => {
@@ -155,6 +172,16 @@ export function ProductForm({
   const handlePickerSelect = (url: string) => {
     if (pickerTarget === 'product') {
       setForm((prev) => ({ ...prev, images: [...prev.images, url] }));
+    } else if (pickerTarget === 'manuals') {
+      setForm(prev => ({
+        ...prev,
+        manuals: { ...prev.manuals!, files: [...(prev.manuals?.files || []), url] }
+      }));
+    } else if (pickerTarget === 'drivers') {
+      setForm(prev => ({
+        ...prev,
+        drivers: { ...prev.drivers!, files: [...(prev.drivers?.files || []), url] }
+      }));
     } else {
       setVariants((prev) => prev.map((v, i) => i === pickerTarget ? { ...v, images: [...v.images, url] } : v));
     }
@@ -192,6 +219,22 @@ export function ProductForm({
 
   const removeAddon = (idx: number) => {
     setCustomOptions((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const addSpec = () => {
+    setForm(prev => ({ ...prev, specifications: [...(prev.specifications || []), { label: '', value: '' }] }));
+  };
+
+  const updateSpec = (idx: number, patch: { label?: string, value?: string }) => {
+    setForm(prev => {
+      const newSpecs = [...(prev.specifications || [])];
+      newSpecs[idx] = { ...newSpecs[idx], ...patch };
+      return { ...prev, specifications: newSpecs };
+    });
+  };
+
+  const removeSpec = (idx: number) => {
+    setForm(prev => ({ ...prev, specifications: (prev.specifications || []).filter((_, i) => i !== idx) }));
   };
 
   const handleSubmit = async () => {
@@ -233,7 +276,7 @@ export function ProductForm({
         isOpen={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onSelect={handlePickerSelect}
-        title={pickerTarget === 'product' ? 'Chọn ảnh sản phẩm' : 'Chọn ảnh biến thể'}
+        title={pickerTarget === 'product' ? 'Chọn ảnh sản phẩm' : typeof pickerTarget === 'number' ? 'Chọn ảnh biến thể' : 'Tải lên tài liệu'}
       />
 
       <div className="space-y-5 pb-20">
@@ -310,10 +353,6 @@ export function ProductForm({
                   </div>
                   <input type="text" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} disabled={autoSlug} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-gray-800 shadow-sm font-mono" />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Mô tả sản phẩm</label>
-                  <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={8} placeholder="Mô tả chi tiết tính năng..." className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm resize-none" />
-                </div>
               </div>
 
               {/* Inline Sales Info block (only for non-standard or simple products) */}
@@ -343,6 +382,76 @@ export function ProductForm({
                   </div>
                 </div>
               )}
+
+              {/* Quick Specs inline */}
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] p-5 shadow-sm space-y-4">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700">Thông tin nhanh (Đặc điểm nổi bật)</h2>
+                <div className="space-y-3">
+                  {(form.quickSpecs || []).map((spec: any, idx: number) => (
+                    <div key={idx} className="flex gap-2">
+                      <input type="text" value={typeof spec === 'string' ? spec : (spec.label ? `${spec.label}: ${spec.value}` : '')} onChange={(e) => {
+                        const newSpecs = [...(form.quickSpecs || [])];
+                        newSpecs[idx] = e.target.value;
+                        setForm({ ...form, quickSpecs: newSpecs });
+                      }} className="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" />
+                      <button type="button" onClick={() => setForm({ ...form, quickSpecs: (form.quickSpecs || []).filter((_, i) => i !== idx) })} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => setForm({ ...form, quickSpecs: [...(form.quickSpecs || []), ''] })} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <Plus className="h-4 w-4" /> Thêm dòng
+                  </button>
+                </div>
+              </div>
+
+              {/* Technical Specifications inline */}
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] p-5 shadow-sm space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-700">
+                  <div>
+                    <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Thông số kỹ thuật</h2>
+                    <p className="text-xs text-gray-400 mt-0.5">Các thông số chi tiết (Thương hiệu, Bảo hành, Tốc độ...).</p>
+                  </div>
+                  <button type="button" onClick={addSpec} className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary/90 shadow-sm">
+                    <Plus className="h-4 w-4" /> Thêm thông số
+                  </button>
+                </div>
+
+                {(!form.specifications || form.specifications.length === 0) ? (
+                  <div className="rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 py-12 flex flex-col items-center justify-center text-gray-500">
+                    <Settings2 className="h-8 w-8 mb-2 opacity-50" />
+                    <p className="text-sm">Chưa có thông số nào được cấu hình</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {form.specifications.map((spec: any, idx: number) => (
+                      <div key={idx} className="flex gap-3 items-center p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 shadow-sm">
+                        <div className="w-1/3">
+                          <input 
+                            type="text" 
+                            value={spec.label} 
+                            onChange={(e) => updateSpec(idx, { label: e.target.value })} 
+                            placeholder="VD: Thương hiệu" 
+                            className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2a303d] px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary" 
+                          />
+                        </div>
+                        <div className="w-2/3">
+                          <input 
+                            type="text" 
+                            value={spec.value} 
+                            onChange={(e) => updateSpec(idx, { value: e.target.value })} 
+                            placeholder="VD: HP" 
+                            className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2a303d] px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary" 
+                          />
+                        </div>
+                        <button type="button" onClick={() => removeSpec(idx)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors">
+                          <Minus className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="space-y-5">
@@ -380,6 +489,17 @@ export function ProductForm({
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Tab: Mô tả sản phẩm ── */}
+        {tab === 'desc' && (
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] p-5 shadow-sm space-y-4">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700">Nội dung chi tiết</h2>
+            <div>
+              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={16} placeholder="Nhập mô tả chi tiết sản phẩm hoặc mã HTML..." className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm resize-y font-mono" />
+              <p className="text-xs text-gray-400 mt-2">Hỗ trợ nội dung HTML để format bài viết đẹp hơn.</p>
             </div>
           </div>
         )}
@@ -439,6 +559,67 @@ export function ProductForm({
           </div>
         )}
 
+
+
+        {/* ── Tab: Hướng dẫn & Tài liệu ── */}
+        {tab === 'docs' && (
+          <div className="space-y-6">
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4 border-b border-gray-100 dark:border-gray-700 pb-3">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Hướng dẫn sử dụng</h2>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Nội dung hướng dẫn (Text/HTML)</label>
+                  <textarea rows={5} value={form.manuals?.content || ''} onChange={(e) => setForm({ ...form, manuals: { ...form.manuals!, content: e.target.value } })} placeholder="Nhập nội dung hướng dẫn sử dụng..." className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm resize-none"></textarea>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">File tài liệu (PDF, DOCX...)</label>
+                  <div className="space-y-2">
+                    {form.manuals?.files?.map((file, idx) => (
+                      <div key={idx} className="flex gap-2 items-center p-2 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <LucideIcons.FileText className="w-4 h-4 text-gray-500" />
+                        <span className="flex-1 text-sm text-gray-700 dark:text-gray-300 truncate">{file}</span>
+                        <button type="button" onClick={() => setForm({ ...form, manuals: { ...form.manuals!, files: form.manuals!.files.filter((_, i) => i !== idx) } })} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 p-1.5 rounded"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => { setPickerTarget('manuals'); setPickerOpen(true); }} className="inline-flex items-center gap-2 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-600 hover:border-primary hover:text-primary transition-colors">
+                      <Upload className="h-4 w-4" /> Tải lên hoặc chọn file
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4 border-b border-gray-100 dark:border-gray-700 pb-3">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Driver & Phần mềm</h2>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Nội dung / Link Download ngoài</label>
+                  <textarea rows={5} value={form.drivers?.content || ''} onChange={(e) => setForm({ ...form, drivers: { ...form.drivers!, content: e.target.value } })} placeholder="Nhập link driver hoặc hướng dẫn cài đặt..." className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm resize-none"></textarea>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">File Driver upload trực tiếp</label>
+                  <div className="space-y-2">
+                    {form.drivers?.files?.map((file, idx) => (
+                      <div key={idx} className="flex gap-2 items-center p-2 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <LucideIcons.FileText className="w-4 h-4 text-gray-500" />
+                        <span className="flex-1 text-sm text-gray-700 dark:text-gray-300 truncate">{file}</span>
+                        <button type="button" onClick={() => setForm({ ...form, drivers: { ...form.drivers!, files: form.drivers!.files.filter((_, i) => i !== idx) } })} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 p-1.5 rounded"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => { setPickerTarget('drivers'); setPickerOpen(true); }} className="inline-flex items-center gap-2 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-600 hover:border-primary hover:text-primary transition-colors">
+                      <Upload className="h-4 w-4" /> Tải lên hoặc chọn file
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── Tab: Tùy chọn Add-ons (Chỉ Tùy Chỉnh) ── */}
         {tab === 'addons' && isCustomBuild && (
           <div className="space-y-4">
@@ -458,7 +639,7 @@ export function ProductForm({
             ) : (
               <div className="space-y-3">
                 {customOptions.map((addon, idx) => (
-                  <div key={addon.id} className="flex flex-col sm:flex-row gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] shadow-sm items-center">
+                  <div key={addon.id || `addon-${idx}`} className="flex flex-col sm:flex-row gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] shadow-sm items-center">
                     <div className="flex-1 w-full">
                       <label className="block text-xs font-medium mb-1 text-gray-600 dark:text-gray-400">Tên linh kiện/Tùy chọn <span className="text-red-500">*</span></label>
                       <input type="text" value={addon.name} onChange={(e) => updateAddon(idx, { name: e.target.value })} placeholder="VD: Khay giấy phụ 500 tờ" className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
@@ -473,6 +654,54 @@ export function ProductForm({
                     <button type="button" onClick={() => removeAddon(idx)} className="mt-5 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 shrink-0"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Tab: Chính sách ── */}
+        {tab === 'policies' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Chính sách & Tiện ích</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Chọn các chính sách áp dụng cho sản phẩm này.</p>
+              </div>
+            </div>
+            {availablePolicies.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 py-12 text-center text-gray-500 text-sm">
+                Chưa có chính sách nào được cấu hình trong hệ thống.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {availablePolicies.map(policy => {
+                  const Icon = (LucideIcons as any)[policy.icon] || LucideIcons.CheckCircle;
+                  const isSelected = form.policyIds?.includes(policy.id);
+                  return (
+                    <label key={policy.id} className={cn(
+                      "flex gap-4 p-4 rounded-xl border cursor-pointer transition-all",
+                      isSelected ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] hover:border-gray-300 dark:hover:border-gray-600"
+                    )}>
+                      <input 
+                        type="checkbox" 
+                        className="sr-only" 
+                        checked={isSelected}
+                        onChange={(e) => {
+                          const current = form.policyIds || [];
+                          if (e.target.checked) setForm({ ...form, policyIds: [...current, policy.id] });
+                          else setForm({ ...form, policyIds: current.filter(id => id !== policy.id) });
+                        }}
+                      />
+                      <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors", isSelected ? "bg-primary/20 text-primary" : "bg-gray-100 dark:bg-gray-800 text-gray-500")}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h3 className={cn("font-medium text-sm", isSelected ? "text-primary" : "text-gray-900 dark:text-gray-100")}>{policy.title}</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{policy.description}</p>
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -518,20 +747,6 @@ function VariantCard({
   onPickImage: () => void;
   onRemoveImage: (imgIdx: number) => void;
 }) {
-  const [attrKey, setAttrKey] = useState('');
-  const [attrVal, setAttrVal] = useState('');
-
-  const addAttr = () => {
-    if (!attrKey.trim()) return;
-    onUpdate({ attributes: { ...variant.attributes, [attrKey.trim()]: attrVal.trim() } });
-    setAttrKey(''); setAttrVal('');
-  };
-
-  const removeAttr = (key: string) => {
-    const { [key]: _, ...rest } = variant.attributes;
-    onUpdate({ attributes: rest });
-  };
-
   return (
     <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-5 py-3 bg-gray-50 dark:bg-gray-800/40 border-b border-gray-100 dark:border-gray-700">
@@ -561,44 +776,59 @@ function VariantCard({
           </div>
         </div>
 
-        {/* Attributes */}
-        <div>
-          <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Thuộc tính mở rộng</label>
-          <div className="space-y-2">
-            {Object.entries(variant.attributes || {}).map(([k, val]) => (
-              <div key={k} className="flex items-center gap-2">
-                <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs font-medium text-gray-600 dark:text-gray-300">{k}</span>
-                <span className="text-gray-400 text-xs">:</span>
-                <span className="text-xs text-gray-700 dark:text-gray-200">{val as string}</span>
-                <button type="button" onClick={() => removeAttr(k)} className="ml-auto p-1 text-gray-400 hover:text-red-500"><X className="h-3 w-3" /></button>
-              </div>
-            ))}
-            <div className="flex gap-2">
-              <input value={attrKey} onChange={(e) => setAttrKey(e.target.value)} placeholder="Thuộc tính (VD: Màu)" className="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary" />
-              <input value={attrVal} onChange={(e) => setAttrVal(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addAttr())} placeholder="Giá trị (VD: Đen)" className="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary" />
-              <button type="button" onClick={addAttr} className="px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-700 text-xs font-medium text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"><Plus className="h-3.5 w-3.5" /></button>
+        <div className="pt-4 mt-2 border-t border-gray-100 dark:border-gray-800 grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Attributes */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Thuộc tính mở rộng</label>
+              <button type="button" onClick={() => onUpdate({ attributes: [...variant.attributes, { key: '', value: '' }] })} className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors"><Plus className="h-3.5 w-3.5" /> Thêm thuộc tính</button>
             </div>
-          </div>
-        </div>
-
-        {/* Variant Images */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">Ảnh riêng của biến thể (tuỳ chọn)</label>
-            <button type="button" onClick={onPickImage} className="text-xs text-primary hover:underline flex items-center gap-1"><Plus className="h-3 w-3" /> Thêm ảnh</button>
-          </div>
-          {variant.images && variant.images.length > 0 ? (
-            <div className="flex gap-2 flex-wrap">
-              {variant.images.map((url, i) => (
-                <div key={i} className="relative group w-16 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100">
-                  <img src={url} alt="" className="w-full h-full object-cover" />
-                  <button type="button" onClick={() => onRemoveImage(i)} className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X className="h-2.5 w-2.5" /></button>
+            <div className="space-y-2">
+              {variant.attributes.map((attr, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input value={attr.key} onChange={(e) => {
+                    const newAttrs = [...variant.attributes];
+                    newAttrs[i].key = e.target.value;
+                    onUpdate({ attributes: newAttrs });
+                  }} placeholder="Thuộc tính (VD: Màu)" className="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary" />
+                  <input value={attr.value} onChange={(e) => {
+                    const newAttrs = [...variant.attributes];
+                    newAttrs[i].value = e.target.value;
+                    onUpdate({ attributes: newAttrs });
+                  }} placeholder="Giá trị (VD: Đen)" className="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary" />
+                  <button type="button" onClick={() => {
+                    const newAttrs = variant.attributes.filter((_, idx) => idx !== i);
+                    onUpdate({ attributes: newAttrs });
+                  }} className="ml-auto p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"><X className="h-3.5 w-3.5" /></button>
                 </div>
               ))}
+              {variant.attributes.length === 0 && (
+                <p className="text-xs text-gray-400 italic mt-2">Chưa có thuộc tính mở rộng.</p>
+              )}
             </div>
-          ) : (
-            <p className="text-xs text-gray-400 italic">Không có ảnh riêng — sẽ dùng ảnh sản phẩm chính.</p>
-          )}
+          </div>
+
+          {/* Variant Images */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Ảnh riêng của biến thể</label>
+              <button type="button" onClick={onPickImage} className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors"><Plus className="h-3.5 w-3.5" /> Thêm ảnh</button>
+            </div>
+            {variant.images && variant.images.length > 0 ? (
+              <div className="flex gap-3 flex-wrap">
+                {variant.images.map((url, i) => (
+                  <div key={i} className="relative group w-16 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100">
+                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => onRemoveImage(i)} className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X className="h-3 w-3" /></button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-20 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center bg-gray-50 dark:bg-gray-800/40">
+                <p className="text-xs text-gray-400 italic">Dùng ảnh sản phẩm chính.</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

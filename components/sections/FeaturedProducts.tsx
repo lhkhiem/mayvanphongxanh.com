@@ -86,6 +86,7 @@ export function FeaturedProducts({ products = [], categories = [] }: { products?
                   reviews={product.reviews}
                   image={product.image}
                   stock={product.stock}
+                  slug={product.slug}
                 />
               </div>
             ))}

@@ -14,7 +14,18 @@ export type ProductVariantInput = {
   originalPrice: number | null
   stockQuantity: number
   images: string[]
-  attributes: Record<string, string>
+  attributes: { key: string, value: string }[]
+}
+
+const processAttributes = (attrs?: { key: string, value: string }[]) => {
+  if (!attrs || attrs.length === 0) return Prisma.JsonNull;
+  const obj: Record<string, string> = {};
+  for (const a of attrs) {
+    if (a.key.trim() && a.value.trim()) {
+      obj[a.key.trim()] = a.value.trim();
+    }
+  }
+  return Object.keys(obj).length > 0 ? obj : Prisma.JsonNull;
 }
 
 export type ProductInput = {
@@ -29,8 +40,13 @@ export type ProductInput = {
   metaTitle: string
   metaDescription: string
   metaKeywords: string
+  quickSpecs?: string[] // Added for Quick Specs
+  specifications?: { label: string, value: string }[] // Added for technical specifications
+  manuals?: { content: string, files: string[] }
+  drivers?: { content: string, files: string[] }
   customOptions?: any // Added for custom-build addons
   variants: ProductVariantInput[]
+  policyIds?: number[] // Added for Product Policies
 }
 
 // ── Queries ───────────────────────────────────────────────────────────────────
@@ -103,6 +119,7 @@ export async function getProduct(id: number) {
       where: { id, deletedAt: null },
       include: {
         category: true,
+        policies: true,
         variants: {
           orderBy: { price: 'asc' },
         },
@@ -124,7 +141,7 @@ export async function createProduct(input: ProductInput) {
       data: {
         name: input.name,
         slug: input.slug,
-        categoryId: input.categoryId,
+        category: { connect: { id: input.categoryId } },
         brand: input.brand || null,
         images: input.images.length > 0 ? input.images : Prisma.JsonNull,
         description: input.description || null,
@@ -133,7 +150,14 @@ export async function createProduct(input: ProductInput) {
         metaTitle: input.metaTitle || null,
         metaDescription: input.metaDescription || null,
         metaKeywords: input.metaKeywords || null,
+        quickSpecs: input.quickSpecs && input.quickSpecs.length > 0 ? input.quickSpecs : Prisma.JsonNull,
+        specifications: input.specifications && input.specifications.length > 0 ? input.specifications : Prisma.JsonNull,
+        manuals: input.manuals ? input.manuals as any : Prisma.JsonNull,
+        drivers: input.drivers ? input.drivers as any : Prisma.JsonNull,
         customOptions: input.customOptions ? input.customOptions : Prisma.JsonNull,
+        policies: {
+          connect: input.policyIds?.map(id => ({ id })) || []
+        },
         variants: {
           create: input.variants.map((v) => ({
             sku: v.sku,
@@ -142,7 +166,7 @@ export async function createProduct(input: ProductInput) {
             originalPrice: v.originalPrice || null,
             stockQuantity: v.stockQuantity,
             images: Array.isArray(v.images) && v.images.length > 0 ? v.images : Prisma.JsonNull,
-            attributes: v.attributes && Object.keys(v.attributes).length > 0 ? v.attributes : Prisma.JsonNull,
+            attributes: processAttributes(v.attributes),
           })),
         },
       },
@@ -181,7 +205,7 @@ export async function updateProduct(id: number, input: ProductInput) {
         data: {
           name: input.name,
           slug: input.slug,
-          categoryId: input.categoryId,
+          category: { connect: { id: input.categoryId } },
           brand: input.brand || null,
           images: input.images.length > 0 ? input.images : Prisma.JsonNull,
           description: input.description || null,
@@ -190,7 +214,14 @@ export async function updateProduct(id: number, input: ProductInput) {
           metaTitle: input.metaTitle || null,
           metaDescription: input.metaDescription || null,
           metaKeywords: input.metaKeywords || null,
+          quickSpecs: input.quickSpecs && input.quickSpecs.length > 0 ? input.quickSpecs : Prisma.JsonNull,
+          specifications: input.specifications && input.specifications.length > 0 ? input.specifications : Prisma.JsonNull,
+          manuals: input.manuals ? input.manuals as any : Prisma.JsonNull,
+          drivers: input.drivers ? input.drivers as any : Prisma.JsonNull,
           customOptions: input.customOptions ? input.customOptions : Prisma.JsonNull,
+          policies: {
+            set: input.policyIds?.map(id => ({ id })) || []
+          }
         },
       })
 
@@ -210,7 +241,7 @@ export async function updateProduct(id: number, input: ProductInput) {
             originalPrice: v.originalPrice || null,
             stockQuantity: v.stockQuantity,
             images: Array.isArray(v.images) && v.images.length > 0 ? v.images : Prisma.JsonNull,
-            attributes: v.attributes && Object.keys(v.attributes).length > 0 ? v.attributes : Prisma.JsonNull,
+            attributes: processAttributes(v.attributes),
           },
         })
       }
@@ -226,7 +257,7 @@ export async function updateProduct(id: number, input: ProductInput) {
             originalPrice: v.originalPrice || null,
             stockQuantity: v.stockQuantity,
             images: Array.isArray(v.images) && v.images.length > 0 ? v.images : Prisma.JsonNull,
-            attributes: v.attributes && Object.keys(v.attributes).length > 0 ? v.attributes : Prisma.JsonNull,
+            attributes: processAttributes(v.attributes),
           })),
         })
       }

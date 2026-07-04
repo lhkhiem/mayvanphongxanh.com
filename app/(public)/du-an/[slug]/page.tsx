@@ -2,7 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { projects } from '@/lib/mockData';
+import { prisma } from '@/lib/db';
 import { idFromSlug, productSlug } from '@/lib/utils';
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
@@ -10,7 +10,17 @@ import { Building2, ArrowLeft, Share2, MapPin, CheckCircle2, ChevronRight, Calen
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const project = projects.find((p) => p.id === idFromSlug(slug));
+  const id = idFromSlug(slug);
+  let project = null;
+  
+  if (!isNaN(id)) {
+    project = await prisma.project.findUnique({ where: { id } });
+  }
+  
+  if (!project) {
+    project = await prisma.project.findUnique({ where: { slug } });
+  }
+
   if (!project) {
     return {
       title: 'Không tìm thấy dự án',
@@ -18,18 +28,32 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
   return {
     title: `${project.title} | Máy Văn Phòng Xanh`,
-    description: project.description,
+    description: project.description || '',
   };
 }
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const project = projects.find((p) => p.id === idFromSlug(slug));
-  const relatedProjects = projects.filter(p => p.id !== project?.id).slice(0, 3);
+  const id = idFromSlug(slug);
+  let project = null;
 
+  if (!isNaN(id)) {
+    project = await prisma.project.findUnique({ where: { id } });
+  }
+  
+  if (!project) {
+    project = await prisma.project.findUnique({ where: { slug } });
+  }
+  
   if (!project) {
     notFound();
   }
+
+  const relatedProjects = await prisma.project.findMany({
+    where: { isActive: true, id: { not: project.id } },
+    take: 3,
+    orderBy: { id: 'desc' }
+  });
 
   return (
     <>
@@ -99,48 +123,38 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <div className="prose prose-lg max-w-none text-gray-700">
                   <h2 className="text-2xl font-bold text-[#0d2a45] mb-4">Tổng quan dự án</h2>
                   <p>
-                    {project.description} Đây là dự án tiêu biểu cho sự nỗ lực không ngừng nghỉ của Máy Văn Phòng Xanh trong việc cung cấp các giải pháp công nghệ toàn diện và tối ưu nhất cho khách hàng doanh nghiệp. 
-                    Chúng tôi đã tiến hành khảo sát kỹ lưỡng và đưa ra các phương án phù hợp nhất với đặc thù vận hành của <strong>{project.client}</strong>.
+                    {project.description}
                   </p>
-                  
-                  <h3 className="text-xl font-bold text-[#0d2a45] mb-4 mt-8">Phạm vi công việc (Scope of Work)</h3>
-                  <ul className="list-disc pl-6 mb-6 space-y-2">
-                    <li>Khảo sát hiện trạng hệ thống thiết bị và hạ tầng mạng tại các chi nhánh.</li>
-                    <li>Cung cấp và lắp đặt toàn bộ thiết bị văn phòng, máy in, máy tính chuyên dụng.</li>
-                    <li>Thiết lập hệ thống bảo mật, tường lửa và phân quyền truy cập nội bộ.</li>
-                    <li>Đào tạo nhân sự sử dụng, chuyển giao công nghệ và quy trình vận hành.</li>
-                    <li>Ký kết hợp đồng bảo trì, hỗ trợ kỹ thuật tận nơi 24/7 trong suốt quá trình sử dụng.</li>
-                  </ul>
+                  {project.content ? (
+                    <div dangerouslySetInnerHTML={{ __html: project.content }} className="mt-8" />
+                  ) : (
+                    <>
+                      <h3 className="text-xl font-bold text-[#0d2a45] mb-4 mt-8">Phạm vi công việc (Scope of Work)</h3>
+                      <ul className="list-disc pl-6 mb-6 space-y-2">
+                        <li>Khảo sát hiện trạng hệ thống thiết bị và hạ tầng mạng tại các chi nhánh.</li>
+                        <li>Cung cấp và lắp đặt toàn bộ thiết bị văn phòng, máy in, máy tính chuyên dụng.</li>
+                        <li>Thiết lập hệ thống bảo mật, tường lửa và phân quyền truy cập nội bộ.</li>
+                        <li>Đào tạo nhân sự sử dụng, chuyển giao công nghệ và quy trình vận hành.</li>
+                        <li>Ký kết hợp đồng bảo trì, hỗ trợ kỹ thuật tận nơi 24/7 trong suốt quá trình sử dụng.</li>
+                      </ul>
 
-                  <h3 className="text-xl font-bold text-[#0d2a45] mb-4 mt-8">Kết quả đạt được</h3>
-                  <div className="bg-gray-50 rounded-lg p-6 mb-6 border border-gray-100">
-                    <div className="flex items-start mb-4">
-                      <CheckCircle2 className="w-6 h-6 text-primary shrink-0 mr-3 mt-1" />
-                      <div>
-                        <h4 className="font-bold text-gray-900 mb-1">Tối ưu hóa chi phí vận hành</h4>
-                        <p className="text-gray-600 text-sm">Giảm 25% chi phí in ấn và bảo trì so với hệ thống cũ nhờ giải pháp đồng bộ và quản lý tập trung.</p>
+                      <h3 className="text-xl font-bold text-[#0d2a45] mb-4 mt-8">Kết quả đạt được</h3>
+                      <div className="bg-gray-50 rounded-lg p-6 mb-6 border border-gray-100">
+                        <div className="flex items-start mb-4">
+                          <CheckCircle2 className="w-6 h-6 text-primary shrink-0 mr-3 mt-1" />
+                          <div>
+                            <h4 className="font-bold text-gray-900 mb-1">Tối ưu hóa chi phí vận hành</h4>
+                            <p className="text-gray-600 text-sm">Giảm 25% chi phí in ấn và bảo trì so với hệ thống cũ nhờ giải pháp đồng bộ và quản lý tập trung.</p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-start mb-4">
-                      <CheckCircle2 className="w-6 h-6 text-primary shrink-0 mr-3 mt-1" />
-                      <div>
-                        <h4 className="font-bold text-gray-900 mb-1">Nâng cao hiệu suất làm việc</h4>
-                        <p className="text-gray-600 text-sm">Hệ thống mạng lưới ổn định và thiết bị cấu hình cao giúp rút ngắn 30% thời gian xử lý công việc hành chính.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start">
-                      <CheckCircle2 className="w-6 h-6 text-primary shrink-0 mr-3 mt-1" />
-                      <div>
-                        <h4 className="font-bold text-gray-900 mb-1">Đảm bảo an toàn bảo mật</h4>
-                        <p className="text-gray-600 text-sm">Hệ thống an ninh mạng mới ngăn chặn 100% các cuộc tấn công mã độc ransomware trong năm đầu tiên.</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <blockquote className="border-l-4 border-yellow-500 pl-4 py-2 italic text-lg text-[#0d2a45] bg-yellow-50 rounded-r mb-6 font-medium">
-                    "Máy Văn Phòng Xanh đã chứng minh năng lực triển khai tuyệt vời, vượt tiến độ 10 ngày so với hợp đồng mà vẫn đảm bảo tiêu chuẩn chất lượng khắt khe nhất của chúng tôi."
-                    <footer className="text-sm text-gray-500 mt-2 font-normal">— Đại diện {project.client}</footer>
-                  </blockquote>
+                      
+                      <blockquote className="border-l-4 border-yellow-500 pl-4 py-2 italic text-lg text-[#0d2a45] bg-yellow-50 rounded-r mb-6 font-medium">
+                        "Máy Văn Phòng Xanh đã chứng minh năng lực triển khai tuyệt vời, vượt tiến độ 10 ngày so với hợp đồng mà vẫn đảm bảo tiêu chuẩn chất lượng khắt khe nhất của chúng tôi."
+                        <footer className="text-sm text-gray-500 mt-2 font-normal">— Đại diện {project.client}</footer>
+                      </blockquote>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

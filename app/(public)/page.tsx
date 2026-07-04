@@ -12,7 +12,10 @@ import { prisma } from '@/lib/db';
 export default async function Home() {
   // Fetch data directly from Server
   const [dbCategories, dbProducts, dbTestimonials, dbPosts, dbProjects, dbSettings] = await Promise.all([
-    prisma.category.findMany({ where: { isActive: true } }),
+    prisma.category.findMany({ 
+      where: { isActive: true, parentId: null },
+      include: { children: true }
+    }),
     prisma.product.findMany({
       where: { isActive: true },
       include: { category: true, variants: true }
@@ -41,7 +44,7 @@ export default async function Home() {
       originalPrice: defaultVariant?.originalPrice,
       rating: 5,
       reviews: 120,
-      image: (defaultVariant?.images as string[])?.[0] || '',
+      image: (p.images as string[])?.[0] || (defaultVariant?.images as string[])?.[0] || '',
       stock: defaultVariant?.stockQuantity || 0,
       description: p.description,
       productType: p.productType,

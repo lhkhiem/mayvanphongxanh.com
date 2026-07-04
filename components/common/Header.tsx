@@ -115,7 +115,7 @@ function InlineSearchBar({ categories = [] }: { categories?: any[] }) {
               {results.map(p => (
                 <Link
                   key={p.id}
-                  href={`/san-pham/${productSlug(p.name, p.id)}`}
+                  href={`/san-pham/${p.slug || productSlug(p.name, p.id)}`}
                   onClick={() => setIsFocused(false)}
                   className="flex items-center gap-3 px-4 py-2.5 hover:bg-primary/5 transition-colors group"
                 >

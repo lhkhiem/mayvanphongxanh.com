@@ -1,7 +1,8 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { projects, companyInfo } from '@/lib/mockData';
+import { companyInfo } from '@/lib/mockData';
+import { prisma } from '@/lib/db';
 import { productSlug } from '@/lib/utils';
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
@@ -22,7 +23,11 @@ export const metadata = {
   description: 'Các dự án tiêu biểu mà Máy Văn Phòng Xanh đã triển khai thành công cho khối cơ quan, tài chính và doanh nghiệp.',
 };
 
-export default function ImplementedProjectsPage() {
+export default async function ImplementedProjectsPage() {
+  const projects = await prisma.project.findMany({
+    where: { isActive: true },
+    orderBy: { id: 'desc' }
+  });
   return (
     <>
       <Header />

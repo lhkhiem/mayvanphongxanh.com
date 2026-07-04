@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { blogPosts } from '@/lib/mockData';
+import { prisma } from '@/lib/db';
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
 import { Calendar, LayoutGrid, FileText, BookOpen, Presentation, Bell } from 'lucide-react';
@@ -11,14 +11,30 @@ export const metadata = {
   description: 'Cập nhật tin tức, thủ thuật, xu hướng và giải pháp công nghệ mới nhất từ Máy Văn Phòng Xanh.',
 };
 
-export default function TechNewsPage() {
-  const featuredPost = blogPosts[0];
-  const topThreePosts = blogPosts.slice(1, 4);
-  const horizontalPosts = blogPosts.slice(4, 7);
-  const latestPosts = blogPosts.slice(7, 9);
+export default async function TechNewsPage() {
+  const dbPosts = await prisma.post.findMany({
+    where: { isActive: true },
+    include: { category: true },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  const formattedPosts = dbPosts.map(p => ({
+    id: p.id,
+    slug: p.slug,
+    title: p.title,
+    excerpt: p.excerpt || '',
+    image: p.image || '/placeholder.jpg',
+    date: new Date(p.publishedAt || p.createdAt).toLocaleDateString('vi-VN'),
+    category: p.category?.name || 'Tin tức',
+  }));
+
+  const featuredPost = formattedPosts[0];
+  const topThreePosts = formattedPosts.slice(1, 4);
+  const horizontalPosts = formattedPosts.slice(4, 7);
+  const latestPosts = formattedPosts.slice(7, 12);
   
   // Re-use some posts for "Bài viết nổi bật" section to fill it up
-  const trendingPosts = [blogPosts[2], blogPosts[5], blogPosts[1], blogPosts[8]];
+  const trendingPosts = formattedPosts.slice(0, 5);
 
   return (
     <>

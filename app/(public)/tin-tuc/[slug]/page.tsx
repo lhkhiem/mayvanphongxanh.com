@@ -2,14 +2,14 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { blogPosts } from '@/lib/mockData';
+import { prisma } from '@/lib/db';
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
 import { Calendar, User, ArrowLeft, Share2, Tag } from 'lucide-react';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const post = blogPosts.find((p) => p.slug === slug);
+  const post = await prisma.post.findUnique({ where: { slug } });
   if (!post) {
     return {
       title: 'Không tìm thấy bài viết',
@@ -23,12 +23,39 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const post = blogPosts.find((p) => p.slug === slug);
-  const relatedPosts = blogPosts.filter(p => p.id !== post?.id).slice(0, 3);
-
-  if (!post) {
+  const dbPost = await prisma.post.findUnique({
+    where: { slug },
+    include: { category: true }
+  });
+  
+  if (!dbPost) {
     notFound();
   }
+
+  const post = {
+    ...dbPost,
+    date: new Date(dbPost.publishedAt || dbPost.createdAt).toLocaleDateString('vi-VN'),
+    category: dbPost.category?.name || 'Tin tức',
+    image: dbPost.image || '/placeholder.jpg'
+  };
+
+  const dbRelated = await prisma.post.findMany({
+    where: { isActive: true, id: { not: dbPost.id } },
+    include: { category: true },
+    orderBy: { createdAt: 'desc' },
+    take: 3
+  });
+
+  const relatedPosts = dbRelated.map(p => ({
+    id: p.id,
+    slug: p.slug,
+    title: p.title,
+    image: p.image || '/placeholder.jpg',
+    date: new Date(p.publishedAt || p.createdAt).toLocaleDateString('vi-VN'),
+    category: p.category?.name || 'Tin tức',
+  }));
+
+
 
   return (
     <>
@@ -78,34 +105,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
                 <p className="lead text-xl font-medium text-gray-900 mb-8">
                   {post.excerpt}
                 </p>
-                
-                {/* Dummy Content for Demo */}
-                <h2 className="text-2xl font-bold text-[#0d2a45] mb-4 mt-8">Tầm quan trọng của giải pháp này</h2>
-                <p className="mb-4">
-                  Trong thời đại công nghệ số 4.0, việc tối ưu hóa hệ thống máy móc văn phòng không chỉ giúp doanh nghiệp tiết kiệm chi phí mà còn nâng cao hiệu suất làm việc. 
-                  Một hệ thống trơn tru giúp nhân viên tập trung vào chuyên môn thay vì mất thời gian sửa lỗi thiết bị.
-                </p>
-                <p className="mb-4">
-                  Thực tế đã chứng minh, các doanh nghiệp đầu tư vào cơ sở hạ tầng IT ngay từ đầu sẽ có khả năng cạnh tranh cao hơn 30% so với các đối thủ cùng ngành. 
-                  Hơn nữa, chi phí bảo trì dài hạn cũng giảm đáng kể nhờ các giải pháp quản trị đồng bộ.
-                </p>
-                
-                <h3 className="text-xl font-bold text-[#0d2a45] mb-4 mt-8">Các bước triển khai cơ bản</h3>
-                <ul className="list-disc pl-6 mb-6 space-y-2">
-                  <li><strong>Đánh giá thực trạng:</strong> Khảo sát hệ thống hiện tại, xác định các "nút thắt cổ chai".</li>
-                  <li><strong>Lên kế hoạch thay thế:</strong> Đề xuất thiết bị phù hợp với ngân sách và quy mô doanh nghiệp.</li>
-                  <li><strong>Triển khai lắp đặt:</strong> Đội ngũ kỹ thuật thi công tận nơi, đảm bảo không ảnh hưởng đến vận hành.</li>
-                  <li><strong>Bảo hành bảo trì:</strong> Định kỳ kiểm tra và vệ sinh hệ thống hàng tháng.</li>
-                </ul>
-
-                <blockquote className="border-l-4 border-primary pl-4 py-2 italic text-lg text-gray-600 bg-gray-50 mb-6 rounded-r">
-                  "Đầu tư vào công nghệ là khoản đầu tư sinh lời nhanh nhất nếu bạn chọn đúng đối tác đồng hành."
-                </blockquote>
-
-                <p className="mb-4">
-                  Để biết thêm chi tiết về giải pháp hoặc cần tư vấn cụ thể cho doanh nghiệp của bạn, đừng ngần ngại liên hệ với đội ngũ chuyên gia của Máy Văn Phòng Xanh. 
-                  Chúng tôi luôn sẵn sàng hỗ trợ 24/7.
-                </p>
+                <div dangerouslySetInnerHTML={{ __html: post.content || '' }} />
               </div>
               
               <div className="mt-12 pt-8 border-t border-gray-100 flex items-center gap-3">

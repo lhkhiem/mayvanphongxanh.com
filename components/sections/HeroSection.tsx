@@ -99,20 +99,6 @@ const trustItems = [
 // ─────────────────────────────────────────────────
 // Sidebar Category Item
 // ─────────────────────────────────────────────────
-const sidebarCategories = [
-  { icon: '💻', name: 'Laptop doanh nghiệp', slug: 'laptop', subs: ['Dell Latitude', 'HP ProBook', 'Lenovo ThinkPad', 'MacBook'] },
-  { icon: '🖥️', name: 'Máy tính để bàn', slug: 'pc', subs: ['PC Văn phòng', 'PC Đồ họa', 'Máy trạm Workstation', 'All-in-One'] },
-  { icon: '🗄️', name: 'Máy chủ & Storage', slug: 'server', subs: ['Server Rack', 'Server Tower', 'NAS Storage', 'SAN Storage'] },
-  { icon: '🌐', name: 'Thiết bị mạng', slug: 'mang-vien-thong', subs: ['Router WiFi', 'Switch PoE', 'Wifi Mesh', 'Firewall bảo mật'] },
-  { icon: '🖨️', name: 'Máy in & Scan', slug: 'may-in', subs: ['Máy in Laser', 'Máy in InkJet', 'Máy scan chuyên dụng', 'Máy in Mã vạch'] },
-  { icon: '📹', name: 'Camera & An ninh', slug: 'camera', subs: ['Camera IP', 'Camera Analog', 'Đầu ghi hình', 'Báo động thông minh'] },
-  { icon: '🎙️', name: 'Thiết bị hội nghị', slug: 'hoi-nghi', subs: ['Camera hội nghị', 'Loa mic đa hướng', 'Màn hình tương tác'] },
-  { icon: '⚙️', name: 'Thiết bị văn phòng', slug: 'thiet-bi', subs: ['Máy hủy tài liệu', 'Máy chấm công', 'Máy chiếu', 'Thiết bị họp'] },
-  { icon: '💳', name: 'Hệ thống POS', slug: 'he-thong-pos', subs: ['Máy POS cảm ứng', 'Ngăn kéo tiền', 'Máy quét mã vạch', 'Máy in hóa đơn'] },
-  { icon: '📦', name: 'Mực in & Vật tư', slug: 'vat-tu', subs: ['Mực in chính hãng', 'Mực in tương thích', 'Giấy in A4', 'Linh kiện thay thế'] },
-  { icon: '🔧', name: 'Dịch vụ kỹ thuật', slug: 'dich-vu', subs: ['Bảo trì máy in', 'Sửa chữa tận nơi', 'Nạp mực in', 'Thiết kế thi công mạng'] },
-  { icon: '🎁', name: 'Giải pháp trọn gói', slug: 'goi-dich-vu', subs: ['Gói Nhà phố', 'Gói Văn phòng', 'Gói Khai trương', 'Cho thuê thiết bị'] },
-];
 
 export function HeroSection({ categories = [] }: { categories?: any[] }) {
   const [current, setCurrent] = useState(0);
@@ -131,7 +117,9 @@ export function HeroSection({ categories = [] }: { categories?: any[] }) {
 
           {/* ── Left sidebar: Categories ── */}
           <div className="hidden lg:block w-[220px] shrink-0 bg-white rounded-lg border border-gray-200 self-start relative" onMouseLeave={() => setActiveSide(null)}>
-            {sidebarCategories.map((cat, idx) => (
+            {(categories && categories.length > 0 ? categories : [
+              { icon: '📦', name: 'Mặc định', slug: 'mac-dinh', children: [] }
+            ]).map((cat, idx, arr) => (
               <div
                 key={cat.slug}
                 className="relative group/cat"
@@ -143,37 +131,41 @@ export function HeroSection({ categories = [] }: { categories?: any[] }) {
                     activeSide === idx
                       ? 'bg-primary/5 border-primary text-primary font-semibold'
                       : 'border-transparent text-gray-700 hover:bg-gray-50 hover:text-primary'
-                  } ${idx !== sidebarCategories.length - 1 ? 'border-b border-gray-100' : ''}`}
+                  } ${idx !== arr.length - 1 ? 'border-b border-gray-100' : ''}`}
                 >
-                  <span className="text-lg w-6 text-center">{cat.icon}</span>
+                  <span className="text-lg w-6 text-center">{cat.icon || '📦'}</span>
                   <span className="flex-1 truncate">{cat.name}</span>
                   <ChevronRight className={`w-3.5 h-3.5 text-gray-400 transition-transform ${activeSide === idx ? 'translate-x-0.5' : ''}`} />
                 </Link>
               </div>
             ))}
 
-            {/* Sub-sidebarCategories Mega Menu Flyout */}
-            {activeSide !== null && (
+            {/* Sub-Categories Mega Menu Flyout */}
+            {activeSide !== null && (categories && categories.length > 0) && (
               <div className="absolute top-0 left-full ml-1 w-[550px] min-h-[420px] bg-white border border-gray-200 shadow-2xl rounded-lg z-[60] p-6 pointer-events-auto flex">
-                {/* Left: subsidebarCategories */}
+                {/* Left: subcategories */}
                 <div className="flex-1 pr-6 border-r border-gray-100">
                   <div className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-5 flex items-center gap-2">
-                    <span>{sidebarCategories[activeSide].icon}</span> {sidebarCategories[activeSide].name}
+                    <span>{categories[activeSide].icon || '📦'}</span> {categories[activeSide].name}
                   </div>
                   <div className="grid grid-cols-2 gap-y-4 gap-x-6">
-                    {sidebarCategories[activeSide].subs.map(sub => (
-                      <Link
-                        key={sub}
-                        href={`/danh-muc/${sidebarCategories[activeSide].slug}`}
-                        className="text-[14px] text-gray-600 hover:text-primary transition-colors flex items-center gap-2 group/link"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover/link:bg-primary transition-colors shrink-0" />
-                        {sub}
-                      </Link>
-                    ))}
+                    {categories[activeSide].children && categories[activeSide].children.length > 0 ? (
+                      categories[activeSide].children.map((sub: any) => (
+                        <Link
+                          key={sub.slug}
+                          href={`/danh-muc/${sub.slug}`}
+                          className="text-[14px] text-gray-600 hover:text-primary transition-colors flex items-center gap-2 group/link"
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover/link:bg-primary transition-colors shrink-0" />
+                          {sub.name}
+                        </Link>
+                      ))
+                    ) : (
+                      <span className="text-[13px] text-gray-500 italic">Đang cập nhật danh mục con...</span>
+                    )}
                   </div>
                   <div className="mt-8">
-                    <Link href={`/danh-muc/${sidebarCategories[activeSide].slug}`} className="inline-flex items-center gap-1.5 text-[13px] text-white bg-primary font-semibold px-5 py-2.5 rounded-md hover:bg-primary/90 transition-colors shadow-sm hover:shadow-md">
+                    <Link href={`/danh-muc/${categories[activeSide].slug}`} className="inline-flex items-center gap-1.5 text-[13px] text-white bg-primary font-semibold px-5 py-2.5 rounded-md hover:bg-primary/90 transition-colors shadow-sm hover:shadow-md">
                       Xem tất cả <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
@@ -182,19 +174,19 @@ export function HeroSection({ categories = [] }: { categories?: any[] }) {
                 <div className="w-[220px] pl-6 flex flex-col">
                   <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-5 flex-1 flex flex-col relative overflow-hidden group/promo border border-primary/20 hover:border-primary/40 transition-colors shadow-sm">
                     <div className="absolute -top-6 -right-6 p-2 opacity-5 group-hover/promo:scale-110 group-hover/promo:rotate-12 transition-all duration-700">
-                      <span className="text-9xl">{sidebarCategories[activeSide].icon}</span>
+                      <span className="text-9xl">{categories[activeSide].icon || '📦'}</span>
                     </div>
                     <div className="relative z-10 flex-1 flex flex-col justify-end">
                       <span className="inline-block text-[11px] font-bold bg-destructive text-white px-2 py-0.5 rounded w-fit mb-3 uppercase tracking-wide shadow-sm">
                         Ưu đãi đặc biệt
                       </span>
                       <h4 className="text-[15px] font-bold text-gray-900 mt-1 leading-snug">
-                        Sắm {sidebarCategories[activeSide].name.toLowerCase()}
+                        Sắm {categories[activeSide].name.toLowerCase()}
                       </h4>
                       <p className="text-[13px] text-gray-600 mt-2 mb-4 leading-relaxed">
                         Tặng gói dịch vụ bảo trì 1 năm trị giá 2.000.000đ khi mua số lượng từ 3 thiết bị.
                       </p>
-                      <Link href={`/danh-muc/${sidebarCategories[activeSide].slug}`} className="text-[13px] font-bold text-primary hover:text-primary/80 flex items-center gap-1 group-hover/promo:gap-2 transition-all">
+                      <Link href={`/danh-muc/${categories[activeSide].slug}`} className="text-[13px] font-bold text-primary hover:text-primary/80 flex items-center gap-1 group-hover/promo:gap-2 transition-all">
                         Xem chi tiết <ArrowRight className="w-4 h-4" />
                       </Link>
                     </div>
@@ -274,7 +266,7 @@ export function HeroSection({ categories = [] }: { categories?: any[] }) {
             </div>
 
             {/* Bottom 3 tiles */}
-            <div className="flex overflow-x-auto sm:grid sm:grid-cols-3 gap-2 flex-1 pb-1 sm:pb-0 scrollbar-hide snap-x">
+            <div className="flex overflow-x-auto sm:overflow-hidden sm:grid sm:grid-cols-3 gap-2 flex-1 pb-1 sm:pb-0 scrollbar-hide snap-x">
               {bottomTiles.map(tile => (
                 <Link
                   key={tile.title}

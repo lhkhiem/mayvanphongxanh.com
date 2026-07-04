@@ -43,6 +43,11 @@ const sidebarNavItems = [
     icon: Tags,
   },
   {
+    title: "Chính sách",
+    href: "/admin/policies",
+    icon: ShieldCheck,
+  },
+  {
     title: "Quản lý kho",
     href: "/admin/inventory",
     icon: Warehouse,
