@@ -2,7 +2,21 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Phone, Mail, MapPin, Clock, Share2, PlayCircle, Send, ArrowRight, Shield, Truck, Award } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, Send, ArrowRight, Shield, Truck, Award } from 'lucide-react';
+import { useSettings } from '@/context/SettingsContext';
+
+const FacebookIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+  </svg>
+);
+
+const YoutubeIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z" />
+    <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" />
+  </svg>
+);
 
 const quickLinks = [
   { label: 'Trang chủ', href: '/' },
@@ -32,10 +46,26 @@ const categories = [
   { label: 'Gói dịch vụ', href: '/danh-muc/goi-dich-vu' },
 ];
 
-export function Footer({ settings = [] }: { settings?: any[] }) {
-  const getSetting = (key: string) => settings.find(s => s.key === key)?.value;
-  const companyName = getSetting('company_name') || 'Công ty TNHH Máy Văn Phòng Xanh';
-  const companyDescription = getSetting('company_description') || 'Đối tác tin cậy cung cấp thiết bị văn phòng, máy in, giải pháp CNTT...';
+export function Footer() {
+  const { getSetting } = useSettings();
+  
+  const companyName = getSetting('company_name', 'Công ty TNHH Máy Văn Phòng Xanh');
+  const companyDescription = getSetting('company_description', 'Đối tác tin cậy cung cấp thiết bị văn phòng, máy in, giải pháp CNTT...');
+  const address = getSetting('contact_address', '123 Đường Văn Phòng, Quận ABC, TP.HCM');
+  const phone = getSetting('contact_phone', '0987.654.321');
+  const email = getSetting('contact_email', 'support@mayvanphongxanh.com');
+  const workTime = getSetting('work_time', 'Thứ 2 – Thứ 7 | 08:00 – 17:30');
+  const technicalPhone = getSetting('technical_phone', '1900 1234');
+  const siteLogo = getSetting('site_logo', '/logo.png');
+
+  const fbLink = getSetting('social_facebook', '');
+  const youtubeLink = getSetting('social_youtube', '');
+  
+  const zaloRaw = getSetting('contact_zalo', '');
+  const zaloLink = zaloRaw ? (zaloRaw.startsWith('http') ? zaloRaw : `https://zalo.me/${zaloRaw.replace(/[\.\s]/g, '')}`) : '#';
+
+  const finalFbLink = fbLink ? (fbLink.startsWith('http') ? fbLink : `https://facebook.com/${fbLink}`) : '#';
+  const finalYoutubeLink = youtubeLink ? (youtubeLink.startsWith('http') ? youtubeLink : `https://youtube.com/${youtubeLink}`) : '#';
 
   return (
     <footer className="bg-[#1a2e1c] text-gray-300">
@@ -68,37 +98,37 @@ export function Footer({ settings = [] }: { settings?: any[] }) {
           {/* Col 1: Company Info */}
           <div className="lg:col-span-1">
             <div className="relative w-40 h-12 mb-4 overflow-hidden mix-blend-screen">
-              <Image src="/logo.png" alt="MVPX Logo" fill className="object-contain object-left scale-[3] origin-left invert grayscale brightness-200" />
+              <Image src={siteLogo} alt={companyName} fill className="object-contain object-left scale-[3] origin-left invert grayscale brightness-200" />
             </div>
             <p className="text-xs text-gray-400 leading-relaxed mb-4">{companyDescription}</p>
 
             <div className="space-y-2 text-xs">
               <div className="flex items-start gap-2">
                 <MapPin className="w-3.5 h-3.5 text-green-400 mt-0.5 shrink-0" />
-                <span className="text-gray-400">123 Đường Chính, Quận 1, TP. Hồ Chí Minh</span>
+                <span className="text-gray-400">{address}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-3.5 h-3.5 text-green-400 shrink-0" />
-                <a href="tel:0987654321" className="text-gray-400 hover:text-white transition-colors">0987.654.321</a>
+                <a href={`tel:${phone.replace(/[\.\s]/g, '')}`} className="text-gray-400 hover:text-white transition-colors">{phone}</a>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-3.5 h-3.5 text-green-400 shrink-0" />
-                <a href="mailto:support@mayvanphongxanh.com" className="text-gray-400 hover:text-white transition-colors">
-                  support@mayvanphongxanh.com
+                <a href={`mailto:${email}`} className="text-gray-400 hover:text-white transition-colors">
+                  {email}
                 </a>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-3.5 h-3.5 text-green-400 shrink-0" />
-                <span className="text-gray-400">T2–T7: 08:00 – 17:30</span>
+                <span className="text-gray-400">{workTime}</span>
               </div>
             </div>
 
             {/* Social icons */}
             <div className="flex gap-2.5 mt-5">
               {[
-                { icon: Share2, href: '#', label: 'Facebook', color: 'hover:bg-blue-600' },
-                { icon: PlayCircle, href: '#', label: 'Youtube', color: 'hover:bg-red-600' },
-                { icon: Send, href: 'https://zalo.me/0987654321', label: 'Zalo', color: 'hover:bg-blue-500' },
+                { icon: FacebookIcon, href: finalFbLink, label: 'Facebook', color: 'hover:bg-blue-600 hover:border-blue-600' },
+                { icon: YoutubeIcon, href: finalYoutubeLink, label: 'Youtube', color: 'hover:bg-red-600 hover:border-red-600' },
+                { icon: Send, href: zaloLink, label: 'Zalo', color: 'hover:bg-blue-500 hover:border-blue-500' },
               ].map(({ icon: Icon, href, label, color }) => (
                 <a
                   key={label}
@@ -191,10 +221,10 @@ export function Footer({ settings = [] }: { settings?: any[] }) {
             {/* Hotline card */}
             <div className="mt-5 bg-white/5 border border-white/10 rounded-xl p-4">
               <p className="text-xs text-gray-400 mb-1">Hỗ trợ kỹ thuật</p>
-              <a href="tel:0987654321" className="text-lg font-bold text-green-400 hover:text-green-300 transition-colors block">
-                0987.654.321
+              <a href={`tel:${technicalPhone.replace(/[\.\s]/g, '')}`} className="text-lg font-bold text-green-400 hover:text-green-300 transition-colors block">
+                {technicalPhone}
               </a>
-              <p className="text-[10px] text-gray-500 mt-0.5">Thứ 2 – Thứ 7 | 08:00 – 17:30</p>
+              <p className="text-[10px] text-gray-500 mt-0.5">{workTime}</p>
             </div>
           </div>
         </div>

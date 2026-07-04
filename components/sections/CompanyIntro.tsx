@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { CheckCircle2, Award, Users, MapPin, Clock } from 'lucide-react';
+import { useSettings } from '@/context/SettingsContext';
 
 const features = [
   'Thiết bị cấp doanh nghiệp, chính hãng 100%',
@@ -11,11 +12,11 @@ const features = [
   'Hợp đồng bảo trì định kỳ toàn diện',
 ];
 
-export function CompanyIntro({ settings = [] }: { settings?: any[] }) {
-  const getSetting = (key: string) => settings.find(s => s.key === key)?.value;
-  const companyName = getSetting('company_name') || 'Công ty TNHH Máy Văn Phòng Xanh';
-  const companyTagline = getSetting('company_tagline') || 'Giải pháp toàn diện cho doanh nghiệp hiện đại';
-  const companyMission = getSetting('company_mission') || 'Cung cấp thiết bị văn phòng chính hãng, giải pháp chuyển đổi số và dịch vụ IT chuyên nghiệp...';
+export function CompanyIntro() {
+  const { getSetting } = useSettings();
+  const companyName = getSetting('company_name', 'Công ty TNHH Máy Văn Phòng Xanh');
+  const companyTagline = getSetting('company_tagline', 'Giải pháp toàn diện cho doanh nghiệp hiện đại');
+  const companyMission = getSetting('company_mission', 'Cung cấp thiết bị văn phòng chính hãng, giải pháp chuyển đổi số và dịch vụ IT chuyên nghiệp...');
   const statsString = getSetting('company_stats');
   let stats = [
     { value: '15+', label: 'Năm kinh nghiệm' },

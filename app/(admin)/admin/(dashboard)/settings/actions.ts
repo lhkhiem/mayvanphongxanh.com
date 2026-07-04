@@ -14,8 +14,7 @@ export async function updateSettings(data: FormData) {
         })
       }
     }
-    
-    revalidatePath("/admin/settings")
+    revalidatePath("/", "layout")
     return { success: true }
   } catch (error) {
     return { error: "Lỗi hệ thống. Không thể lưu cài đặt." }

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { updateSettings } from "./actions"
 import { toast } from "sonner"
-import { Save, Building2, Phone, LineChart } from "lucide-react"
+import { Save, Building2, Phone, LineChart, CreditCard } from "lucide-react"
 import { MediaPickerInput } from "@/components/admin/media-picker-input"
 
 export function SettingsForm({ initialData }: { initialData: Record<string, string> }) {
@@ -57,6 +57,13 @@ export function SettingsForm({ initialData }: { initialData: Record<string, stri
               <LineChart className="w-4 h-4 mr-3 text-current" /> 
               SEO & Analytics
             </TabsTrigger>
+            <TabsTrigger 
+              value="payment" 
+              className="w-full justify-start px-4 py-2.5 text-sm font-medium transition-all rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-l-4 data-[state=active]:border-primary data-[state=active]:rounded-l-none"
+            >
+              <CreditCard className="w-4 h-4 mr-3 text-current" /> 
+              Thanh toán & Hỗ trợ
+            </TabsTrigger>
           </TabsList>
 
           <div className="flex-1 min-w-0">
@@ -89,7 +96,7 @@ export function SettingsForm({ initialData }: { initialData: Record<string, stri
               />
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Giờ làm việc</label>
-                <Input name="company_working_hours" defaultValue={initialData['company_working_hours']} placeholder="Thứ 2 - Thứ 7: 8h00 - 17h30" className="shadow-sm" />
+                <Input name="work_time" defaultValue={initialData['work_time']} placeholder="Thứ 2 - Thứ 7: 8h00 - 17h30" className="shadow-sm" />
               </div>
             </TabsContent>
 
@@ -113,6 +120,10 @@ export function SettingsForm({ initialData }: { initialData: Record<string, stri
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Fanpage Facebook URL</label>
                 <Input name="social_facebook" defaultValue={initialData['social_facebook']} placeholder="https://facebook.com/..." className="shadow-sm" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Youtube Channel URL</label>
+                <Input name="social_youtube" defaultValue={initialData['social_youtube']} placeholder="https://youtube.com/..." className="shadow-sm" />
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Google Maps URL</label>
@@ -139,6 +150,36 @@ export function SettingsForm({ initialData }: { initialData: Record<string, stri
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Mã Google Analytics (Tùy chọn)</label>
                 <Input name="seo_google_analytics" defaultValue={initialData['seo_google_analytics']} placeholder="G-XXXXXXXXXX" className="shadow-sm" />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="payment" className="space-y-4 max-w-2xl mt-0">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 border-b pb-2 mb-4">Tổng đài hỗ trợ</h3>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Hotline CSKH & Bảo hành</label>
+                <Input name="cskh_phone" defaultValue={initialData['cskh_phone']} placeholder="1900 1234 (Nhánh 1)" className="shadow-sm" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Hotline Hỗ trợ Kỹ thuật</label>
+                <Input name="technical_phone" defaultValue={initialData['technical_phone']} placeholder="1900 1234 (Nhánh 2)" className="shadow-sm" />
+              </div>
+
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 border-b pb-2 mt-8 mb-4">Thông tin chuyển khoản</h3>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Số tài khoản</label>
+                <Input name="bank_account" defaultValue={initialData['bank_account']} placeholder="1023456789" className="shadow-sm" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Chủ tài khoản</label>
+                <Input name="bank_owner" defaultValue={initialData['bank_owner']} placeholder="CÔNG TY TNHH MÁY VĂN PHÒNG XANH" className="shadow-sm uppercase" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Ngân hàng & Chi nhánh</label>
+                <Input name="bank_name" defaultValue={initialData['bank_name']} placeholder="Vietcombank – Chi nhánh Sở Giao Dịch" className="shadow-sm" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Mã số thuế</label>
+                <Input name="tax_code" defaultValue={initialData['tax_code']} placeholder="0101234567" className="shadow-sm" />
               </div>
             </TabsContent>
           </div>

@@ -169,21 +169,21 @@ export function ProductForm({
     setPickerOpen(true);
   };
 
-  const handlePickerSelect = (url: string) => {
+  const handlePickerSelectMultiple = (urls: string[]) => {
     if (pickerTarget === 'product') {
-      setForm((prev) => ({ ...prev, images: [...prev.images, url] }));
+      setForm((prev) => ({ ...prev, images: [...prev.images, ...urls] }));
     } else if (pickerTarget === 'manuals') {
       setForm(prev => ({
         ...prev,
-        manuals: { ...prev.manuals!, files: [...(prev.manuals?.files || []), url] }
+        manuals: { ...prev.manuals!, files: [...(prev.manuals?.files || []), ...urls] }
       }));
     } else if (pickerTarget === 'drivers') {
       setForm(prev => ({
         ...prev,
-        drivers: { ...prev.drivers!, files: [...(prev.drivers?.files || []), url] }
+        drivers: { ...prev.drivers!, files: [...(prev.drivers?.files || []), ...urls] }
       }));
     } else {
-      setVariants((prev) => prev.map((v, i) => i === pickerTarget ? { ...v, images: [...v.images, url] } : v));
+      setVariants((prev) => prev.map((v, i) => i === pickerTarget ? { ...v, images: [...v.images, ...urls] } : v));
     }
     setPickerOpen(false);
   };
@@ -275,7 +275,8 @@ export function ProductForm({
       <MediaPickerModal
         isOpen={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onSelect={handlePickerSelect}
+        multiple={true}
+        onSelectMultiple={handlePickerSelectMultiple}
         title={pickerTarget === 'product' ? 'Chọn ảnh sản phẩm' : typeof pickerTarget === 'number' ? 'Chọn ảnh biến thể' : 'Tải lên tài liệu'}
       />
 

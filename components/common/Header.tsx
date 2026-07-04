@@ -13,7 +13,7 @@ import { useCart } from '@/context/CartContext';
 import { CartDrawer } from './CartDrawer';
 import { useCompare } from '@/context/CompareContext';
 import { slugify, productSlug } from '@/lib/utils';
-import { useSession, signOut } from 'next-auth/react';
+import { useSettings } from '@/context/SettingsContext';
 
 
 // ──────────────────────────────────────────
@@ -165,7 +165,12 @@ export function Header({ categories = [] }: { categories?: any[] }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { cartCount, setIsOpen } = useCart();
   const { items: compareItems } = useCompare();
-  const { data: session } = useSession();
+  const { getSetting } = useSettings();
+
+  const hotline = getSetting('contact_phone', '0987.654.321');
+  const email = getSetting('contact_email', 'support@mayvanphongxanh.com');
+  const workTime = getSetting('work_time', '08:00 – 17:30 (Thứ 2 – Thứ 7)');
+  const siteLogo = getSetting('site_logo', '/logo.png');
 
   return (
     <header className="sticky top-0 z-50 w-full shadow-md">
@@ -173,19 +178,19 @@ export function Header({ categories = [] }: { categories?: any[] }) {
       <div className="bg-[#1B5E20] text-white py-1.5 text-xs">
         <div className="mx-auto max-w-7xl px-4 flex justify-between items-center">
           <div className="hidden sm:flex items-center gap-5">
-            <a href="mailto:support@mayvanphongxanh.com" className="flex items-center gap-1.5 hover:text-green-200 transition-colors">
+            <a href={`mailto:${email}`} className="flex items-center gap-1.5 hover:text-green-200 transition-colors">
               <Mail className="w-3 h-3" />
-              <span>support@mayvanphongxanh.com</span>
+              <span>{email}</span>
             </a>
             <div className="flex items-center gap-1.5">
               <Clock className="w-3 h-3" />
-              <span>08:00 – 17:30 (Thứ 2 – Thứ 7)</span>
+              <span>{workTime}</span>
             </div>
           </div>
           <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-            <a href="tel:0987654321" className="flex items-center gap-1.5 hover:text-green-200 transition-colors">
+            <a href={`tel:${hotline.replace(/[\.\s]/g, '')}`} className="flex items-center gap-1.5 hover:text-green-200 transition-colors">
               <Phone className="w-3 h-3" />
-              <span className="font-semibold">0987.654.321</span>
+              <span className="font-semibold">{hotline}</span>
             </a>
             <Link href="/lien-he" className="flex items-center gap-1.5 hover:text-green-200 transition-colors">
               <Headphones className="w-3 h-3" />
@@ -202,7 +207,7 @@ export function Header({ categories = [] }: { categories?: any[] }) {
             {/* Logo */}
             <Link href="/" className="shrink-0 flex items-center overflow-hidden w-36 md:w-52 h-12 md:h-16">
               <div className="relative w-full h-full mix-blend-multiply">
-                <Image src="/logo.png" alt="Máy Văn Phòng Xanh" fill className="object-contain object-left scale-[3] md:scale-[3.5] origin-left" priority />
+                <Image src={siteLogo} alt="Máy Văn Phòng Xanh" fill className="object-contain object-left scale-[3] md:scale-[3.5] origin-left" priority />
               </div>
             </Link>
             
@@ -242,50 +247,14 @@ export function Header({ categories = [] }: { categories?: any[] }) {
 
               {/* Hotline widget */}
               <a
-                href="tel:0987654321"
+                href={`tel:${hotline.replace(/[\.\s]/g, '')}`}
                 className="flex flex-col items-center px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors group"
               >
                 <Phone className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
-                <span className="text-xs font-bold text-gray-900 mt-1 whitespace-nowrap">0987.654.321</span>
+                <span className="text-xs font-bold text-gray-900 mt-1 whitespace-nowrap">{hotline}</span>
               </a>
 
-              {/* Account / Login */}
-              {session ? (
-                <div className="relative group/account">
-                  <Link
-                    href="/tai-khoan"
-                    className="flex flex-col items-center px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <User className="w-5 h-5 text-gray-600 group-hover/account:text-primary transition-colors" />
-                    <span className="text-xs text-gray-700 mt-1 whitespace-nowrap max-w-[80px] truncate">
-                      {session.user?.name || 'Tài khoản'}
-                    </span>
-                  </Link>
-                  <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-100 shadow-xl rounded-xl opacity-0 invisible group-hover/account:opacity-100 group-hover/account:visible transition-all z-50 py-2">
-                    <Link href="/tai-khoan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary">
-                      Trang cá nhân
-                    </Link>
-                    <Link href="/tai-khoan/don-hang" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary">
-                      Đơn hàng của tôi
-                    </Link>
-                    <hr className="my-1 border-gray-100" />
-                    <button 
-                      onClick={() => signOut()}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      Đăng xuất
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <Link
-                  href="/dang-nhap"
-                  className="flex flex-col items-center px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors group"
-                >
-                  <User className="w-5 h-5 text-gray-600 group-hover:text-primary group-hover:scale-110 transition-all" />
-                  <span className="text-xs text-gray-700 mt-1 whitespace-nowrap">Đăng nhập</span>
-                </Link>
-              )}
+
 
               {/* Compare */}
               <Link

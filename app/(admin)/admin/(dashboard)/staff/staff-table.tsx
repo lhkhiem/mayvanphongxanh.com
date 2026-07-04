@@ -99,10 +99,8 @@ export function StaffTable({ data, roles }: { data: any[], roles: any[] }) {
         </div>
         
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700">
-              <Plus className="mr-2 h-4 w-4" /> Thêm mới
-            </Button>
+          <DialogTrigger render={<Button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700" />}>
+            <Plus className="mr-2 h-4 w-4" /> Thêm mới
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>

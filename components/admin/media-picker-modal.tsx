@@ -23,24 +23,26 @@ function formatBytes(bytes: number): string {
 interface MediaPickerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (url: string) => void;
+  onSelect?: (url: string) => void;
+  onSelectMultiple?: (urls: string[]) => void;
   title?: string;
+  multiple?: boolean;
 }
 
-export function MediaPickerModal({ isOpen, onClose, onSelect, title = "Chọn ảnh từ thư viện" }: MediaPickerModalProps) {
+export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, title = "Chọn ảnh từ thư viện", multiple = false }: MediaPickerModalProps) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       fetchAssets();
-      setSelectedId(null);
+      setSelectedIds([]);
     }
   }, [isOpen]);
 
@@ -80,7 +82,7 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, title = "Chọn �
         toast.success(`Đã upload ${data.data.length} file`);
         await fetchAssets();
         // Auto-select the first uploaded file
-        if (data.data.length === 1) setSelectedId(data.data[0].id);
+        if (data.data.length === 1 && !multiple) setSelectedIds([data.data[0].id]);
       }
     } catch { toast.error("Lỗi kết nối"); } finally { setUploading(false); }
   };
@@ -94,8 +96,18 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, title = "Chọn �
   }, []);
 
   const handleConfirm = () => {
-    const asset = assets.find((a) => a.id === selectedId);
-    if (asset) { onSelect(asset.url); onClose(); }
+    if (multiple) {
+      const selectedAssets = assets.filter(a => selectedIds.includes(a.id));
+      if (onSelectMultiple) {
+        onSelectMultiple(selectedAssets.map(a => a.url));
+      }
+    } else {
+      const asset = assets.find((a) => a.id === selectedIds[0]);
+      if (asset && onSelect) {
+        onSelect(asset.url);
+      }
+    }
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -175,10 +187,16 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, title = "Chọn �
               {assets.map((asset) => (
                 <div
                   key={asset.id}
-                  onClick={() => setSelectedId(prev => prev === asset.id ? null : asset.id)}
+                  onClick={() => {
+                    if (multiple) {
+                      setSelectedIds(prev => prev.includes(asset.id) ? prev.filter(id => id !== asset.id) : [...prev, asset.id])
+                    } else {
+                      setSelectedIds(prev => prev[0] === asset.id ? [] : [asset.id])
+                    }
+                  }}
                   className={cn(
                     "group relative rounded-lg overflow-hidden border-2 bg-gray-100 dark:bg-gray-800 cursor-pointer transition-all",
-                    selectedId === asset.id
+                    selectedIds.includes(asset.id)
                       ? "border-primary ring-2 ring-primary/30 shadow-md"
                       : "border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500"
                   )}
@@ -186,7 +204,7 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, title = "Chọn �
                   <div className="aspect-square">
                     <img src={asset.url} alt={asset.fileName} className="w-full h-full object-cover" loading="lazy" />
                   </div>
-                  {selectedId === asset.id && (
+                  {selectedIds.includes(asset.id) && (
                     <div className="absolute top-1.5 left-1.5 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shadow">
                       <Check className="h-3 w-3" />
                     </div>
@@ -202,17 +220,23 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, title = "Chọn �
               {assets.map((asset) => (
                 <div
                   key={asset.id}
-                  onClick={() => setSelectedId(prev => prev === asset.id ? null : asset.id)}
+                  onClick={() => {
+                    if (multiple) {
+                      setSelectedIds(prev => prev.includes(asset.id) ? prev.filter(id => id !== asset.id) : [...prev, asset.id])
+                    } else {
+                      setSelectedIds(prev => prev[0] === asset.id ? [] : [asset.id])
+                    }
+                  }}
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-100 dark:border-gray-700/50 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors",
-                    selectedId === asset.id && "bg-blue-50 dark:bg-blue-900/10"
+                    selectedIds.includes(asset.id) && "bg-blue-50 dark:bg-blue-900/10"
                   )}
                 >
                   <div className={cn(
                     "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
-                    selectedId === asset.id ? "bg-primary border-primary" : "border-gray-300 dark:border-gray-600"
+                    selectedIds.includes(asset.id) ? "bg-primary border-primary" : "border-gray-300 dark:border-gray-600"
                   )}>
-                    {selectedId === asset.id && <Check className="h-3 w-3 text-white" />}
+                    {selectedIds.includes(asset.id) && <Check className="h-3 w-3 text-white" />}
                   </div>
                   <div className="w-12 h-12 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 shrink-0 bg-gray-100 dark:bg-gray-800">
                     <img src={asset.url} alt={asset.fileName} className="w-full h-full object-cover" loading="lazy" />
@@ -231,8 +255,8 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, title = "Chọn �
         {/* Footer */}
         <div className="flex items-center justify-between px-5 py-4 border-t border-gray-200 dark:border-gray-700 shrink-0 bg-gray-50 dark:bg-gray-800/30">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {selectedId
-              ? <span className="text-primary font-medium">Đã chọn 1 ảnh</span>
+            {selectedIds.length > 0
+              ? <span className="text-primary font-medium">Đã chọn {selectedIds.length} ảnh</span>
               : `${assets.length} ảnh trong thư viện`}
           </p>
           <div className="flex items-center gap-3">
@@ -244,11 +268,11 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, title = "Chọn �
             </button>
             <button
               onClick={handleConfirm}
-              disabled={!selectedId}
+              disabled={selectedIds.length === 0}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Check className="h-4 w-4" />
-              Chọn ảnh này
+              {multiple && selectedIds.length > 1 ? `Chọn ${selectedIds.length} ảnh này` : 'Chọn ảnh này'}
             </button>
           </div>
         </div>

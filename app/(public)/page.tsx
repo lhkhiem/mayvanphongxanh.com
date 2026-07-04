@@ -61,11 +61,11 @@ export default async function Home() {
       <FeaturedProducts products={products} categories={dbCategories} />
       <ServicePackagesSection products={products.filter(p => p.category === 'Gói dịch vụ')} />
       <ProjectsSection projects={dbProjects} />
-      <CompanyIntro settings={dbSettings} />
+      <CompanyIntro />
       <CustomerReviews testimonials={dbTestimonials} />
       <BlogSection posts={dbPosts} />
 
-      <Footer settings={dbSettings} />
+      <Footer />
     </main>
   );
 }

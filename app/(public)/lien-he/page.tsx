@@ -17,8 +17,41 @@ import {
   Wrench
 } from 'lucide-react';
 import { useState } from 'react';
+import { useSettings } from '@/context/SettingsContext';
 
 export default function ContactPage() {
+  const { getSetting } = useSettings();
+  
+  const workTime = getSetting('work_time', '08:00 - 17:30 (Thứ 2 - Thứ 7)');
+  const hotline = getSetting('contact_phone', '0987.654.321');
+  const cskh = getSetting('cskh_phone', '1900 1234 (Nhánh 1)');
+  const techSupport = getSetting('technical_phone', '1900 1234 (Nhánh 2)');
+  const bankAccount = getSetting('bank_account', '1023456789');
+  const bankOwner = getSetting('bank_owner', 'CÔNG TY TNHH MÁY VĂN PHÒNG XANH');
+  const bankName = getSetting('bank_name', 'Vietcombank – Chi nhánh Sở Giao Dịch');
+  const taxCode = getSetting('tax_code', '0101234567');
+  
+  const rawMapUrl = getSetting('contact_maps_url', '');
+  const defaultEmbed = 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.096814183571!2d105.78003371540232!3d21.028811885998316!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ab86cece9ac1%3A0xa9bc04e0460289f5!2zSMOgIE7hu5lpLCBWaeG7h3QgTmFt!5e0!3m2!1svi!2s!4v1689000000000!5m2!1svi!2s';
+  
+  let iframeSrc = defaultEmbed;
+  let directionLink = 'https://www.google.com/maps';
+
+  if (rawMapUrl) {
+    if (rawMapUrl.includes('<iframe')) {
+      // User pasted the whole iframe HTML, extract src
+      const match = rawMapUrl.match(/src="([^"]+)"/);
+      if (match) iframeSrc = match[1];
+    } else if (rawMapUrl.includes('embed')) {
+      // User pasted the embed URL
+      iframeSrc = rawMapUrl;
+    } else {
+      // User pasted a standard map link, it cannot be embedded.
+      // We keep the default embed map but update the direction link.
+      directionLink = rawMapUrl;
+    }
+  }
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -57,7 +90,7 @@ export default function ContactPage() {
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">Tư vấn và triển khai công nghệ cho doanh nghiệp</p>
               </div>
               <a 
-                href="https://www.google.com/maps" 
+                href={directionLink} 
                 target="_blank" 
                 rel="noreferrer"
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 shadow-sm"
@@ -66,10 +99,10 @@ export default function ContactPage() {
               </a>
             </div>
             
-            {/* Embedded Google Map - Placeholder coordinates (Hanoi center) */}
+            {/* Embedded Google Map */}
             <iframe 
               className="h-[300px] w-full border-0 sm:h-[400px] lg:h-[480px]" 
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.096814183571!2d105.78003371540232!3d21.028811885998316!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ab86cece9ac1%3A0xa9bc04e0460289f5!2zSMOgIE7hu5lpLCBWaeG7h3QgTmFt!5e0!3m2!1svi!2s!4v1689000000000!5m2!1svi!2s" 
+              src={iframeSrc} 
               title="Vị trí Máy Văn Phòng Xanh" 
               loading="lazy" 
               referrerPolicy="no-referrer-when-downgrade"
@@ -152,7 +185,7 @@ export default function ContactPage() {
                 </span>
                 <div>
                   <h2 className="font-bold text-foreground">Thời gian làm việc</h2>
-                  <p className="text-sm font-medium text-muted-foreground mt-0.5">08:00 - 17:30 (Thứ 2 - Thứ 7)</p>
+                  <p className="text-sm font-medium text-muted-foreground mt-0.5">{workTime}</p>
                 </div>
               </div>
 
@@ -163,7 +196,7 @@ export default function ContactPage() {
                   </span>
                   <div>
                     <h2 className="font-bold text-foreground">Hotline / Zalo</h2>
-                    <p className="text-sm font-medium text-muted-foreground mt-0.5">0987.654.321</p>
+                    <p className="text-sm font-medium text-muted-foreground mt-0.5">{hotline}</p>
                   </div>
                 </div>
               </a>
@@ -175,7 +208,7 @@ export default function ContactPage() {
                   </span>
                   <div>
                     <h2 className="font-bold text-foreground">CSKH & Bảo hành</h2>
-                    <p className="text-sm font-medium text-muted-foreground mt-0.5">1900 1234 (Nhánh 1)</p>
+                    <p className="text-sm font-medium text-muted-foreground mt-0.5">{cskh}</p>
                   </div>
                 </div>
               </a>
@@ -187,7 +220,7 @@ export default function ContactPage() {
                   </span>
                   <div>
                     <h2 className="font-bold text-foreground">Hỗ trợ Kỹ thuật</h2>
-                    <p className="text-sm font-medium text-muted-foreground mt-0.5">1900 1234 (Nhánh 2)</p>
+                    <p className="text-sm font-medium text-muted-foreground mt-0.5">{techSupport}</p>
                   </div>
                 </div>
               </a>
@@ -207,19 +240,19 @@ export default function ContactPage() {
                   <dl className="space-y-4 text-sm text-foreground">
                     <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
                       <dt className="inline font-semibold">Số tài khoản: </dt>
-                      <dd className="inline text-xl font-extrabold tracking-wider text-primary ml-1">1023456789</dd>
+                      <dd className="inline text-xl font-extrabold tracking-wider text-primary ml-1">{bankAccount}</dd>
                     </div>
                     <div className="border-b border-border pb-3 flex flex-col gap-1">
                       <dt className="font-semibold text-muted-foreground">Chủ tài khoản: </dt>
-                      <dd className="font-bold">CÔNG TY TNHH MÁY VĂN PHÒNG XANH</dd>
+                      <dd className="font-bold uppercase">{bankOwner}</dd>
                     </div>
                     <div className="border-b border-border pb-3 flex flex-col gap-1">
                       <dt className="font-semibold text-muted-foreground">Ngân hàng: </dt>
-                      <dd className="font-bold">Vietcombank – Chi nhánh Sở Giao Dịch</dd>
+                      <dd className="font-bold">{bankName}</dd>
                     </div>
                     <div className="flex flex-col gap-1">
                       <dt className="font-semibold text-muted-foreground">Mã số thuế: </dt>
-                      <dd className="font-bold">0101234567</dd>
+                      <dd className="font-bold">{taxCode}</dd>
                     </div>
                   </dl>
                 </div>

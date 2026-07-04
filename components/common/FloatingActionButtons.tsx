@@ -4,11 +4,23 @@ import { useState, useEffect } from 'react';
 import { Phone, ArrowUp, MessageCircle, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSettings } from '@/context/SettingsContext';
 
 export function FloatingActionButtons() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const pathname = usePathname();
+  const { getSetting } = useSettings();
+
+  const zaloLink = getSetting('contact_zalo', '0987654321');
+  const fbLink = getSetting('social_facebook', 'mayvanphongxanh');
+  const hotline = getSetting('contact_phone', '0987.654.321');
+  const workTime = getSetting('work_time', '08:30 – 21:00').split('(')[0].trim(); // Get just the time part if it has days
+  
+  // Clean up links if user just entered ID or phone number
+  const finalZalo = zaloLink.startsWith('http') ? zaloLink : `https://zalo.me/${zaloLink.replace(/[\.\s]/g, '')}`;
+  const finalFb = fbLink.startsWith('http') ? fbLink : `https://m.me/${fbLink}`;
+  const finalHotline = `tel:${hotline.replace(/[\.\s]/g, '')}`;
 
   if (pathname?.startsWith('/admin')) return null;
 
@@ -36,7 +48,7 @@ export function FloatingActionButtons() {
 
           {/* Zalo */}
           <a
-            href="https://zalo.me/0987654321"
+            href={finalZalo}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100"
@@ -46,13 +58,13 @@ export function FloatingActionButtons() {
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-800">Tư vấn Zalo</p>
-              <p className="text-[10px] text-gray-500">08:30 – 21:00</p>
+              <p className="text-[10px] text-gray-500">{workTime}</p>
             </div>
           </a>
 
           {/* Messenger */}
           <a
-            href="https://m.me/mayvanphongxanh"
+            href={finalFb}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100"
@@ -62,13 +74,13 @@ export function FloatingActionButtons() {
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-800">Chat Facebook</p>
-              <p className="text-[10px] text-gray-500">08:30 – 21:00</p>
+              <p className="text-[10px] text-gray-500">{workTime}</p>
             </div>
           </a>
 
           {/* Phone */}
           <a
-            href="tel:0987654321"
+            href={finalHotline}
             className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
           >
             <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shrink-0">
@@ -76,7 +88,7 @@ export function FloatingActionButtons() {
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-800">Gọi điện ngay</p>
-              <p className="text-[10px] text-green-600 font-semibold">0987.654.321</p>
+              <p className="text-[10px] text-green-600 font-semibold">{hotline}</p>
             </div>
           </a>
 
