@@ -8,7 +8,7 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user
-      const isAdmin = auth?.user?.role === "ADMIN"
+      const isAdmin = (auth?.user as any)?.role === "ADMIN"
       const isOnAdmin = nextUrl.pathname.startsWith("/admin")
       const isLoginRoute = nextUrl.pathname === "/admin/login"
 
@@ -28,7 +28,7 @@ export const authConfig = {
     },
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role
+        token.role = (user as any).role
       }
       return token
     },

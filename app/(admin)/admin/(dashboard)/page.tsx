@@ -48,10 +48,8 @@ export default function AdminDashboard() {
                 <div className="text-sm opacity-80">Users</div>
               </div>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
+                <DropdownMenuTrigger className="h-6 w-6 text-white hover:bg-white/20 rounded-md inline-flex items-center justify-center focus:outline-none transition-colors">
+                  <MoreVertical className="h-4 w-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem>Action</DropdownMenuItem>
@@ -83,10 +81,8 @@ export default function AdminDashboard() {
                 <div className="text-sm opacity-80">Income</div>
               </div>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
+                <DropdownMenuTrigger className="h-6 w-6 text-white hover:bg-white/20 rounded-md inline-flex items-center justify-center focus:outline-none transition-colors">
+                  <MoreVertical className="h-4 w-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem>Action</DropdownMenuItem>
@@ -118,10 +114,8 @@ export default function AdminDashboard() {
                 <div className="text-sm opacity-80">Conversion Rate</div>
               </div>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
+                <DropdownMenuTrigger className="h-6 w-6 text-white hover:bg-white/20 rounded-md inline-flex items-center justify-center focus:outline-none transition-colors">
+                  <MoreVertical className="h-4 w-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem>Action</DropdownMenuItem>
@@ -153,10 +147,8 @@ export default function AdminDashboard() {
                 <div className="text-sm opacity-80">Sessions</div>
               </div>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/20">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
+                <DropdownMenuTrigger className="h-6 w-6 text-white hover:bg-white/20 rounded-md inline-flex items-center justify-center focus:outline-none transition-colors">
+                  <MoreVertical className="h-4 w-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem>Action</DropdownMenuItem>
@@ -179,18 +171,18 @@ export default function AdminDashboard() {
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
             <div>
-              <h2 className="text-xl font-bold text-gray-800">Traffic</h2>
-              <div className="text-sm text-gray-500">January - July 2023</div>
+              <h2 className="text-xl font-bold text-foreground">Traffic</h2>
+              <div className="text-sm text-muted-foreground">January - July 2023</div>
             </div>
             <div className="flex items-center gap-2 mt-4 sm:mt-0">
               <div className="inline-flex rounded-md shadow-sm" role="group">
-                <button type="button" className="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-l-lg hover:bg-gray-100 hover:text-blue-700">
+                <button type="button" className="px-4 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-l-lg hover:bg-muted">
                   Day
                 </button>
                 <button type="button" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border-t border-b border-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-700">
                   Month
                 </button>
-                <button type="button" className="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-r-md hover:bg-gray-100 hover:text-blue-700">
+                <button type="button" className="px-4 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-r-md hover:bg-muted">
                   Year
                 </button>
               </div>
@@ -214,38 +206,38 @@ export default function AdminDashboard() {
           </div>
 
           {/* Footer Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-8 pt-8 border-t">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-8 pt-8 border-t border-border">
             <div className="text-center">
-              <div className="text-sm text-gray-500 mb-1">Visits</div>
-              <div className="font-bold text-gray-800">29.703 Users (40%)</div>
-              <div className="w-full bg-gray-200 rounded-full h-1 mt-2">
+              <div className="text-sm text-muted-foreground mb-1">Visits</div>
+              <div className="font-bold text-foreground">29.703 Users (40%)</div>
+              <div className="w-full bg-muted rounded-full h-1 mt-2">
                 <div className="bg-green-500 h-1 rounded-full" style={{ width: '40%' }}></div>
               </div>
             </div>
             <div className="text-center">
-              <div className="text-sm text-gray-500 mb-1">Unique</div>
-              <div className="font-bold text-gray-800">24.093 Users (20%)</div>
-              <div className="w-full bg-gray-200 rounded-full h-1 mt-2">
+              <div className="text-sm text-muted-foreground mb-1">Unique</div>
+              <div className="font-bold text-foreground">24.093 Users (20%)</div>
+              <div className="w-full bg-muted rounded-full h-1 mt-2">
                 <div className="bg-blue-500 h-1 rounded-full" style={{ width: '20%' }}></div>
               </div>
             </div>
             <div className="text-center">
-              <div className="text-sm text-gray-500 mb-1">Pageviews</div>
-              <div className="font-bold text-gray-800">78.706 Views (60%)</div>
-              <div className="w-full bg-gray-200 rounded-full h-1 mt-2">
+              <div className="text-sm text-muted-foreground mb-1">Pageviews</div>
+              <div className="font-bold text-foreground">78.706 Views (60%)</div>
+              <div className="w-full bg-muted rounded-full h-1 mt-2">
                 <div className="bg-yellow-500 h-1 rounded-full" style={{ width: '60%' }}></div>
               </div>
             </div>
             <div className="text-center">
-              <div className="text-sm text-gray-500 mb-1">New Users</div>
-              <div className="font-bold text-gray-800">22.123 Users (80%)</div>
-              <div className="w-full bg-gray-200 rounded-full h-1 mt-2">
+              <div className="text-sm text-muted-foreground mb-1">New Users</div>
+              <div className="font-bold text-foreground">22.123 Users (80%)</div>
+              <div className="w-full bg-muted rounded-full h-1 mt-2">
                 <div className="bg-red-500 h-1 rounded-full" style={{ width: '80%' }}></div>
               </div>
             </div>
             <div className="text-center">
-              <div className="text-sm text-gray-500 mb-1">Bounce Rate</div>
-              <div className="font-bold text-gray-800">Average Rate (40.15%)</div>
+              <div className="text-sm text-muted-foreground mb-1">Bounce Rate</div>
+              <div className="font-bold text-foreground">Average Rate (40.15%)</div>
               <div className="w-full bg-gray-200 rounded-full h-1 mt-2">
                 <div className="bg-purple-500 h-1 rounded-full" style={{ width: '40%' }}></div>
               </div>

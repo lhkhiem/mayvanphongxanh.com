@@ -5,119 +5,225 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  Users,
-  Settings,
-  PieChart,
-  Bell,
   Box,
+  Tags,
+  Warehouse,
+  Wrench,
+  CalendarClock,
+  ShoppingCart,
+  Receipt,
+  Users,
+  MessageSquare,
+  Newspaper,
+  Image as ImageIcon,
+  UserCog,
+  ShieldCheck,
+  Settings,
   Layers,
 } from "lucide-react";
 
 const sidebarNavItems = [
   {
-    title: "Dashboard",
+    title: "Tổng quan",
     href: "/admin",
     icon: LayoutDashboard,
   },
   {
-    title: "Typography",
-    href: "/admin/typography",
+    title: "SẢN PHẨM & KHO",
+    isHeader: true,
+  },
+  {
+    title: "Sản phẩm",
+    href: "/admin/products",
     icon: Box,
   },
   {
-    title: "COMPONENTS",
+    title: "Danh mục",
+    href: "/admin/categories",
+    icon: Tags,
+  },
+  {
+    title: "Quản lý kho",
+    href: "/admin/inventory",
+    icon: Warehouse,
+  },
+  {
+    title: "DỊCH VỤ & CHO THUÊ",
     isHeader: true,
   },
   {
-    title: "Base",
-    href: "/admin/base",
-    icon: Layers,
+    title: "Thuê máy",
+    href: "/admin/rentals",
+    icon: CalendarClock,
   },
   {
-    title: "Users",
-    href: "/admin/users",
+    title: "Sửa chữa & Bảo hành",
+    href: "/admin/maintenance",
+    icon: Wrench,
+    badge: "3",
+  },
+  {
+    title: "KINH DOANH",
+    isHeader: true,
+  },
+  {
+    title: "Đơn hàng",
+    href: "/admin/orders",
+    icon: ShoppingCart,
+    badge: "12",
+  },
+  {
+    title: "Hóa đơn & Thu chi",
+    href: "/admin/invoices",
+    icon: Receipt,
+  },
+  {
+    title: "KHÁCH HÀNG",
+    isHeader: true,
+  },
+  {
+    title: "Danh sách",
+    href: "/admin/customers",
     icon: Users,
-    badge: "NEW",
   },
   {
-    title: "Settings",
+    title: "Liên hệ",
+    href: "/admin/feedback",
+    icon: MessageSquare,
+  },
+  {
+    title: "NỘI DUNG",
+    isHeader: true,
+  },
+  {
+    title: "Bài viết & Tin tức",
+    href: "/admin/posts",
+    icon: Newspaper,
+  },
+  {
+    title: "Banner & Media",
+    href: "/admin/media",
+    icon: ImageIcon,
+  },
+  {
+    title: "HỆ THỐNG",
+    isHeader: true,
+  },
+  {
+    title: "Quản trị viên",
+    href: "/admin/staff",
+    icon: UserCog,
+  },
+  {
+    title: "Phân quyền",
+    href: "/admin/roles",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Cài đặt chung",
     href: "/admin/settings",
     icon: Settings,
   },
-  {
-    title: "PLUGINS",
-    isHeader: true,
-  },
-  {
-    title: "Charts",
-    href: "/admin/charts",
-    icon: PieChart,
-  },
-  {
-    title: "Notifications",
-    href: "/admin/notifications",
-    icon: Bell,
-    badge: "PRO",
-  },
 ];
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  isOpen: boolean;
+  isUnfoldable: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}
+
+export function AdminSidebar({ isOpen, isUnfoldable, setIsOpen }: AdminSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 flex-col border-r bg-[#212631] text-white md:flex">
-      {/* Logo/Brand */}
-      <div className="flex h-14 items-center justify-center border-b border-gray-700 font-bold text-lg">
-        <Link href="/admin" className="flex items-center gap-2">
-          <Box className="h-6 w-6" />
-          <span>COREUI NEXT.JS</span>
-          <span className="text-xs bg-blue-600 px-1 py-0.5 rounded text-white font-normal ml-1">
-            PRO
-          </span>
-        </Link>
-      </div>
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm lg:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
 
-      {/* Navigation */}
-      <div className="flex-1 overflow-auto py-4">
-        <nav className="grid items-start px-2 text-sm font-medium">
-          {sidebarNavItems.map((item, index) => {
-            if (item.isHeader) {
-              return (
-                <div
-                  key={index}
-                  className="px-4 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider"
-                >
-                  {item.title}
-                </div>
-              );
-            }
+      {/* Sidebar */}
+      <aside 
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex flex-col bg-[#212631] text-white transition-all duration-300 lg:static lg:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full",
+          isUnfoldable ? "lg:w-[70px]" : "w-64"
+        )}
+      >
+        {/* Logo/Brand */}
+        <div className="flex h-14 items-center justify-center bg-[#1a1e27] border-b border-gray-800 font-bold text-lg overflow-hidden shrink-0">
+          <Link href="/admin" className="flex items-center gap-2 px-4 whitespace-nowrap">
+            <Box className="h-7 w-7 text-blue-500 shrink-0" />
+            <div className={cn("flex items-center gap-2 transition-opacity duration-300", isUnfoldable ? "opacity-0 w-0 hidden" : "opacity-100")}>
+              <span>MVPX</span>
+              <span className="text-[10px] bg-blue-600 px-1.5 py-0.5 rounded text-white font-normal">
+                CMS
+              </span>
+            </div>
+          </Link>
+        </div>
 
-            return (
-              <Link
-                key={index}
-                href={item.href || "#"}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-4 py-3 text-gray-300 transition-all hover:bg-white/10 hover:text-white",
-                  pathname === item.href ? "bg-white/10 text-white" : ""
-                )}
-              >
-                {item.icon && <item.icon className="h-5 w-5" />}
-                {item.title}
-                {item.badge && (
-                  <span
+        {/* Navigation */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden py-4 custom-scrollbar">
+          <nav className="grid items-start px-3 text-sm font-medium gap-1">
+            {sidebarNavItems.map((item, index) => {
+              if (item.isHeader) {
+                return (
+                  <div
+                    key={index}
                     className={cn(
-                      "ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full text-white",
-                      item.badge === "NEW" ? "bg-blue-500" : "bg-red-500"
+                      "px-3 mt-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider transition-all",
+                      isUnfoldable ? "opacity-0 hidden" : "opacity-100"
                     )}
                   >
-                    {item.badge}
+                    {item.title}
+                  </div>
+                );
+              }
+
+              const isActive = pathname === item.href;
+
+              return (
+                <Link
+                  key={index}
+                  href={item.href || "#"}
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2.5 text-gray-300 transition-all hover:bg-white/10 hover:text-white group relative",
+                    isActive ? "bg-white/10 text-white" : "",
+                    isUnfoldable ? "justify-center px-0" : ""
+                  )}
+                  title={isUnfoldable ? item.title : undefined}
+                >
+                  {item.icon && <item.icon className={cn("h-5 w-5 shrink-0", isActive ? "text-blue-500" : "text-gray-400 group-hover:text-gray-200")} />}
+                  
+                  <span className={cn("whitespace-nowrap transition-all duration-300", isUnfoldable ? "opacity-0 w-0 hidden" : "opacity-100")}>
+                    {item.title}
                   </span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-    </aside>
+                  
+                  {item.badge && !isUnfoldable && (
+                    <span
+                      className={cn(
+                        "ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full text-white",
+                        item.badge === "NEW" ? "bg-blue-500" : "bg-red-500"
+                      )}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+        
+        {/* Copyright */}
+        <div className={cn("shrink-0 p-4 border-t border-gray-800 text-[11px] text-gray-500", isUnfoldable ? "hidden" : "block")}>
+          © {new Date().getFullYear()} Máy Văn Phòng Xanh.
+        </div>
+      </aside>
+    </>
   );
 }

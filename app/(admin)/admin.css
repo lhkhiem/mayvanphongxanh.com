@@ -1,0 +1,157 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  color-scheme: light;
+  --background: #f8fafc; /* CoreUI typical light gray bg */
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #321fdb; /* CoreUI blue */
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9; /* Standard gray hover */
+  --accent-foreground: #0f172a;
+  --destructive: #e55353; /* CoreUI red */
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #321fdb;
+  
+  --chart-1: #321fdb;
+  --chart-2: #3399ff;
+  --chart-3: #f9b115;
+  --chart-4: #e55353;
+  --chart-5: #2eb85c;
+  
+  --radius: 0.5rem;
+  
+  /* CoreUI Sidebar variables */
+  --sidebar: #212631; /* CoreUI PRO dark sidebar */
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #321fdb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #333a4d;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #212631;
+  --sidebar-ring: #321fdb;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #212631;
+  --foreground: rgba(255, 255, 255, 0.87);
+  --card: #2a303d;
+  --card-foreground: rgba(255, 255, 255, 0.87);
+  --popover: #2a303d;
+  --popover-foreground: rgba(255, 255, 255, 0.87);
+  --primary: #321fdb;
+  --primary-foreground: #ffffff;
+  --secondary: #323a49;
+  --secondary-foreground: rgba(255, 255, 255, 0.87);
+  --muted: #323a49;
+  --muted-foreground: rgba(255, 255, 255, 0.6);
+  --accent: #323a49;
+  --accent-foreground: rgba(255, 255, 255, 0.87);
+  --destructive: #e55353;
+  --border: #323a49;
+  --input: #323a49;
+  --ring: #321fdb;
+  
+  --sidebar: #1d222b;
+  --sidebar-foreground: rgba(255, 255, 255, 0.87);
+  --sidebar-primary: #321fdb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2a303d;
+  --sidebar-accent-foreground: rgba(255, 255, 255, 0.87);
+  --sidebar-border: #1d222b;
+  --sidebar-ring: #321fdb;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* Custom Scrollbar cho Sidebar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.4) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+/* Ẩn mũi tên 2 đầu trên Webkit */
+.custom-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}

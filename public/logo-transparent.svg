@@ -1,0 +1,34 @@
+<svg width="700" height="200" viewBox="0 0 700 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="greenGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4ade80" />
+      <stop offset="100%" stop-color="#16a34a" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Icon -->
+  <g transform="translate(30, 30)">
+    <!-- Paper -->
+    <rect x="35" y="10" width="70" height="50" rx="4" fill="#e2e8f0" />
+    <line x1="45" y1="25" x2="85" y2="25" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
+    <line x1="45" y1="40" x2="75" y2="40" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
+    
+    <!-- Printer Body -->
+    <path d="M10 50 h 120 v 50 a 10 10 0 0 1 -10 10 h -100 a 10 10 0 0 1 -10 -10 v -50 z" fill="#1e293b" />
+    <path d="M0 60 h 140 v 20 a 5 5 0 0 1 -5 5 h -130 a 5 5 0 0 1 -5 -5 z" fill="#334155" />
+    
+    <!-- Printed Paper (Green accented) -->
+    <rect x="25" y="80" width="90" height="40" rx="2" fill="url(#greenGrad)" />
+    <line x1="35" y1="95" x2="105" y2="95" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+    <line x1="35" y1="105" x2="85" y2="105" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+    
+    <!-- Green Leaf motif overlay -->
+    <path d="M100 100 C 130 70, 150 90, 140 120 C 120 110, 100 100, 100 100 Z" fill="url(#greenGrad)" opacity="0.9"/>
+  </g>
+
+  <!-- Typography -->
+  <text x="210" y="105" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="54" fill="#1e293b" letter-spacing="-1">Máy Văn Phòng</text>
+  <text x="590" y="105" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="54" fill="url(#greenGrad)" letter-spacing="-1">Xanh</text>
+  
+  <text x="215" y="145" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="22" fill="#64748b" letter-spacing="1">GIẢI PHÁP THIẾT BỊ DOANH NGHIỆP</text>
+</svg>

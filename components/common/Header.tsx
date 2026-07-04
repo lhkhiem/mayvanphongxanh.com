@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   ShoppingCart, Search, Menu, X, Phone, Mail, Clock,
-  ChevronDown, ArrowRightLeft, Tag, Headphones
+  ChevronDown, ArrowRightLeft, Tag, Headphones, User
 } from 'lucide-react';
 import { Navigation } from './Navigation';
 import { MobileMenu } from './MobileMenu';
@@ -13,6 +13,7 @@ import { useCart } from '@/context/CartContext';
 import { CartDrawer } from './CartDrawer';
 import { useCompare } from '@/context/CompareContext';
 import { slugify, productSlug } from '@/lib/utils';
+import { useSession, signOut } from 'next-auth/react';
 
 
 // ──────────────────────────────────────────
@@ -164,6 +165,7 @@ export function Header({ categories = [] }: { categories?: any[] }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { cartCount, setIsOpen } = useCart();
   const { items: compareItems } = useCompare();
+  const { data: session } = useSession();
 
   return (
     <header className="sticky top-0 z-50 w-full shadow-md">
@@ -246,6 +248,44 @@ export function Header({ categories = [] }: { categories?: any[] }) {
                 <Phone className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-bold text-gray-900 mt-1 whitespace-nowrap">0987.654.321</span>
               </a>
+
+              {/* Account / Login */}
+              {session ? (
+                <div className="relative group/account">
+                  <Link
+                    href="/tai-khoan"
+                    className="flex flex-col items-center px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <User className="w-5 h-5 text-gray-600 group-hover/account:text-primary transition-colors" />
+                    <span className="text-xs text-gray-700 mt-1 whitespace-nowrap max-w-[80px] truncate">
+                      {session.user?.name || 'Tài khoản'}
+                    </span>
+                  </Link>
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-100 shadow-xl rounded-xl opacity-0 invisible group-hover/account:opacity-100 group-hover/account:visible transition-all z-50 py-2">
+                    <Link href="/tai-khoan" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary">
+                      Trang cá nhân
+                    </Link>
+                    <Link href="/tai-khoan/don-hang" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary">
+                      Đơn hàng của tôi
+                    </Link>
+                    <hr className="my-1 border-gray-100" />
+                    <button 
+                      onClick={() => signOut()}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      Đăng xuất
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  href="/dang-nhap"
+                  className="flex flex-col items-center px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors group"
+                >
+                  <User className="w-5 h-5 text-gray-600 group-hover:text-primary group-hover:scale-110 transition-all" />
+                  <span className="text-xs text-gray-700 mt-1 whitespace-nowrap">Đăng nhập</span>
+                </Link>
+              )}
 
               {/* Compare */}
               <Link
