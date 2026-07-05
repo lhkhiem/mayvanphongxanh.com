@@ -198,7 +198,7 @@ export default function ComparePage() {
                   {compareProducts.map((product) => (
                     <td key={`action-${product?.id}`} className="p-8 text-center bg-background/50">
                       <button 
-                        onClick={() => addToCart({ id: product!.id, name: product!.name, price: product!.price, image: product!.image })}
+                        onClick={() => addToCart({ id: product!.id, cartItemId: String(product!.id), name: product!.name, price: product!.price, image: product!.image })}
                         disabled={product!.stock === 0}
                         className="w-full mx-auto flex items-center justify-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-all duration-300 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
                       >

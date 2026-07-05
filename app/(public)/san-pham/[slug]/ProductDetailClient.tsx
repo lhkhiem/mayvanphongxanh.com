@@ -127,12 +127,14 @@ export default function ProductDetailClient({
 
   const handleAddToCart = () => {
     addToCart({ 
-      id: product.id, 
+      id: product.id,
+      variantId: currentVariant?.id,
       cartItemId: currentCartItemId(),
       name: product.name,
       variantName: currentVariantName(),
       sku: currentVariant?.sku,
       attributes: currentVariant?.attributes,
+      customOptions: product?.productType === 'custom-build' ? selectedCustomOptions : undefined,
       price: currentPrice(), 
       image: activeImage 
     }, quantity);

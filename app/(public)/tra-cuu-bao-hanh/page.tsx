@@ -1,38 +1,86 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
-import { Search, ShieldCheck, FileText, Settings2, ShieldAlert } from 'lucide-react';
+import { Search, ShieldCheck, FileText, Settings2, ShieldAlert, AlertCircle } from 'lucide-react';
+
+type WarrantyHistory = {
+  id: number;
+  typeLabel: string;
+  title: string;
+  note: string | null;
+  eventDate: string;
+};
+
+type WarrantyResult = {
+  serialNumber: string;
+  productName: string;
+  sku: string | null;
+  purchaseDate: string;
+  expiresAt: string;
+  warrantyMonths: number;
+  status: string;
+  statusLabel: string;
+  customerInfo: string;
+  history: WarrantyHistory[];
+};
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(value));
+}
 
 export default function WarrantyTrackingPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<WarrantyResult | null>(null);
+  const [error, setError] = useState('');
+
+  const searchWarranty = async (query: string) => {
+    const value = query.trim();
+    if (!value) return;
+
+    setIsSearching(true);
+    setError('');
+    setResult(null);
+
+    try {
+      const response = await fetch(`/api/warranties/lookup?query=${encodeURIComponent(value)}`, {
+        cache: 'no-store',
+      });
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'Không thể tra cứu bảo hành.');
+      }
+
+      setResult(data.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể tra cứu bảo hành.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchTerm.trim()) return;
-    
-    setIsSearching(true);
-    
-    // Simulate API delay
-    setTimeout(() => {
-      setIsSearching(false);
-      setResult({
-        serialNumber: searchTerm.toUpperCase(),
-        productName: 'Máy in Laser Đen Trắng Canon LBP 2900',
-        purchaseDate: '15/01/2026',
-        warrantyExpiry: '15/01/2027',
-        status: 'Còn bảo hành',
-        customerInfo: 'Nguyễn Văn A - 0912***789',
-        warrantyPeriod: '12 Tháng',
-        history: [
-          { date: '15/01/2026', action: 'Kích hoạt bảo hành điện tử', note: 'Mua mới tại cửa hàng' }
-        ]
-      });
-    }, 1000);
+    searchWarranty(searchTerm);
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const serial = params.get('serial');
+    if (serial) {
+      setSearchTerm(serial);
+      searchWarranty(serial);
+    }
+  }, []);
+
+  const isActive = result?.status === 'ACTIVE';
 
   return (
     <main className="min-h-screen bg-background flex flex-col">
@@ -47,11 +95,11 @@ export default function WarrantyTrackingPage() {
             Tra cứu Bảo hành
           </h1>
           <p className="text-muted-foreground">
-            Kiểm tra thông tin bảo hành sản phẩm của bạn bằng Số Serial (S/N) hoặc Số điện thoại mua hàng.
+            Kiểm tra thông tin bảo hành sản phẩm bằng số Serial/SN, số điện thoại hoặc email mua hàng.
           </p>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-6 md:p-8 shadow-sm mb-12">
+        <div className="bg-card border border-border rounded-xl p-6 md:p-8 shadow-sm mb-8">
           <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -71,31 +119,40 @@ export default function WarrantyTrackingPage() {
               disabled={isSearching}
               className="sm:w-48 py-4 bg-primary text-primary-foreground rounded-lg font-bold text-lg hover:bg-primary/90 transition-all disabled:opacity-50 flex items-center justify-center"
             >
-              {isSearching ? 'Đang tìm...' : 'Kiểm Tra'}
+              {isSearching ? 'Đang tìm...' : 'Kiểm tra'}
             </button>
           </form>
         </div>
 
-        {/* Tracking Result */}
+        {error && (
+          <div className="mb-8 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-red-700 flex gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <span className="text-sm font-medium">{error}</span>
+          </div>
+        )}
+
         {result && (
           <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="p-6 md:p-8 border-b border-border bg-secondary/30">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
-                <div>
+                <div className="min-w-0">
                   <h3 className="text-xl font-bold text-foreground mb-2">{result.productName}</h3>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Settings2 className="w-4 h-4" />
-                    <span>S/N: <strong className="text-foreground">{result.serialNumber}</strong></span>
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-2">
+                      <Settings2 className="w-4 h-4" />
+                      S/N: <strong className="text-foreground font-mono break-all">{result.serialNumber}</strong>
+                    </span>
+                    {result.sku && <span>SKU: <strong className="text-foreground">{result.sku}</strong></span>}
                   </div>
                 </div>
                 <div className="text-left sm:text-right">
-                  <span className={`px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 inline-flex ${
-                    result.status === 'Còn bảo hành' 
-                      ? 'bg-green-100 text-green-700 border border-green-200' 
+                  <span className={`px-4 py-2 rounded-full font-semibold text-sm inline-flex items-center gap-2 ${
+                    isActive
+                      ? 'bg-green-100 text-green-700 border border-green-200'
                       : 'bg-red-100 text-red-700 border border-red-200'
                   }`}>
-                    {result.status === 'Còn bảo hành' ? <ShieldCheck className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
-                    {result.status}
+                    {isActive ? <ShieldCheck className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
+                    {result.statusLabel}
                   </span>
                 </div>
               </div>
@@ -103,17 +160,19 @@ export default function WarrantyTrackingPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-background rounded-lg border border-border">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Ngày mua hàng</p>
-                  <p className="font-medium text-foreground">{result.purchaseDate}</p>
+                  <p className="font-medium text-foreground">{formatDate(result.purchaseDate)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Thời hạn bảo hành</p>
-                  <p className="font-medium text-foreground">{result.warrantyPeriod}</p>
+                  <p className="font-medium text-foreground">{result.warrantyMonths} tháng</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Ngày hết hạn</p>
-                  <p className="font-medium text-foreground">{result.warrantyExpiry}</p>
+                  <p className="font-medium text-foreground">{formatDate(result.expiresAt)}</p>
                 </div>
               </div>
+
+              <p className="mt-5 text-sm text-muted-foreground">{result.customerInfo}</p>
             </div>
 
             <div className="p-6 md:p-8">
@@ -124,14 +183,15 @@ export default function WarrantyTrackingPage() {
               
               {result.history.length > 0 ? (
                 <div className="space-y-4">
-                  {result.history.map((item: any, index: number) => (
-                    <div key={index} className="flex gap-4 p-4 border border-border rounded-lg bg-secondary/10">
-                      <div className="w-24 shrink-0 text-sm font-medium text-muted-foreground">
-                        {item.date}
+                  {result.history.map((item) => (
+                    <div key={item.id} className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-4 border border-border rounded-lg bg-secondary/10">
+                      <div className="w-32 shrink-0 text-sm font-medium text-muted-foreground">
+                        {formatDate(item.eventDate)}
                       </div>
                       <div>
-                        <p className="font-medium text-foreground">{item.action}</p>
-                        <p className="text-sm text-muted-foreground mt-1">{item.note}</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-primary mb-1">{item.typeLabel}</p>
+                        <p className="font-medium text-foreground">{item.title}</p>
+                        {item.note && <p className="text-sm text-muted-foreground mt-1">{item.note}</p>}
                       </div>
                     </div>
                   ))}

@@ -13,16 +13,46 @@ export default function CheckoutPage() {
   const { items, cartTotal, clearCart } = useCart();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderError, setOrderError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate API call
-    setTimeout(() => {
+    setOrderError('');
+
+    const formData = new FormData(e.currentTarget);
+
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: formData.get('customerName'),
+          customerPhone: formData.get('customerPhone'),
+          customerEmail: formData.get('customerEmail'),
+          shippingAddress: formData.get('shippingAddress'),
+          notes: formData.get('notes'),
+          items: items.map((item) => ({
+            id: item.id,
+            variantId: item.variantId,
+            quantity: item.quantity,
+            customOptions: item.customOptions,
+          })),
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'Không thể tạo đơn hàng.');
+      }
+
       clearCart();
-      router.push('/checkout/success');
-    }, 1500);
+      router.push(`/thanh-toan/thanh-cong?orderId=${encodeURIComponent(data.orderId)}`);
+    } catch (error) {
+      setOrderError(error instanceof Error ? error.message : 'Không thể tạo đơn hàng.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (items.length === 0 && !isSubmitting) {
@@ -54,41 +84,44 @@ export default function CheckoutPage() {
         <h1 className="text-3xl font-bold text-foreground mb-8">Thanh toán & Giao hàng</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Checkout Form */}
           <div className="lg:col-span-2">
             <form id="checkout-form" onSubmit={handleSubmit} className="space-y-8">
-              {/* Billing Info */}
               <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
                 <h2 className="text-xl font-bold text-foreground mb-6">Thông tin Giao hàng</h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">Họ và tên *</label>
-                    <input required type="text" className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="Nhập họ tên đầy đủ" />
+                    <input required name="customerName" type="text" className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="Nhập họ tên đầy đủ" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">Số điện thoại *</label>
-                    <input required type="tel" className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="VD: 0912345678" />
+                    <input required name="customerPhone" type="tel" className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="VD: 0912345678" />
                   </div>
                 </div>
 
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-foreground mb-2">Email *</label>
-                  <input required type="email" className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="Để gửi mã theo dõi đơn hàng" />
+                  <label className="block text-sm font-medium text-foreground mb-2">Email</label>
+                  <input name="customerEmail" type="email" className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="Để gửi mã theo dõi đơn hàng" />
                 </div>
 
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-foreground mb-2">Địa chỉ giao hàng chi tiết *</label>
-                  <input required type="text" className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" />
+                  <input required name="shippingAddress" type="text" className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">Ghi chú thêm (Tùy chọn)</label>
-                  <textarea rows={3} className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all resize-none" placeholder="Lưu ý giao hàng, giờ nhận hàng..."></textarea>
+                  <textarea name="notes" rows={3} className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all resize-none" placeholder="Lưu ý giao hàng, giờ nhận hàng..."></textarea>
                 </div>
               </div>
 
-              {/* Payment Method */}
+              {orderError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                  {orderError}
+                </div>
+              )}
+
               <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
                 <h2 className="text-xl font-bold text-foreground mb-6">Phương thức Thanh toán</h2>
                 
@@ -113,7 +146,6 @@ export default function CheckoutPage() {
             </form>
           </div>
 
-          {/* Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-card border border-border rounded-xl p-6 shadow-sm sticky top-28">
               <h2 className="text-xl font-bold text-foreground mb-6">Tóm tắt Đơn hàng</h2>

@@ -21,6 +21,7 @@ export interface ProductCardProps {
   brand?: string;
   sku?: string;
   slug?: string;
+  variantId?: string;
 }
 
 export function ProductCard({
@@ -35,6 +36,7 @@ export function ProductCard({
   stock,
   sku,
   slug,
+  variantId,
 }: ProductCardProps) {
   const [showCompareToast, setShowCompareToast] = useState(false);
   const [showCompareErrorToast, setShowCompareErrorToast] = useState('');
@@ -51,7 +53,7 @@ export function ProductCard({
   const isCompared = hasItem(id);
 
   const handleAddToCart = () => {
-    addToCart({ id, name, price, image });
+    addToCart({ id, variantId, cartItemId: variantId ? `${id}-${variantId}` : String(id), name, price, image, sku });
   };
 
   const handleToggleCompare = (e: React.MouseEvent) => {

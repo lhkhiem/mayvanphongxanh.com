@@ -75,7 +75,7 @@ const sidebarNavItems = [
     title: "Đơn hàng",
     href: "/admin/orders",
     icon: ShoppingCart,
-    badge: "12",
+
   },
   {
     title: "Hóa đơn & Thu chi",
@@ -208,11 +208,11 @@ export function AdminSidebar({ isOpen, isUnfoldable, setIsOpen }: AdminSidebarPr
                   title={isUnfoldable ? item.title : undefined}
                 >
                   {item.icon && <item.icon className={cn("h-5 w-5 shrink-0", isActive ? "text-blue-500" : "text-gray-400 group-hover:text-gray-200")} />}
-                  
+
                   <span className={cn("whitespace-nowrap transition-all duration-300", isUnfoldable ? "opacity-0 w-0 hidden" : "opacity-100")}>
                     {item.title}
                   </span>
-                  
+
                   {item.badge && !isUnfoldable && (
                     <span
                       className={cn(
@@ -228,7 +228,7 @@ export function AdminSidebar({ isOpen, isUnfoldable, setIsOpen }: AdminSidebarPr
             })}
           </nav>
         </div>
-        
+
         {/* Copyright */}
         <div className={cn("shrink-0 p-4 border-t border-gray-800 text-[11px] text-gray-500", isUnfoldable ? "hidden" : "block")}>
           © {new Date().getFullYear()} Máy Văn Phòng Xanh.

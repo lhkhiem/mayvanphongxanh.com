@@ -4,11 +4,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export interface CartItem {
   id: number;
+  variantId?: string;
   cartItemId: string; // Composite ID: e.g., "1", "28-v3510-i3-8", "29-cpu-i5-ram-16"
   name: string;
   variantName?: string; // Additional string to display, e.g., "(Core i5, 8GB RAM)"
   sku?: string;
   attributes?: Record<string, string>;
+  customOptions?: unknown;
   price: number;
   image: string;
   quantity: number;
@@ -38,7 +40,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const storedCart = localStorage.getItem('mvpx_cart');
       if (storedCart) {
-        setItems(JSON.parse(storedCart));
+        const parsedItems = JSON.parse(storedCart) as CartItem[];
+        setItems(parsedItems.map((item) => ({
+          ...item,
+          cartItemId: item.cartItemId || (item.variantId ? `${item.id}-${item.variantId}` : String(item.id)),
+        })));
       }
     } catch (error) {
       console.error('Failed to parse cart from localStorage:', error);
@@ -54,14 +60,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [items, isInitialized]);
 
   const addToCart = (product: Omit<CartItem, 'quantity'>, quantity = 1) => {
+    const cartItemId = product.cartItemId || (product.variantId ? `${product.id}-${product.variantId}` : String(product.id));
+    const normalizedProduct = { ...product, cartItemId };
+
     setItems((prev) => {
-      const existingItem = prev.find((item) => item.cartItemId === product.cartItemId);
+      const existingItem = prev.find((item) => item.cartItemId === cartItemId);
       if (existingItem) {
         return prev.map((item) =>
-          item.cartItemId === product.cartItemId ? { ...item, quantity: item.quantity + quantity } : item
+          item.cartItemId === cartItemId ? { ...item, quantity: item.quantity + quantity } : item
         );
       }
-      return [...prev, { ...product, quantity }];
+      return [...prev, { ...normalizedProduct, quantity }];
     });
     setIsOpen(true); // Auto open cart on add
   };

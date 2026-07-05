@@ -316,3 +316,64 @@ model RolePermission {
 
   @@id([roleId, permissionId])
 }
+
+// ==========================================
+// WARRANTY & SERVICE
+// ==========================================
+
+enum WarrantyStatus {
+  ACTIVE
+  EXPIRED
+  VOIDED
+}
+
+enum WarrantyEventType {
+  ACTIVATED
+  REPAIR_RECEIVED
+  REPAIRING
+  REPAIRED
+  RETURNED
+  NOTE
+}
+
+model WarrantyRecord {
+  id             String         @id @default(cuid())
+  serialNumber   String         @unique
+  productName    String
+  sku            String?
+  customerName   String
+  customerPhone  String
+  customerEmail  String?
+  orderId        String?
+  orderItemId    Int?
+  purchaseDate   DateTime
+  warrantyMonths Int            @default(12)
+  expiresAt      DateTime
+  status         WarrantyStatus @default(ACTIVE)
+  notes          String?        @db.Text
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  events         WarrantyEvent[]
+
+  @@index([serialNumber])
+  @@index([customerPhone])
+  @@index([customerEmail])
+  @@index([expiresAt])
+  @@index([status])
+}
+
+model WarrantyEvent {
+  id          Int               @id @default(autoincrement())
+  warrantyId  String
+  type        WarrantyEventType @default(NOTE)
+  title       String
+  note        String?           @db.Text
+  eventDate   DateTime          @default(now())
+  createdAt   DateTime          @default(now())
+
+  warranty    WarrantyRecord    @relation(fields: [warrantyId], references: [id], onDelete: Cascade)
+
+  @@index([warrantyId])
+  @@index([eventDate])
+}
