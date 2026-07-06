@@ -58,6 +58,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                 stock={product.stock}
                 slug={product.slug}
                 category={product.category}
+                productType={product.productType}
               />
             ))}
           </div>

@@ -22,6 +22,7 @@ export interface ProductCardProps {
   sku?: string;
   slug?: string;
   variantId?: string;
+  productType?: string;
 }
 
 export function ProductCard({
@@ -37,6 +38,7 @@ export function ProductCard({
   sku,
   slug,
   variantId,
+  productType,
 }: ProductCardProps) {
   const [showCompareToast, setShowCompareToast] = useState(false);
   const [showCompareErrorToast, setShowCompareErrorToast] = useState('');
@@ -146,6 +148,7 @@ export function ProductCard({
                 )}
                 <div className="font-bold text-[17px] text-primary">
                   {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)}
+                  {productType === 'rental' && <span className="text-xs font-normal text-muted-foreground ml-0.5">/ tháng</span>}
                 </div>
               </div>
               {/* Discount Badge on the right of price */}
@@ -186,7 +189,7 @@ export function ProductCard({
           onClick={handleAddToCart}
           disabled={stock === 0}
           className="w-8 h-8 flex items-center justify-center bg-primary text-white rounded shadow-sm hover:bg-primary/90 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-          title="Thêm vào giỏ"
+          title={productType === 'rental' ? "Đăng ký thuê" : "Thêm vào giỏ"}
         >
           <ShoppingCart className="w-4 h-4" />
         </button>

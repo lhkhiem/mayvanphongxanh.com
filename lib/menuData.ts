@@ -28,6 +28,7 @@ export let mockMenus: Menu[] = [
         componentType: 'mega-products',
       },
       { id: 'mi-3', label: 'Dịch vụ trọn gói', url: '/danh-muc/goi-dich-vu' },
+      { id: 'mi-rental', label: 'Cho thuê máy', url: '/cho-thue-may' },
       { 
         id: 'mi-4', 
         label: 'Tra cứu',

@@ -12,6 +12,7 @@ export type CategoryWithChildren = {
   icon: string | null
   color: string | null
   isActive: boolean
+  isFeatured: boolean
   _count: { products: number }
   children: CategoryWithChildren[]
 }
@@ -39,6 +40,7 @@ export type CategoryFormData = {
   icon: string
   color: string
   isActive: boolean
+  isFeatured?: boolean
 }
 
 export async function createCategory(data: CategoryFormData) {
@@ -51,6 +53,7 @@ export async function createCategory(data: CategoryFormData) {
         icon: data.icon || null,
         color: data.color || null,
         isActive: data.isActive,
+        isFeatured: data.isFeatured || false,
       },
     })
     revalidatePath("/admin/categories")
@@ -79,6 +82,7 @@ export async function updateCategory(id: number, data: CategoryFormData) {
         icon: data.icon || null,
         color: data.color || null,
         isActive: data.isActive,
+        isFeatured: data.isFeatured ?? false,
       },
     })
     revalidatePath("/admin/categories")

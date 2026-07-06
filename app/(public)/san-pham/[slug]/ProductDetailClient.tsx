@@ -148,6 +148,8 @@ export default function ProductDetailClient({
     ? Math.round(((originalPrice - price) / originalPrice) * 100) 
     : 0;
 
+  const isRental = product?.productType === 'rental';
+
   return (
     <>
     <main className="min-h-screen bg-background flex flex-col print:hidden">
@@ -233,10 +235,13 @@ export default function ProductDetailClient({
                 <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1 mb-1">
                   <span className="text-4xl font-extrabold text-foreground tracking-tight">
                     {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)}
+                    {isRental && <span className="text-2xl font-semibold text-muted-foreground ml-1">/ tháng</span>}
                   </span>
-                  <span className="text-sm font-medium text-muted-foreground">
-                    (Đã bao gồm VAT)
-                  </span>
+                  {!isRental && (
+                    <span className="text-sm font-medium text-muted-foreground">
+                      (Đã bao gồm VAT)
+                    </span>
+                  )}
                 </div>
                 {originalPrice && discount > 0 && (
                   <div className="flex items-center gap-2 mt-2">
@@ -285,6 +290,7 @@ export default function ProductDetailClient({
                       </div>
                       <div className="text-primary font-bold text-sm">
                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(variant.price)}
+                        {isRental && <span className="font-normal text-xs text-muted-foreground ml-1">/ tháng</span>}
                       </div>
                       {variant.attributes && Object.keys(variant.attributes).length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-border/50">
@@ -349,6 +355,43 @@ export default function ProductDetailClient({
               </div>
             )}
 
+            {/* Rental Terms */}
+            {isRental && product.rentalTerms && (
+              <div className="mb-6 p-5 bg-blue-50/50 border border-blue-100 rounded-2xl">
+                <h3 className="text-sm font-bold text-blue-900 mb-4 uppercase tracking-wider flex items-center gap-2">
+                  <Info className="w-5 h-5 text-blue-600" /> Cấu hình thuê máy
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-muted-foreground text-xs">Phí đặt cọc</span>
+                    <span className="font-semibold text-foreground">
+                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.rentalTerms.deposit || 0)}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-muted-foreground text-xs">Kì hạn thuê tối thiểu</span>
+                    <span className="font-semibold text-foreground">{product.rentalTerms.minMonths || 12} tháng</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-muted-foreground text-xs">Định mức in Đen trắng</span>
+                    <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN').format(product.rentalTerms.freeBw || 0)} trang/tháng</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-muted-foreground text-xs">Phí vượt mức Đen trắng</span>
+                    <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.rentalTerms.overageBw || 0)} / trang</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-muted-foreground text-xs">Định mức in Màu</span>
+                    <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN').format(product.rentalTerms.freeColor || 0)} trang/tháng</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-muted-foreground text-xs">Phí vượt mức Màu</span>
+                    <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.rentalTerms.overageColor || 0)} / trang</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Quick Specs */}
             <div className="mb-6 bg-secondary/20 rounded-2xl p-5 border border-border">
               <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
@@ -404,13 +447,13 @@ export default function ProductDetailClient({
                     disabled={stock === 0}
                     className="flex-1 h-14 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5"
                   >
-                    MUA NGAY
+                    {isRental ? 'ĐĂNG KÝ THUÊ MÁY' : 'MUA NGAY'}
                   </button>
                   <button 
                     onClick={handleAddToCart}
                     disabled={stock === 0}
                     className="w-14 h-14 bg-primary/10 text-primary border-2 border-primary/20 rounded-xl hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
-                    title="Thêm vào giỏ"
+                    title={isRental ? "Thêm vào giỏ (Thuê)" : "Thêm vào giỏ"}
                   >
                     <ShoppingCart className="w-5 h-5" />
                   </button>

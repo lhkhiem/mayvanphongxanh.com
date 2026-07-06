@@ -12,6 +12,7 @@ import {
 import { getProducts, deleteProduct, toggleProductActive } from "./actions";
 import { getCategories } from "../categories/actions";
 import { CategoryFilterDropdown } from "@/components/admin/category-filter-dropdown";
+import { ProductTypeFilterDropdown } from "@/components/admin/product-type-filter-dropdown";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
@@ -163,18 +164,48 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState<number | undefined>();
+  const [productType, setProductType] = useState<string>('all');
   const [status, setStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [restoredScroll, setRestoredScroll] = useState<number | null>(null);
+
+  // Restore state on mount
+  useEffect(() => {
+    const saved = sessionStorage.getItem('products_list_state');
+    if (saved) {
+      try {
+        const state = JSON.parse(saved);
+        setSearch(state.search ?? "");
+        setCategoryId(state.categoryId);
+        setProductType(state.productType ?? 'all');
+        setStatus(state.status ?? 'all');
+        setPage(state.page ?? 1);
+        setPageSize(state.pageSize ?? 20);
+        if (state.scroll) setRestoredScroll(state.scroll);
+      } catch (e) {}
+      sessionStorage.removeItem('products_list_state');
+    }
+  }, []);
+
+  // Helper to save state before leaving
+  const saveState = () => {
+    const main = document.querySelector('main');
+    const scrollPos = main ? main.scrollTop : 0;
+    sessionStorage.setItem('products_list_state', JSON.stringify({
+      search, categoryId, productType, status, page, pageSize, scroll: scrollPos
+    }));
+  };
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     const res = await getProducts({
       search: search || undefined,
       categoryId,
+      productType,
       status,
       page,
       pageSize,
@@ -187,7 +218,20 @@ export default function ProductsPage() {
       setTotalPages(res.totalPages ?? 1);
     }
     setLoading(false);
-  }, [search, categoryId, status, page, pageSize]);
+  }, [search, categoryId, productType, status, page, pageSize]);
+
+  // Restore scroll after loading completes
+  useEffect(() => {
+    if (!loading && restoredScroll !== null) {
+      setTimeout(() => {
+        const main = document.querySelector('main');
+        if (main) {
+          main.scrollTo({ top: restoredScroll, behavior: 'instant' });
+        }
+        setRestoredScroll(null);
+      }, 50);
+    }
+  }, [loading, restoredScroll]);
 
   useEffect(() => {
     getCategories().then((res) => {
@@ -195,11 +239,13 @@ export default function ProductsPage() {
     });
   }, []);
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when filters change (only if not restoring from cache)
   useEffect(() => {
-    setPage(1);
-    setSelectedIds(new Set());
-  }, [search, categoryId, status, pageSize]);
+    if (restoredScroll === null) {
+      setPage(1);
+      setSelectedIds(new Set());
+    }
+  }, [search, categoryId, productType, status, pageSize]);
 
   useEffect(() => {
     const timer = setTimeout(fetchProducts, 250);
@@ -266,7 +312,11 @@ export default function ProductsPage() {
             </button>
           )}
           <Link
-            href="/admin/products/new"
+            href={`/admin/products/new?${new URLSearchParams({
+              ...(categoryId ? { categoryId: categoryId.toString() } : {}),
+              ...(productType && productType !== 'all' ? { productType } : {})
+            }).toString()}`}
+            onClick={saveState}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors shadow-sm whitespace-nowrap"
           >
             <Plus className="h-4 w-4" />
@@ -294,7 +344,12 @@ export default function ProductsPage() {
           onChange={setCategoryId}
         />
 
-        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+        <ProductTypeFilterDropdown
+          value={productType}
+          onChange={setProductType}
+        />
+
+        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 shrink-0">
           {(['all', 'active', 'inactive'] as const).map((s) => (
             <button
               key={s}
@@ -391,15 +446,38 @@ export default function ProductsPage() {
                           )}
                         </div>
                         <div className="min-w-0">
-                          <Link
-                            href={`/admin/products/${p.id}`}
-                            className="font-semibold text-gray-900 dark:text-gray-100 hover:text-primary transition-colors line-clamp-1"
-                          >
-                            {p.name}
-                          </Link>
-                          {p.brand && (
-                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{p.brand}</p>
-                          )}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Link
+                              href={`/admin/products/${p.id}`}
+                              onClick={saveState}
+                              className="font-semibold text-gray-900 dark:text-gray-100 hover:text-primary transition-colors line-clamp-1"
+                            >
+                              {p.name}
+                            </Link>
+                            {p.isFeatured && (
+                              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 rounded shrink-0">
+                                Nổi bật
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            {p.brand && (
+                              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{p.brand}</span>
+                            )}
+                            {p.productType && (
+                              <span className={cn(
+                                "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                                p.productType === 'rental' ? "bg-blue-100 text-blue-600" :
+                                p.productType === 'custom-build' ? "bg-purple-100 text-purple-600" :
+                                p.productType === 'pre-packaged' ? "bg-emerald-100 text-emerald-600" :
+                                "bg-gray-100 text-gray-600"
+                              )}>
+                                {p.productType === 'rental' ? 'Cho thuê' :
+                                p.productType === 'custom-build' ? 'Tùy chỉnh' :
+                                p.productType === 'pre-packaged' ? 'Trọn gói' : 'Tiêu chuẩn'}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -476,6 +554,7 @@ export default function ProductsPage() {
                         </button>
                         <Link
                           href={`/admin/products/${p.id}`}
+                          onClick={saveState}
                           className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
                           title="Chỉnh sửa"
                         >

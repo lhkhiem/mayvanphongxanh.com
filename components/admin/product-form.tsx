@@ -43,6 +43,7 @@ const PRODUCT_TYPES = [
   { value: 'standard', label: 'Tiêu chuẩn (Có nhiều biến thể)' },
   { value: 'pre-packaged', label: 'Trọn gói (Máy + Dịch vụ)' },
   { value: 'custom-build', label: 'Tùy chỉnh (Độ thêm linh kiện)' },
+  { value: 'rental', label: 'Cho thuê (Dịch vụ thuê máy)' },
 ];
 
 const DEFAULT_VARIANT: ProductVariantInput = {
@@ -59,12 +60,14 @@ export type CustomOption = {
 export function ProductForm({
   initialData,
   categories,
+  brands = [],
 }: {
   initialData?: any;
   categories: any[];
+  brands?: any[];
 }) {
   const router = useRouter();
-  const isEditing = !!initialData;
+  const isEditing = !!initialData?.id;
 
   const [tab, setTab] = useState<string>('info');
   const [loading, setLoading] = useState(false);
@@ -75,11 +78,13 @@ export function ProductForm({
     name: initialData?.name || '',
     slug: initialData?.slug || '',
     categoryId: initialData?.categoryId || 0,
+    brandId: initialData?.brandId || null,
     brand: initialData?.brand || '',
     images: Array.isArray(initialData?.images) ? initialData.images : [],
     description: initialData?.description || '',
     productType: initialData?.productType || 'standard',
     isActive: initialData?.isActive ?? true,
+    isFeatured: initialData?.isFeatured ?? false,
     metaTitle: initialData?.metaTitle || '',
     metaDescription: initialData?.metaDescription || '',
     metaKeywords: initialData?.metaKeywords || '',
@@ -87,6 +92,7 @@ export function ProductForm({
     specifications: Array.isArray(initialData?.specifications) ? initialData.specifications : [],
     manuals: initialData?.manuals || { content: '', files: [] },
     drivers: initialData?.drivers || { content: '', files: [] },
+    rentalTerms: initialData?.rentalTerms || { deposit: 0, minMonths: 12, freeBw: 0, freeColor: 0, overageBw: 0, overageColor: 0 },
     policyIds: Array.isArray(initialData?.policies) ? initialData.policies.map((p: any) => p.id) : [],
   });
 
@@ -114,6 +120,7 @@ export function ProductForm({
   // Dynamic Tabs Logic
   const isStandard = form.productType === 'standard';
   const isCustomBuild = form.productType === 'custom-build';
+  const isRental = form.productType === 'rental';
 
   const [hasVariants, setHasVariants] = useState<boolean>(
     isStandard && (variants.length > 1 || (variants.length === 1 && variants[0].attributes && variants[0].attributes.length > 0))
@@ -273,7 +280,11 @@ export function ProductForm({
     if (res.error) toast.error(res.error);
     else {
       toast.success(isEditing ? "Cập nhật thành công!" : "Tạo thành công!");
-      router.push("/admin/products");
+      if (isEditing) {
+        router.back();
+      } else {
+        router.push("/admin/products");
+      }
     }
   };
 
@@ -291,9 +302,9 @@ export function ProductForm({
         {/* ── Page Header ── */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Link href="/admin/products" className="p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors">
+            <button onClick={() => isEditing ? router.back() : router.push("/admin/products")} className="p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors">
               <ArrowLeft className="h-5 w-5" />
-            </Link>
+            </button>
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
                 {isEditing ? "Chỉnh sửa sản phẩm" : "Tạo sản phẩm mới"}
@@ -303,19 +314,33 @@ export function ProductForm({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setForm({ ...form, isActive: !form.isActive })}
-                className={cn("relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0", form.isActive ? "bg-primary" : "bg-gray-300 dark:bg-gray-600")}
-              >
-                <span className={cn("inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform", form.isActive ? "translate-x-4" : "translate-x-0.5")} />
-              </button>
-              <span className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap hidden sm:block">
-                {form.isActive ? "Đang bán" : "Tạm ẩn"}
-              </span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, isFeatured: !form.isFeatured })}
+                  className={cn("relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0", form.isFeatured ? "bg-amber-500" : "bg-gray-300 dark:bg-gray-600")}
+                >
+                  <span className={cn("inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform", form.isFeatured ? "translate-x-4" : "translate-x-0.5")} />
+                </button>
+                <span className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap hidden sm:block">
+                  Sản phẩm nổi bật
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, isActive: !form.isActive })}
+                  className={cn("relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0", form.isActive ? "bg-primary" : "bg-gray-300 dark:bg-gray-600")}
+                >
+                  <span className={cn("inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform", form.isActive ? "translate-x-4" : "translate-x-0.5")} />
+                </button>
+                <span className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap hidden sm:block">
+                  {form.isActive ? "Đang bán" : "Tạm ẩn"}
+                </span>
+              </div>
             </div>
-            <button type="button" onClick={() => router.push("/admin/products")} className="px-3 py-2 rounded-lg border border-gray-300 dark:gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium transition-colors hidden sm:block">
+            <button type="button" onClick={() => isEditing ? router.back() : router.push("/admin/products")} className="px-3 py-2 rounded-lg border border-gray-300 dark:gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium transition-colors hidden sm:block">
               Hủy
             </button>
             <button type="button" onClick={handleSubmit} disabled={loading} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-50">
@@ -363,11 +388,10 @@ export function ProductForm({
                 </div>
               </div>
 
-              {/* Inline Sales Info block (only for non-standard or simple products) */}
               {(!isStandard || (isStandard && !hasVariants)) && (
                 <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] p-5 shadow-sm space-y-4">
                   <div className="pb-2 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                    <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Thông tin bán hàng (Gói cơ bản)</h2>
+                    <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Thông tin bán hàng {isRental ? '(Cho thuê)' : '(Gói cơ bản)'}</h2>
                     {isCustomBuild && <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded font-medium">Giá Base</span>}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -380,7 +404,9 @@ export function ProductForm({
                       <input type="number" min={0} value={variants[0].stockQuantity} onChange={(e) => updateVariant(0, { stockQuantity: parseInt(e.target.value) || 0 })} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Giá bán (đ) <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">
+                        {isRental ? 'Giá thuê / tháng (đ)' : 'Giá bán (đ)'} <span className="text-red-500">*</span>
+                      </label>
                       <input type="number" min={0} value={variants[0].price || ''} onChange={(e) => updateVariant(0, { price: parseFloat(e.target.value) || 0 })} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" />
                     </div>
                     <div>
@@ -471,7 +497,24 @@ export function ProductForm({
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Thương hiệu</label>
-                  <input type="text" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} placeholder="HP, Canon..." className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" />
+                  <select 
+                    value={form.brandId || ""} 
+                    onChange={(e) => {
+                      const brandId = e.target.value ? parseInt(e.target.value) : null;
+                      const selectedBrand = brands?.find(b => b.id === brandId);
+                      setForm({ 
+                        ...form, 
+                        brandId: brandId,
+                        brand: selectedBrand ? selectedBrand.name : ''
+                      });
+                    }}
+                    className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2a303d] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                  >
+                    <option value="">-- Không chọn --</option>
+                    {brands?.map(b => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Loại sản phẩm</label>
@@ -494,9 +537,42 @@ export function ProductForm({
                     {form.productType === 'standard' && 'Hiển thị tab Biến thể để thêm nhiều tùy chọn màu/kích cỡ.'}
                     {form.productType === 'pre-packaged' && 'Bán theo gói 1 giá duy nhất. Không có tab biến thể.'}
                     {form.productType === 'custom-build' && 'Giá Base hiển thị ở đây. Hiển thị tab Tùy chọn để add thêm linh kiện.'}
+                    {form.productType === 'rental' && 'Giá nhập vào sẽ được tính là Giá thuê / tháng.'}
                   </p>
                 </div>
               </div>
+              
+              {isRental && (
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] p-5 shadow-sm space-y-4">
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700">Cấu hình thuê máy</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Phí đặt cọc (đ)</label>
+                      <input type="number" min={0} value={form.rentalTerms?.deposit || ''} onChange={(e) => setForm({ ...form, rentalTerms: { ...form.rentalTerms, deposit: parseFloat(e.target.value) || 0 } })} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Kì hạn thuê tối thiểu (Tháng)</label>
+                      <input type="number" min={1} value={form.rentalTerms?.minMonths || ''} onChange={(e) => setForm({ ...form, rentalTerms: { ...form.rentalTerms, minMonths: parseInt(e.target.value) || 1 } })} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Định mức in Đen trắng (trang/tháng)</label>
+                      <input type="number" min={0} value={form.rentalTerms?.freeBw || ''} onChange={(e) => setForm({ ...form, rentalTerms: { ...form.rentalTerms, freeBw: parseInt(e.target.value) || 0 } })} placeholder="VD: 3000" className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Định mức in Màu (trang/tháng)</label>
+                      <input type="number" min={0} value={form.rentalTerms?.freeColor || ''} onChange={(e) => setForm({ ...form, rentalTerms: { ...form.rentalTerms, freeColor: parseInt(e.target.value) || 0 } })} placeholder="VD: 0" className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Phí vượt mức Đen trắng (đ/trang)</label>
+                      <input type="number" min={0} value={form.rentalTerms?.overageBw || ''} onChange={(e) => setForm({ ...form, rentalTerms: { ...form.rentalTerms, overageBw: parseFloat(e.target.value) || 0 } })} placeholder="VD: 100" className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Phí vượt mức Màu (đ/trang)</label>
+                      <input type="number" min={0} value={form.rentalTerms?.overageColor || ''} onChange={(e) => setForm({ ...form, rentalTerms: { ...form.rentalTerms, overageColor: parseFloat(e.target.value) || 0 } })} placeholder="VD: 1000" className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

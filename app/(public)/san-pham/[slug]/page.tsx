@@ -76,6 +76,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     manuals: dbProduct.manuals,
     drivers: dbProduct.drivers,
     policies: dbProduct.policies,
+    rentalTerms: dbProduct.rentalTerms,
   };
 
   // Fetch related products

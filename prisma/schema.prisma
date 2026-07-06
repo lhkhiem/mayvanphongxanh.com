@@ -19,10 +19,25 @@ model Category {
   icon      String?
   color     String?
   isActive  Boolean    @default(true)
+  isFeatured Boolean   @default(false)
   
   parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children  Category[] @relation("CategoryHierarchy")
   products  Product[]
+
+  @@index([slug])
+}
+
+// 1.5 Thương hiệu
+model Brand {
+  id          Int        @id @default(autoincrement())
+  slug        String     @unique
+  name        String
+  logo        String?
+  description String?    @db.Text
+  isActive    Boolean    @default(true)
+  
+  products    Product[]
 
   @@index([slug])
 }
@@ -33,16 +48,19 @@ model Product {
   slug        String    @unique
   name        String
   categoryId  Int
+  brandId     Int?
   brand       String?
   images      Json?     // Mảng URL ảnh: ["url1", "url2", ...]
   description String?   @db.Text
   productType String    @default("standard") // standard, pre-packaged, custom-build
   isActive    Boolean   @default(true)
+  isFeatured  Boolean   @default(false)
   customOptions Json?
   quickSpecs  Json?
   specifications Json?
   manuals     Json?
   drivers     Json?
+  rentalTerms Json?
 
   // SEO
   metaTitle       String?
@@ -54,6 +72,7 @@ model Product {
   deletedAt   DateTime?
 
   category    Category         @relation(fields: [categoryId], references: [id])
+  brandRef    Brand?           @relation(fields: [brandId], references: [id], onDelete: SetNull)
   variants    ProductVariant[]
   policies    ProductPolicy[]
 

@@ -17,7 +17,15 @@ const SORT_OPTIONS = [
 
 const MOCK_BRANDS = ['HP', 'Canon', 'Epson', 'Brother', 'Dell', 'Lenovo', 'Asus'];
 
-export default function ProductsClient({ products = [], initialCategory }: { products?: any[], initialCategory?: string }) {
+export default function ProductsClient({ 
+  products = [], 
+  initialCategory,
+  headerContent 
+}: { 
+  products?: any[], 
+  initialCategory?: string,
+  headerContent?: React.ReactNode 
+}) {
   const [sortBy, setSortBy] = useState('featured');
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -185,6 +193,8 @@ export default function ProductsClient({ products = [], initialCategory }: { pro
   return (
     <main className="min-h-screen bg-[#F4F7F6]">
       <Header />
+      
+      {headerContent}
       
       {/* Breadcrumbs */}
       <div className="bg-white border-b border-gray-200">
@@ -375,7 +385,7 @@ export default function ProductsClient({ products = [], initialCategory }: { pro
             {sortedProducts.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 {sortedProducts.map((product) => (
-                  <ProductCard key={product.id} {...product} />
+                  <ProductCard key={product.id} {...product} productType={product.productType} />
                 ))}
               </div>
             ) : (

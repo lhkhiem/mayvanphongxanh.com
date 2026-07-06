@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { ProductForm } from "@/components/admin/product-form";
 import { getProduct } from "@/app/(admin)/admin/(dashboard)/products/actions";
 import { getCategories } from "@/app/(admin)/admin/(dashboard)/categories/actions";
+import { getBrands } from "@/app/(admin)/admin/(dashboard)/brands/actions";
 
 export default async function EditProductPage({
   params,
@@ -12,9 +13,10 @@ export default async function EditProductPage({
   const id = parseInt(paramId);
   if (isNaN(id)) notFound();
 
-  const [productRes, categoriesRes] = await Promise.all([
+  const [productRes, categoriesRes, brandsRes] = await Promise.all([
     getProduct(id),
     getCategories(),
+    getBrands(),
   ]);
 
   if (productRes.error || !productRes.data) notFound();
@@ -23,6 +25,7 @@ export default async function EditProductPage({
     <ProductForm
       initialData={productRes.data}
       categories={categoriesRes.data || []}
+      brands={brandsRes.data || []}
     />
   );
 }

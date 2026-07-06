@@ -48,17 +48,22 @@ export default async function Home() {
       stock: defaultVariant?.stockQuantity || 0,
       description: p.description,
       productType: p.productType,
+      isFeatured: p.isFeatured,
       attributes: defaultVariant?.attributes,
       variants: p.variants,
       customOptions: p.customOptions
     };
   });
 
+  // Filter featured categories and products
+  const featuredCategories = dbCategories.filter(c => c.isFeatured);
+  const featuredProducts = products.filter(p => p.isFeatured);
+
   return (
     <main className="min-h-screen bg-background">
       <Header categories={dbCategories} />
       <HeroSection categories={dbCategories} />
-      <FeaturedProducts products={products} categories={dbCategories} />
+      <FeaturedProducts products={featuredProducts} categories={featuredCategories} />
       <ServicePackagesSection products={products.filter(p => p.category === 'Gói dịch vụ')} />
       <ProjectsSection projects={dbProjects} />
       <CompanyIntro />

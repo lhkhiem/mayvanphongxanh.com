@@ -41,6 +41,7 @@ type Category = {
   icon: string | null;
   color: string | null;
   isActive: boolean;
+  isFeatured: boolean;
   _count: { products: number };
 };
 
@@ -60,6 +61,7 @@ const DEFAULT_FORM: CategoryFormData = {
   icon: "",
   color: "#3b82f6",
   isActive: true,
+  isFeatured: false,
 };
 
 // ── Main Component ─────────────────────────────────────────────────────────────
@@ -185,6 +187,7 @@ export default function CategoriesPage() {
                         icon: parent.icon || "",
                         color: parent.color || "#3b82f6",
                         isActive: parent.isActive,
+                        isFeatured: parent.isFeatured,
                       }}
                       onSubmit={(data) => handleUpdate(parent.id, data)}
                       onCancel={() => setEditingId(null)}
@@ -218,6 +221,7 @@ export default function CategoriesPage() {
                                 icon: child.icon || "",
                                 color: child.color || "#3b82f6",
                                 isActive: child.isActive,
+                                isFeatured: child.isFeatured,
                               }}
                               onSubmit={(data) => handleUpdate(child.id, data)}
                               onCancel={() => setEditingId(null)}
@@ -292,6 +296,11 @@ function CategoryRow({
           {!category.isActive && (
             <span className="px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 rounded">
               Ẩn
+            </span>
+          )}
+          {category.isFeatured && (
+            <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 rounded">
+              Nổi bật
             </span>
           )}
           {isParent && (
@@ -505,21 +514,41 @@ function CategoryForm({
           </div>
         </div>
 
-        {/* Active Toggle */}
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setForm({ ...form, isActive: !form.isActive })}
-            className={cn(
-              "relative inline-flex h-5 w-9 items-center rounded-full transition-colors",
-              form.isActive ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
-            )}
-          >
-            <span className={cn("inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform", form.isActive ? "translate-x-4" : "translate-x-0.5")} />
-          </button>
-          <span className="text-sm text-gray-700 dark:text-gray-300">
-            {form.isActive ? "Hiển thị trên website" : "Ẩn khỏi website"}
-          </span>
+        {/* Toggles */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
+          {/* Active Toggle */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, isActive: !form.isActive })}
+              className={cn(
+                "relative inline-flex h-5 w-9 items-center rounded-full transition-colors",
+                form.isActive ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
+              )}
+            >
+              <span className={cn("inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform", form.isActive ? "translate-x-4" : "translate-x-0.5")} />
+            </button>
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              {form.isActive ? "Hiển thị trên website" : "Ẩn khỏi website"}
+            </span>
+          </div>
+
+          {/* Featured Toggle */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, isFeatured: !form.isFeatured })}
+              className={cn(
+                "relative inline-flex h-5 w-9 items-center rounded-full transition-colors",
+                form.isFeatured ? "bg-amber-500" : "bg-gray-300 dark:bg-gray-600"
+              )}
+            >
+              <span className={cn("inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform", form.isFeatured ? "translate-x-4" : "translate-x-0.5")} />
+            </button>
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              Danh mục nổi bật
+            </span>
+          </div>
         </div>
 
         {/* Buttons */}

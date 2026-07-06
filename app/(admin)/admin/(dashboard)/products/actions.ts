@@ -32,11 +32,13 @@ export type ProductInput = {
   name: string
   slug: string
   categoryId: number
+  brandId?: number | null
   brand: string
   images: string[]
   description: string
   productType: string
   isActive: boolean
+  isFeatured?: boolean
   metaTitle: string
   metaDescription: string
   metaKeywords: string
@@ -44,6 +46,14 @@ export type ProductInput = {
   specifications?: { label: string, value: string }[] // Added for technical specifications
   manuals?: { content: string, files: string[] }
   drivers?: { content: string, files: string[] }
+  rentalTerms?: {
+    deposit?: number
+    minMonths?: number
+    freeBw?: number
+    freeColor?: number
+    overageBw?: number
+    overageColor?: number
+  }
   customOptions?: any // Added for custom-build addons
   variants: ProductVariantInput[]
   policyIds?: number[] // Added for Product Policies
@@ -54,6 +64,7 @@ export type ProductInput = {
 export async function getProducts(params?: {
   search?: string
   categoryId?: number
+  productType?: string
   status?: 'all' | 'active' | 'inactive'
   page?: number
   pageSize?: number
@@ -77,6 +88,10 @@ export async function getProducts(params?: {
 
     if (params?.categoryId) {
       where.categoryId = params.categoryId
+    }
+
+    if (params?.productType && params.productType !== 'all') {
+      where.productType = params.productType
     }
 
     if (params?.status === 'active') {
@@ -142,11 +157,13 @@ export async function createProduct(input: ProductInput) {
         name: input.name,
         slug: input.slug,
         category: { connect: { id: input.categoryId } },
+        brandId: input.brandId || null,
         brand: input.brand || null,
         images: input.images.length > 0 ? input.images : Prisma.JsonNull,
         description: input.description || null,
         productType: input.productType || 'standard',
         isActive: input.isActive,
+        isFeatured: input.isFeatured || false,
         metaTitle: input.metaTitle || null,
         metaDescription: input.metaDescription || null,
         metaKeywords: input.metaKeywords || null,
@@ -154,6 +171,7 @@ export async function createProduct(input: ProductInput) {
         specifications: input.specifications && input.specifications.length > 0 ? input.specifications : Prisma.JsonNull,
         manuals: input.manuals ? input.manuals as any : Prisma.JsonNull,
         drivers: input.drivers ? input.drivers as any : Prisma.JsonNull,
+        rentalTerms: input.rentalTerms ? input.rentalTerms as any : Prisma.JsonNull,
         customOptions: input.customOptions ? input.customOptions : Prisma.JsonNull,
         policies: {
           connect: input.policyIds?.map(id => ({ id })) || []
@@ -206,11 +224,13 @@ export async function updateProduct(id: number, input: ProductInput) {
           name: input.name,
           slug: input.slug,
           category: { connect: { id: input.categoryId } },
+          brandId: input.brandId || null,
           brand: input.brand || null,
           images: input.images.length > 0 ? input.images : Prisma.JsonNull,
           description: input.description || null,
           productType: input.productType || 'standard',
           isActive: input.isActive,
+          isFeatured: input.isFeatured ?? false,
           metaTitle: input.metaTitle || null,
           metaDescription: input.metaDescription || null,
           metaKeywords: input.metaKeywords || null,
@@ -218,6 +238,7 @@ export async function updateProduct(id: number, input: ProductInput) {
           specifications: input.specifications && input.specifications.length > 0 ? input.specifications : Prisma.JsonNull,
           manuals: input.manuals ? input.manuals as any : Prisma.JsonNull,
           drivers: input.drivers ? input.drivers as any : Prisma.JsonNull,
+          rentalTerms: input.rentalTerms ? input.rentalTerms as any : Prisma.JsonNull,
           customOptions: input.customOptions ? input.customOptions : Prisma.JsonNull,
           policies: {
             set: input.policyIds?.map(id => ({ id })) || []
