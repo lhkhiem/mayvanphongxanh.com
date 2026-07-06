@@ -138,6 +138,9 @@ model Order {
   customerEmail   String?
   shippingAddress String
   
+  customerId      String?
+  customer        Customer?   @relation(fields: [customerId], references: [id])
+  
   subTotal        Float
   shippingFee     Float       @default(0)
   discount        Float       @default(0)
@@ -304,6 +307,7 @@ model User {
   password      String?
   roleId        String?
   role          Role?     @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  customer      Customer?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -363,6 +367,8 @@ model WarrantyRecord {
   customerName   String
   customerPhone  String
   customerEmail  String?
+  customerId     String?
+  customer       Customer?      @relation(fields: [customerId], references: [id])
   orderId        String?
   orderItemId    Int?
   purchaseDate   DateTime
@@ -395,4 +401,55 @@ model WarrantyEvent {
 
   @@index([warrantyId])
   @@index([eventDate])
+}
+
+// ==========================================
+// CUSTOMERS
+// ==========================================
+
+model Customer {
+  id          String    @id @default(cuid())
+  name        String
+  phone       String    @unique
+  email       String?   @unique
+  address     String?
+  
+  userId      String?   @unique
+  user        User?     @relation(fields: [userId], references: [id])
+  
+  orders      Order[]
+  warranties  WarrantyRecord[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([phone])
+  @@index([email])
+}
+
+// ==========================================
+// CUSTOMER FEEDBACK & CONTACT
+// ==========================================
+
+model NewsletterSubscription {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+enum ContactStatus {
+  PENDING
+  PROCESSED
+}
+
+model ContactRequest {
+  id        String        @id @default(cuid())
+  name      String
+  phone     String
+  service   String
+  message   String        @db.Text
+  status    ContactStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 }

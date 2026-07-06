@@ -466,11 +466,11 @@ export default function ProductsPage() {
                             )}
                             {p.productType && (
                               <span className={cn(
-                                "text-[10px] px-1.5 py-0.5 rounded font-medium",
-                                p.productType === 'rental' ? "bg-blue-100 text-blue-600" :
-                                p.productType === 'custom-build' ? "bg-purple-100 text-purple-600" :
-                                p.productType === 'pre-packaged' ? "bg-emerald-100 text-emerald-600" :
-                                "bg-gray-100 text-gray-600"
+                                "text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider border",
+                                p.productType === 'rental' ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800" :
+                                p.productType === 'custom-build' ? "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:border-purple-800" :
+                                p.productType === 'pre-packaged' ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-800" :
+                                "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:border-gray-700"
                               )}>
                                 {p.productType === 'rental' ? 'Cho thuê' :
                                 p.productType === 'custom-build' ? 'Tùy chỉnh' :

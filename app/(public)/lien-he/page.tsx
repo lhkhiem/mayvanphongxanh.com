@@ -14,10 +14,12 @@ import {
   Clock,
   HeadphonesIcon,
   MessageCircle,
-  Wrench
+  Wrench,
+  Loader2
 } from 'lucide-react';
 import { useState } from 'react';
 import { useSettings } from '@/context/SettingsContext';
+import { toast } from 'sonner';
 
 export default function ContactPage() {
   const { getSetting } = useSettings();
@@ -58,12 +60,29 @@ export default function ContactPage() {
     service: 'Báo giá sản phẩm',
     message: '',
   });
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // Add logic to send data to API
-    alert('Cảm ơn bạn đã liên hệ. Chúng tôi sẽ phản hồi sớm nhất có thể!');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || 'Cảm ơn bạn đã liên hệ. Chúng tôi sẽ phản hồi sớm nhất có thể!');
+        setFormData({ name: '', phone: '', service: 'Báo giá sản phẩm', message: '' });
+      } else {
+        toast.error(data.error || 'Đã có lỗi xảy ra.');
+      }
+    } catch (error) {
+      toast.error('Lỗi kết nối. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -168,11 +187,12 @@ export default function ContactPage() {
               </div>
 
               <button 
-                className="inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-primary px-8 text-sm font-bold text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors" 
+                className="inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-primary px-8 text-sm font-bold text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
                 type="submit"
+                disabled={loading}
               >
-                <Send className="w-4 h-4" />
-                Gửi yêu cầu
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {loading ? 'Đang gửi...' : 'Gửi yêu cầu'}
               </button>
             </form>
 

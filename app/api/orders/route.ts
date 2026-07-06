@@ -156,12 +156,44 @@ export async function POST(request: Request) {
       const discount = 0
       const totalAmount = subTotal + shippingFee - discount
 
+      // Deduplication: Tìm hoặc tạo Customer
+      let customer = await tx.customer.findUnique({
+        where: { phone: customerPhone },
+      })
+
+      if (!customer && customerEmail) {
+        customer = await tx.customer.findUnique({
+          where: { email: customerEmail },
+        })
+      }
+
+      if (customer) {
+        customer = await tx.customer.update({
+          where: { id: customer.id },
+          data: {
+            name: customerName,
+            address: shippingAddress,
+            ...(customerEmail && !customer.email ? { email: customerEmail } : {}),
+          },
+        })
+      } else {
+        customer = await tx.customer.create({
+          data: {
+            name: customerName,
+            phone: customerPhone,
+            email: customerEmail,
+            address: shippingAddress,
+          },
+        })
+      }
+
       return tx.order.create({
         data: {
           customerName,
           customerPhone,
           customerEmail,
           shippingAddress,
+          customerId: customer.id,
           notes,
           subTotal,
           shippingFee,

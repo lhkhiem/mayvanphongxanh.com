@@ -95,6 +95,11 @@ export function ProductCard({
         className="relative overflow-hidden bg-white h-48 md:h-52 mb-4 flex items-center justify-center cursor-pointer"
         onClick={() => router.push(`/san-pham/${hrefSlug}`)}
       >
+        {productType === 'rental' && (
+          <div className="absolute top-2 left-2 z-10 bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm uppercase tracking-wider">
+            Cho Thuê
+          </div>
+        )}
         {!imageError ? (
           <img
             src={image}

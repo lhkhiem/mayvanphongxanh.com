@@ -68,6 +68,7 @@ type OrderItem = {
   price: number
   quantity: number
   customOptions: unknown
+  variant?: { product: { productType: string } } | null
 }
 
 type Order = {
@@ -397,6 +398,8 @@ export default function OrdersPage() {
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700/60">
                   {orders.map((order) => {
                     const isExpanded = expandedId === order.id
+                    const hasRental = order.items.some(item => item.variant?.product?.productType === 'rental')
+                    const hasSale = order.items.some(item => item.variant?.product?.productType !== 'rental')
                     return (
                       <Fragment key={order.id}>
                         <tr className="align-top transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/30">
@@ -414,6 +417,15 @@ export default function OrdersPage() {
                                   <Copy className="h-3 w-3" />
                                 </button>
                                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{formatDate(order.createdAt)}</p>
+                                {hasRental && hasSale ? (
+                                  <span className="mt-1.5 inline-block rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                                    MUA & THUÊ
+                                  </span>
+                                ) : hasRental ? (
+                                  <span className="mt-1.5 inline-block rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                    ĐƠN THUÊ MÁY
+                                  </span>
+                                ) : null}
                               </div>
                             </div>
                           </td>
@@ -503,7 +515,14 @@ export default function OrdersPage() {
                                       return (
                                         <div key={item.id} className="grid gap-2 px-4 py-3 sm:grid-cols-[1fr_auto]">
                                           <div>
-                                            <p className="font-medium text-gray-900 dark:text-gray-100">{item.productName}</p>
+                                            <div className="flex items-center gap-2">
+                                              <p className="font-medium text-gray-900 dark:text-gray-100">{item.productName}</p>
+                                              {item.variant?.product?.productType === 'rental' && (
+                                                <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-600 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
+                                                  Thuê
+                                                </span>
+                                              )}
+                                            </div>
                                             <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                                               SKU: {item.sku} • {item.variantName || "Mặc định"}
                                             </p>

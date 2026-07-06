@@ -68,6 +68,15 @@ export async function getOrders(params?: OrderListParams) {
               price: true,
               quantity: true,
               customOptions: true,
+              variant: {
+                select: {
+                  product: {
+                    select: {
+                      productType: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },

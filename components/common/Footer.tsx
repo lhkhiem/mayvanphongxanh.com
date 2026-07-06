@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Phone, Mail, MapPin, Clock, Send, ArrowRight, Shield, Truck, Award } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, Send, ArrowRight, Shield, Truck, Award, Loader2 } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 const FacebookIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -48,6 +50,34 @@ const categories = [
 
 export function Footer() {
   const { getSetting } = useSettings();
+  const [subscriberEmail, setSubscriberEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubscribe = async () => {
+    if (!subscriberEmail || !subscriberEmail.includes('@')) {
+      toast.error('Vui lòng nhập email hợp lệ!');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: subscriberEmail }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || 'Đăng ký nhận tin thành công!');
+        setSubscriberEmail('');
+      } else {
+        toast.error(data.error || 'Đã có lỗi xảy ra.');
+      }
+    } catch (error) {
+      toast.error('Lỗi kết nối. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const companyName = getSetting('company_name', 'Công ty TNHH Máy Văn Phòng Xanh');
   const companyDescription = getSetting('company_description', 'Đối tác tin cậy cung cấp thiết bị văn phòng, máy in, giải pháp CNTT...');
@@ -209,12 +239,18 @@ export function Footer() {
             <div className="flex flex-col gap-2">
               <input
                 type="email"
+                value={subscriberEmail}
+                onChange={(e) => setSubscriberEmail(e.target.value)}
                 placeholder="Nhập email của bạn"
                 className="w-full px-3 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/60 transition-colors"
               />
-              <button className="w-full py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
-                <Send className="w-3.5 h-3.5" />
-                Đăng ký ngay
+              <button 
+                onClick={handleSubscribe}
+                disabled={loading}
+                className="w-full py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                {loading ? 'Đang xử lý...' : 'Đăng ký ngay'}
               </button>
             </div>
 
