@@ -57,6 +57,7 @@ export type ProductInput = {
   customOptions?: any // Added for custom-build addons
   variants: ProductVariantInput[]
   policyIds?: number[] // Added for Product Policies
+  consumableIds?: number[] // Added for Consumables
 }
 
 // ── Queries ───────────────────────────────────────────────────────────────────
@@ -135,6 +136,7 @@ export async function getProduct(id: number) {
       include: {
         category: true,
         policies: true,
+        consumables: true,
         variants: {
           orderBy: { price: 'asc' },
         },
@@ -157,7 +159,7 @@ export async function createProduct(input: ProductInput) {
         name: input.name,
         slug: input.slug,
         category: { connect: { id: input.categoryId } },
-        brandId: input.brandId || null,
+        brandRef: input.brandId ? { connect: { id: input.brandId } } : undefined,
         brand: input.brand || null,
         images: input.images.length > 0 ? input.images : Prisma.JsonNull,
         description: input.description || null,
@@ -175,6 +177,9 @@ export async function createProduct(input: ProductInput) {
         customOptions: input.customOptions ? input.customOptions : Prisma.JsonNull,
         policies: {
           connect: input.policyIds?.map(id => ({ id })) || []
+        },
+        consumables: {
+          connect: input.consumableIds?.map(id => ({ id })) || []
         },
         variants: {
           create: input.variants.map((v) => ({
@@ -224,7 +229,7 @@ export async function updateProduct(id: number, input: ProductInput) {
           name: input.name,
           slug: input.slug,
           category: { connect: { id: input.categoryId } },
-          brandId: input.brandId || null,
+          brandRef: input.brandId ? { connect: { id: input.brandId } } : { disconnect: true },
           brand: input.brand || null,
           images: input.images.length > 0 ? input.images : Prisma.JsonNull,
           description: input.description || null,
@@ -242,6 +247,9 @@ export async function updateProduct(id: number, input: ProductInput) {
           customOptions: input.customOptions ? input.customOptions : Prisma.JsonNull,
           policies: {
             set: input.policyIds?.map(id => ({ id })) || []
+          },
+          consumables: {
+            set: input.consumableIds?.map(id => ({ id })) || []
           }
         },
       })

@@ -36,14 +36,14 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   if (!isNaN(id)) {
     dbProduct = await prisma.product.findUnique({
       where: { id },
-      include: { category: true, variants: true, policies: true }
+      include: { category: true, variants: true, policies: true, consumables: { include: { category: true, variants: true } } }
     });
   }
   
   if (!dbProduct) {
     dbProduct = await prisma.product.findUnique({
       where: { slug },
-      include: { category: true, variants: true, policies: true }
+      include: { category: true, variants: true, policies: true, consumables: { include: { category: true, variants: true } } }
     });
   }
 
@@ -102,13 +102,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       include: { category: true, variants: true },
       take: 4,
       orderBy: { createdAt: 'desc' }
-    }),
-    // Consumables (Vật tư) if this is a printer
-    product.category === 'Máy in' ? prisma.product.findMany({
-      where: { category: { name: 'Vật tư' }, isActive: true },
-      include: { category: true, variants: true },
-      take: 4
-    }) : Promise.resolve([])
+    })
   ]);
 
   const mapProducts = (list: any[]) => list.map(p => {
@@ -134,7 +128,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       similarProducts={mapProducts(similarDb)} 
       sameBrandProducts={mapProducts(sameBrandDb)} 
       relatedProducts={mapProducts(relatedDb)} 
-      consumables={mapProducts(consumablesDb)} 
+      consumables={mapProducts(dbProduct.consumables || [])} 
     />
   );
 }

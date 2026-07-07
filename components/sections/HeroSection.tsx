@@ -104,6 +104,13 @@ export function HeroSection({ categories = [] }: { categories?: any[] }) {
   const [current, setCurrent] = useState(0);
   const [activeSide, setActiveSide] = useState<number | null>(null);
 
+  const allCats = categories && categories.length > 0 ? categories : [
+    { icon: '📦', name: 'Mặc định', slug: 'mac-dinh', children: [] }
+  ];
+  const MAX_CATS = 10;
+  const visibleCats = allCats.slice(0, MAX_CATS);
+  const hasMoreCats = allCats.length > MAX_CATS;
+
   useEffect(() => {
     const t = setInterval(() => setCurrent(p => (p + 1) % slides.length), 5000);
     return () => clearInterval(t);
@@ -116,29 +123,40 @@ export function HeroSection({ categories = [] }: { categories?: any[] }) {
         <div className="flex gap-2.5">
 
           {/* ── Left sidebar: Categories ── */}
-          <div className="hidden lg:block w-[220px] shrink-0 bg-white rounded-lg border border-gray-200 self-start relative" onMouseLeave={() => setActiveSide(null)}>
-            {(categories && categories.length > 0 ? categories : [
-              { icon: '📦', name: 'Mặc định', slug: 'mac-dinh', children: [] }
-            ]).map((cat, idx, arr) => (
-              <div
-                key={cat.slug}
-                className="relative group/cat"
-                onMouseEnter={() => setActiveSide(idx)}
-              >
-                <Link
-                  href={`/danh-muc/${cat.slug}`}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors border-l-[3px] ${
-                    activeSide === idx
-                      ? 'bg-primary/5 border-primary text-primary font-semibold'
-                      : 'border-transparent text-gray-700 hover:bg-gray-50 hover:text-primary'
-                  } ${idx !== arr.length - 1 ? 'border-b border-gray-100' : ''}`}
+          <div className="hidden lg:flex flex-col w-[220px] shrink-0 bg-white rounded-lg border border-gray-200 relative" onMouseLeave={() => setActiveSide(null)}>
+            {/* Category list */}
+            <div>
+              {visibleCats.map((cat, idx, arr) => (
+                <div
+                  key={cat.slug}
+                  className="relative group/cat"
+                  onMouseEnter={() => setActiveSide(idx)}
                 >
-                  <span className="text-lg w-6 text-center">{cat.icon || '📦'}</span>
-                  <span className="flex-1 truncate">{cat.name}</span>
-                  <ChevronRight className={`w-3.5 h-3.5 text-gray-400 transition-transform ${activeSide === idx ? 'translate-x-0.5' : ''}`} />
-                </Link>
-              </div>
-            ))}
+                  <Link
+                    href={`/danh-muc/${cat.slug}`}
+                    className={`flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors border-l-[3px] ${
+                      activeSide === idx
+                        ? 'bg-primary/5 border-primary text-primary font-semibold'
+                        : 'border-transparent text-gray-700 hover:bg-gray-50 hover:text-primary'
+                    } ${idx !== arr.length - 1 ? 'border-b border-gray-100' : ''}`}
+                  >
+                    <span className="text-lg w-6 text-center">{cat.icon || '📦'}</span>
+                    <span className="flex-1 truncate">{cat.name}</span>
+                    <ChevronRight className={`w-3.5 h-3.5 text-gray-400 transition-transform ${activeSide === idx ? 'translate-x-0.5' : ''}`} />
+                  </Link>
+                </div>
+              ))}
+            </div>
+
+            {/* Xem thêm – pinned to bottom when categories exceed MAX */}
+            {hasMoreCats && (
+              <Link
+                href="/danh-muc"
+                className="mt-auto flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-primary border-t border-gray-100 hover:bg-primary/5 transition-colors"
+              >
+                Xem tất cả danh mục <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            )}
 
             {/* Sub-Categories Mega Menu Flyout */}
             {activeSide !== null && (categories && categories.length > 0) && (
@@ -266,12 +284,12 @@ export function HeroSection({ categories = [] }: { categories?: any[] }) {
             </div>
 
             {/* Bottom 3 tiles */}
-            <div className="flex overflow-x-auto sm:overflow-hidden sm:grid sm:grid-cols-3 gap-2 flex-1 pb-1 sm:pb-0 scrollbar-hide snap-x">
+            <div className="flex overflow-x-auto sm:overflow-hidden sm:grid sm:grid-cols-3 gap-2 h-[110px] pb-1 sm:pb-0 scrollbar-hide snap-x">
               {bottomTiles.map(tile => (
                 <Link
                   key={tile.title}
                   href={tile.href}
-                  className={`relative shrink-0 w-[150px] sm:w-auto rounded-lg overflow-hidden bg-gradient-to-br ${tile.bg} p-3 flex flex-col justify-between hover:opacity-90 hover:scale-[1.02] transition-all duration-200 group snap-start`}
+                  className={`relative shrink-0 w-[150px] sm:w-auto h-[110px] rounded-lg overflow-hidden bg-gradient-to-br ${tile.bg} p-3 flex flex-col justify-between hover:opacity-90 hover:scale-[1.02] transition-all duration-200 group snap-start`}
                 >
                   <div>
                     <div className="text-xl mb-0.5">{tile.icon}</div>
@@ -289,11 +307,11 @@ export function HeroSection({ categories = [] }: { categories?: any[] }) {
 
           {/* ── Right: 2 promo tiles ── */}
           <div className="hidden xl:flex w-[200px] shrink-0 flex-col gap-2">
-            {promoTiles.map(tile => (
+            {promoTiles.map((tile, tileIdx) => (
               <Link
                 key={tile.label}
                 href={tile.href}
-                className={`relative flex-1 rounded-lg overflow-hidden bg-gradient-to-br ${tile.bg} p-4 flex flex-col justify-between hover:opacity-90 hover:scale-[1.02] transition-all duration-200 group min-h-[165px]`}
+                className={`relative rounded-lg overflow-hidden bg-gradient-to-br ${tile.bg} p-4 flex flex-col justify-between hover:opacity-90 hover:scale-[1.02] transition-all duration-200 group shrink-0 ${tileIdx === 0 ? 'h-[320px] lg:h-[380px]' : 'h-[110px]'}`}
               >
                 <div>
                   <span className="inline-block text-xs font-bold bg-yellow-400 text-gray-900 rounded px-2 py-0.5 mb-2">

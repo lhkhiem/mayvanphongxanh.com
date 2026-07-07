@@ -15,7 +15,7 @@ const SORT_OPTIONS = [
   { label: 'Bán chạy', value: 'best-sellers' },
 ];
 
-const MOCK_BRANDS = ['HP', 'Canon', 'Epson', 'Brother', 'Dell', 'Lenovo', 'Asus'];
+
 
 export default function ProductsClient({ 
   products = [], 
@@ -89,14 +89,24 @@ export default function ProductsClient({
     return result;
   }, [selectedCategories]);
 
-  // Calculate dynamic category counts
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     products.forEach(p => {
       counts[p.category] = (counts[p.category] || 0) + 1;
     });
     return Object.entries(counts).map(([name, count]) => ({ name, count }));
-  }, []);
+  }, [products]);
+
+  const brandCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    products.forEach(p => {
+      const brand = p.brand || (p.attributes && p.attributes['Thương hiệu']);
+      if (brand) {
+        counts[brand] = (counts[brand] || 0) + 1;
+      }
+    });
+    return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+  }, [products]);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategories(prev => 
@@ -227,6 +237,32 @@ export default function ProductsClient({
                 </button>
               </div>
 
+              {/* Danh Mục (Moved above Khoảng giá) */}
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="font-bold text-gray-800 text-[13px] uppercase mb-3 flex items-center justify-between cursor-pointer">
+                  DANH MỤC
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                </h3>
+                <div className="space-y-2.5 max-h-[250px] overflow-y-auto custom-scrollbar">
+                  {categoryCounts.map((cat) => (
+                    <label key={cat.name} className="flex items-start gap-2.5 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={selectedCategories.includes(cat.name)}
+                        onChange={() => handleCategoryChange(cat.name)}
+                        className="mt-0.5 rounded border-gray-300 text-primary focus:ring-primary w-3.5 h-3.5"
+                      />
+                      <span className="text-[13px] text-gray-600 group-hover:text-primary flex-1 leading-snug">
+                        {cat.name}
+                      </span>
+                      <span className="text-[11px] text-gray-400 bg-gray-100 px-1.5 rounded">
+                        {cat.count}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               {/* Khoảng giá */}
               <div className="p-4 border-b border-gray-200">
                 <h3 className="font-bold text-gray-800 text-[14px] mb-4">
@@ -274,31 +310,6 @@ export default function ProductsClient({
                 </div>
               </div>
 
-              {/* Danh Mục */}
-              <div className="p-4 border-b border-gray-200">
-                <h3 className="font-bold text-gray-800 text-[13px] uppercase mb-3 flex items-center justify-between cursor-pointer">
-                  DANH MỤC
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
-                </h3>
-                <div className="space-y-2.5 max-h-[250px] overflow-y-auto custom-scrollbar">
-                  {categoryCounts.map((cat) => (
-                    <label key={cat.name} className="flex items-start gap-2.5 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        checked={selectedCategories.includes(cat.name)}
-                        onChange={() => handleCategoryChange(cat.name)}
-                        className="mt-0.5 rounded border-gray-300 text-primary focus:ring-primary w-3.5 h-3.5"
-                      />
-                      <span className="text-[13px] text-gray-600 group-hover:text-primary flex-1 leading-snug">
-                        {cat.name}
-                      </span>
-                      <span className="text-[11px] text-gray-400 bg-gray-100 px-1.5 rounded">
-                        {cat.count}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
 
               {/* Thương Hiệu */}
               <div className="p-4 border-b border-gray-200">
@@ -307,16 +318,19 @@ export default function ProductsClient({
                   <ChevronDown className="w-4 h-4 text-gray-400" />
                 </h3>
                 <div className="space-y-2.5 max-h-[250px] overflow-y-auto custom-scrollbar">
-                  {MOCK_BRANDS.map((brand) => (
-                    <label key={brand} className="flex items-start gap-2.5 cursor-pointer group">
+                  {brandCounts.map((brand) => (
+                    <label key={brand.name} className="flex items-start gap-2.5 cursor-pointer group">
                       <input
                         type="checkbox"
-                        checked={selectedBrands.includes(brand)}
-                        onChange={() => handleBrandChange(brand)}
+                        checked={selectedBrands.includes(brand.name)}
+                        onChange={() => handleBrandChange(brand.name)}
                         className="mt-0.5 rounded border-gray-300 text-primary focus:ring-primary w-3.5 h-3.5"
                       />
                       <span className="text-[13px] text-gray-600 group-hover:text-primary flex-1 leading-snug">
-                        {brand}
+                        {brand.name}
+                      </span>
+                      <span className="text-[11px] text-gray-400 bg-gray-100 px-1.5 rounded">
+                        {brand.count}
                       </span>
                     </label>
                   ))}

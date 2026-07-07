@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
-import { Star, ShoppingCart, Truck, ShieldCheck, ArrowLeft, Plus, Minus, CheckCircle2, Printer, Phone, Mail, MapPin, CreditCard, ChevronRight, Download, Info } from 'lucide-react';
+import { Star, ShoppingCart, Truck, ShieldCheck, ArrowLeft, Plus, Minus, CheckCircle2, Printer, Phone, Mail, MapPin, CreditCard, ChevronRight, Download, Info, Package } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
@@ -155,9 +155,9 @@ export default function ProductDetailClient({
     <main className="min-h-screen bg-background flex flex-col print:hidden">
       <Header />
       
-      <div className="flex-1 mx-auto max-w-7xl px-4 py-8 w-full">
+      <div className="flex-1 mx-auto max-w-7xl px-4 py-6 w-full">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1 sm:gap-2 text-sm text-muted-foreground mb-6 overflow-x-auto whitespace-nowrap scrollbar-hide">
+        <nav className="flex items-center gap-1 sm:gap-2 text-sm text-muted-foreground mb-4 overflow-x-auto whitespace-nowrap scrollbar-hide">
           <Link href="/" className="hover:text-primary transition-colors flex items-center gap-1">
             Trang chủ
           </Link>
@@ -179,11 +179,11 @@ export default function ProductDetailClient({
           </span>
         </nav>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8">
           {/* Image Gallery */}
-          <div className="md:col-span-5 lg:col-span-5 flex flex-col gap-4">
+          <div className="md:col-span-5 lg:col-span-4 flex flex-col gap-2">
             <div 
-              className="relative aspect-square rounded-2xl overflow-hidden bg-white border border-border cursor-crosshair"
+              className="relative aspect-square lg:aspect-[4/3] rounded-2xl overflow-hidden bg-white border border-border cursor-crosshair"
               onMouseMove={(e) => {
                 const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
                 const x = ((e.clientX - left) / width) * 100;
@@ -211,7 +211,7 @@ export default function ProductDetailClient({
             </div>
             
             {/* Thumbnails */}
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-4 gap-2">
               {gallery.map((img, idx) => (
                 <button
                   key={idx}
@@ -222,15 +222,48 @@ export default function ProductDetailClient({
                 </button>
               ))}
             </div>
+
+            {/* Consumables (Vật tư mua kèm) - Left Column */}
+            {consumables && consumables.length > 0 && (
+              <div className="mt-auto p-3 bg-emerald-50/50 border border-emerald-100 rounded-2xl shadow-sm">
+                <h3 className="text-sm font-bold text-emerald-800 mb-2 uppercase tracking-wider flex items-center gap-2">
+                  <Package className="w-4 h-4 text-emerald-600" /> Vật tư tiêu hao khuyên dùng
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {consumables.map((item: any) => (
+                    <div key={item.id} className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-emerald-100 hover:border-emerald-300 transition-colors shadow-sm group">
+                      <Link href={`/san-pham/${item.slug}`} className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-50 flex-shrink-0 border border-border block">
+                        <Image src={item.image} alt={item.name} fill className="object-cover group-hover:scale-105 transition-transform" />
+                      </Link>
+                      <div className="flex-1 min-w-0">
+                        <Link href={`/san-pham/${item.slug}`} className="font-semibold text-[13px] text-foreground hover:text-primary truncate block leading-tight mb-0.5">
+                          {item.name}
+                        </Link>
+                        <div className="text-primary font-bold text-sm">
+                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
+                        </div>
+                      </div>
+                      <Link 
+                        href={`/san-pham/${item.slug}`}
+                        className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all flex-shrink-0"
+                        title="Xem chi tiết"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Product Info */}
-          <div className="md:col-span-7 lg:col-span-7 flex flex-col">
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-6 leading-tight">
+          <div className="md:col-span-7 lg:col-span-8 flex flex-col">
+            <h1 className="text-2xl font-bold text-foreground mb-4 leading-tight">
               {product.name}
             </h1>
 
-            <div className="mb-6 bg-secondary/20 rounded-2xl p-5 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="mb-4 bg-secondary/20 rounded-2xl p-4 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1 mb-1">
                   <span className="text-4xl font-extrabold text-foreground tracking-tight">
@@ -393,8 +426,8 @@ export default function ProductDetailClient({
             )}
 
             {/* Quick Specs */}
-            <div className="mb-6 bg-secondary/20 rounded-2xl p-5 border border-border">
-              <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
+            <div className="mb-4 bg-secondary/20 rounded-2xl p-4 border border-border">
+              <h3 className="text-sm font-bold text-foreground mb-3 uppercase tracking-wider flex items-center gap-2">
                 <Info className="w-5 h-5 text-primary" /> Thông số nổi bật
               </h3>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 text-sm text-foreground">
@@ -422,56 +455,57 @@ export default function ProductDetailClient({
             </div>
 
             {/* Actions */}
-            <div className="mb-6">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex items-center border-2 border-primary/20 bg-background rounded-xl h-14 w-full sm:w-36 flex-shrink-0">
+            <div className="mb-4">
+              <div className="flex flex-col lg:flex-row gap-3">
+                <div className="flex items-center border-2 border-primary/20 bg-background rounded-xl h-12 w-full lg:w-32 flex-shrink-0">
                   <button 
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-12 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-l-xl"
+                    className="w-10 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-l-xl"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
                   <span className="flex-1 text-center font-bold text-lg">{quantity}</span>
                   <button 
                     onClick={() => setQuantity(Math.min(stock, quantity + 1))}
-                    className="w-12 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-r-xl"
+                    className="w-10 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-r-xl"
                     disabled={quantity >= stock}
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
   
-                <div className="flex flex-1 gap-3">
+                <div className="flex flex-1 gap-2 sm:gap-3">
                   <button 
                     onClick={handleAddToCart}
                     disabled={stock === 0}
-                    className="flex-1 h-14 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5"
-                  >
-                    {isRental ? 'ĐĂNG KÝ THUÊ MÁY' : 'MUA NGAY'}
-                  </button>
-                  <button 
-                    onClick={handleAddToCart}
-                    disabled={stock === 0}
-                    className="w-14 h-14 bg-primary/10 text-primary border-2 border-primary/20 rounded-xl hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
+                    className="w-12 h-12 bg-primary/10 text-primary border-2 border-primary/20 rounded-xl hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
                     title={isRental ? "Thêm vào giỏ (Thuê)" : "Thêm vào giỏ"}
                   >
                     <ShoppingCart className="w-5 h-5" />
                   </button>
+
+                  <button 
+                    onClick={handleAddToCart}
+                    disabled={stock === 0}
+                    className="flex-1 h-12 bg-primary text-primary-foreground rounded-xl font-bold text-sm sm:text-base hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 px-2"
+                  >
+                    {isRental ? 'ĐĂNG KÝ THUÊ' : 'MUA NGAY'}
+                  </button>
+
+                  <button 
+                    onClick={() => window.print()}
+                    className="px-3 sm:px-4 h-12 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-bold text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 flex-shrink-0"
+                    title="Yêu cầu báo giá"
+                  >
+                    <Printer className="w-5 h-5" />
+                    <span className="hidden xl:inline">BÁO GIÁ</span>
+                  </button>
                 </div>
-              </div>
-              <div className="mt-3">
-                <button 
-                  onClick={() => window.print()}
-                  className="w-full h-12 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-medium text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
-                >
-                  <Printer className="w-4 h-4" />
-                  YÊU CẦU BÁO GIÁ CHO DOANH NGHIỆP
-                </button>
               </div>
             </div>
 
             {/* Features / Policies */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="grid grid-cols-2 gap-2 mt-auto mb-0">
               {(product.policies && product.policies.length > 0 ? product.policies : [
                 { id: 1, icon: 'Truck', title: 'Giao hàng Miễn phí', description: 'Cho đơn hàng trên 500k' },
                 { id: 2, icon: 'ShieldCheck', title: 'Bảo hành Chính hãng', description: 'Tối thiểu 12 tháng' }

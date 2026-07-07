@@ -75,6 +75,8 @@ model Product {
   brandRef    Brand?           @relation(fields: [brandId], references: [id], onDelete: SetNull)
   variants    ProductVariant[]
   policies    ProductPolicy[]
+  consumables         Product[] @relation("ProductConsumables")
+  consumableOf        Product[] @relation("ProductConsumables")
 
   @@index([categoryId])
   @@index([slug])

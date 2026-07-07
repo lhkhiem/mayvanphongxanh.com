@@ -11,7 +11,7 @@ import Link from "next/link";
 import { MediaPickerModal } from "@/components/admin/media-picker-modal";
 import { RichTextEditor, type RichTextEditorRef } from "@/components/admin/rich-text-editor";
 import { CategoryFilterDropdown } from "@/components/admin/category-filter-dropdown";
-import { createProduct, updateProduct, type ProductInput, type ProductVariantInput } from "@/app/(admin)/admin/(dashboard)/products/actions";
+import { createProduct, updateProduct, getProducts, type ProductInput, type ProductVariantInput } from "@/app/(admin)/admin/(dashboard)/products/actions";
 import { getPolicies } from "@/app/(admin)/admin/(dashboard)/policies/actions";
 import { cn } from "@/lib/utils";
 import * as LucideIcons from "lucide-react";
@@ -94,6 +94,7 @@ export function ProductForm({
     drivers: initialData?.drivers || { content: '', files: [] },
     rentalTerms: initialData?.rentalTerms || { deposit: 0, minMonths: 12, freeBw: 0, freeColor: 0, overageBw: 0, overageColor: 0 },
     policyIds: Array.isArray(initialData?.policies) ? initialData.policies.map((p: any) => p.id) : [],
+    consumableIds: Array.isArray(initialData?.consumables) ? initialData.consumables.map((c: any) => c.id) : [],
   });
 
   const [variants, setVariants] = useState<ProductVariantInput[]>(
@@ -109,6 +110,16 @@ export function ProductForm({
 
   const [customOptions, setCustomOptions] = useState<CustomOption[]>(
     Array.isArray(initialData?.customOptions) ? initialData.customOptions : []
+  );
+
+  const [isConsumablesEnabled, setIsConsumablesEnabled] = useState<boolean>(
+    Array.isArray(initialData?.consumables) && initialData.consumables.length > 0
+  );
+  const [availableConsumables, setAvailableConsumables] = useState<any[]>([]);
+  const [consumableSearch, setConsumableSearch] = useState("");
+  const [searchingConsumables, setSearchingConsumables] = useState(false);
+  const [selectedConsumables, setSelectedConsumables] = useState<any[]>(
+    Array.isArray(initialData?.consumables) ? initialData.consumables : []
   );
 
   // Media picker state
@@ -142,6 +153,20 @@ export function ProductForm({
   useEffect(() => {
     getPolicies().then(setAvailablePolicies).catch(console.error);
   }, []);
+
+  // Fetch consumables
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (tab === 'info' && isConsumablesEnabled) {
+         setSearchingConsumables(true);
+         getProducts({ search: consumableSearch, pageSize: 50 }).then(res => {
+            setAvailableConsumables(res.data || []);
+            setSearchingConsumables(false);
+         });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [consumableSearch, tab, isConsumablesEnabled]);
 
   // Auto-switch tab if current tab is hidden
   useEffect(() => {
@@ -271,7 +296,8 @@ export function ProductForm({
     const input: ProductInput = { 
       ...form, 
       variants,
-      customOptions: isCustomBuild ? customOptions : undefined
+      customOptions: isCustomBuild ? customOptions : undefined,
+      consumableIds: isConsumablesEnabled ? selectedConsumables.map(c => c.id) : []
     };
 
     const res = isEditing ? await updateProduct(initialData.id, input) : await createProduct(input);
@@ -542,6 +568,78 @@ export function ProductForm({
                 </div>
               </div>
               
+              {/* Vật tư tiêu hao (trong tab Info) */}
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-4 border-b border-gray-100 dark:border-gray-700 pb-3">
+                  <div>
+                    <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Vật tư tiêu hao</h2>
+                    <p className="text-xs text-gray-400 mt-0.5">Linh kiện thay thế định kỳ</p>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Bật</span>
+                    <input type="checkbox" checked={isConsumablesEnabled} onChange={(e) => setIsConsumablesEnabled(e.target.checked)} className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4" />
+                  </label>
+                </div>
+
+                {isConsumablesEnabled && (
+                  <div className="space-y-6">
+                    {/* Selected Consumables */}
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Đã chọn ({selectedConsumables.length})</h3>
+                      {selectedConsumables.length === 0 ? (
+                        <div className="p-4 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg text-center text-sm text-gray-500">Chưa có vật tư nào được chọn</div>
+                      ) : (
+                        <div className="grid grid-cols-1 gap-3">
+                          {selectedConsumables.map(c => (
+                            <div key={c.id} className="flex gap-3 items-center p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                              <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded shrink-0 overflow-hidden flex items-center justify-center">
+                                {c.images && c.images[0] ? <img src={c.images[0]} alt={c.name} className="w-full h-full object-cover" /> : <Package className="w-5 h-5 text-gray-400" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{c.name}</p>
+                              </div>
+                              <button type="button" onClick={() => setSelectedConsumables(prev => prev.filter(item => item.id !== c.id))} className="p-1.5 text-gray-400 hover:text-red-500 rounded-md transition-colors"><X className="w-4 h-4" /></button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Search and Select */}
+                    <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Tìm kiếm & Thêm vật tư</h3>
+                      <div className="relative">
+                        <LucideIcons.Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input type="text" value={consumableSearch} onChange={e => setConsumableSearch(e.target.value)} placeholder="Nhập tên sản phẩm để tìm..." className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2a303d] text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" />
+                        {searchingConsumables && <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Đang tìm...</div>}
+                      </div>
+                      
+                      <div className="max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg divide-y divide-gray-100 dark:divide-gray-800">
+                        {availableConsumables.filter(c => c.id !== initialData?.id && !selectedConsumables.some(sc => sc.id === c.id)).length === 0 ? (
+                          <div className="p-4 text-center text-sm text-gray-500">Không tìm thấy sản phẩm khả dụng</div>
+                        ) : (
+                          availableConsumables
+                            .filter(c => c.id !== initialData?.id && !selectedConsumables.some(sc => sc.id === c.id))
+                            .map(c => (
+                              <div key={c.id} className="flex gap-3 items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded shrink-0 overflow-hidden flex items-center justify-center">
+                                  {c.images && c.images[0] ? <img src={c.images[0]} alt={c.name} className="w-full h-full object-cover" /> : <Package className="w-5 h-5 text-gray-400" />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{c.name}</p>
+                                </div>
+                                <button type="button" onClick={() => setSelectedConsumables(prev => [...prev, c])} className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium rounded-md transition-colors whitespace-nowrap">
+                                  Thêm
+                                </button>
+                              </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
               {isRental && (
                 <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] p-5 shadow-sm space-y-4">
                   <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700">Cấu hình thuê máy</h2>
@@ -753,6 +851,8 @@ export function ProductForm({
             )}
           </div>
         )}
+
+
 
         {/* ── Tab: Chính sách ── */}
         {tab === 'policies' && (
