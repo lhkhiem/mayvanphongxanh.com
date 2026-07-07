@@ -181,7 +181,7 @@ export default function ProductDetailClient({
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8">
           {/* Image Gallery */}
-          <div className="md:col-span-5 lg:col-span-4 flex flex-col gap-2">
+          <div className="md:col-span-5 lg:col-span-5 flex flex-col gap-2">
             <div 
               className="relative aspect-square lg:aspect-[4/3] rounded-2xl overflow-hidden bg-white border border-border cursor-crosshair"
               onMouseMove={(e) => {
@@ -258,7 +258,7 @@ export default function ProductDetailClient({
           </div>
 
           {/* Product Info */}
-          <div className="md:col-span-7 lg:col-span-8 flex flex-col">
+          <div className="md:col-span-7 lg:col-span-7 flex flex-col">
             <h1 className="text-2xl font-bold text-foreground mb-4 leading-tight">
               {product.name}
             </h1>
