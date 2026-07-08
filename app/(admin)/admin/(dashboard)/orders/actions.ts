@@ -126,11 +126,58 @@ export async function getOrderStats() {
 
 export async function updateOrderStatus(id: string, status: OrderStatus) {
   try {
-    await prisma.order.update({
+    const updatedOrder = await prisma.order.update({
       where: { id },
       data: { status },
+      include: {
+        items: {
+          include: {
+            variant: {
+              include: {
+                product: true
+              }
+            }
+          }
+        }
+      }
     })
+
+    // Nếu đơn hàng chuyển sang trạng thái đã giao, kiểm tra và tạo record Máy Thuê
+    if (status === "DELIVERED") {
+      const rentalItems = updatedOrder.items.filter(
+        (item) => item.variant?.product?.productType === "rental"
+      )
+
+      for (const item of rentalItems) {
+        const existingRentalsCount = await prisma.rentalMachine.count({
+          where: { orderItemId: item.id },
+        })
+
+        const quantityToCreate = item.quantity - existingRentalsCount
+
+        if (quantityToCreate > 0) {
+          const newRentals = Array.from({ length: quantityToCreate }).map(() => ({
+            orderId: updatedOrder.id,
+            orderItemId: item.id,
+            productId: item.variant!.productId,
+            productName: item.productName,
+            sku: item.sku,
+            customerName: updatedOrder.customerName,
+            customerPhone: updatedOrder.customerPhone,
+            customerEmail: updatedOrder.customerEmail,
+            customerAddress: updatedOrder.shippingAddress,
+            status: "ACTIVE" as const,
+          }))
+
+          await prisma.rentalMachine.createMany({
+            data: newRentals,
+          })
+        }
+      }
+    }
+
     revalidatePath("/admin/orders")
+    revalidatePath("/admin/rentals")
     return { success: true }
   } catch (error) {
     console.error("updateOrderStatus error:", error)

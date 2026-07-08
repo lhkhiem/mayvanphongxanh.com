@@ -12,71 +12,72 @@ datasource db {
 
 // 1. Danh mục
 model Category {
-  id        Int        @id @default(autoincrement())
-  slug      String     @unique
-  name      String
-  parentId  Int?
-  icon      String?
-  color     String?
-  isActive  Boolean    @default(true)
-  isFeatured Boolean   @default(false)
-  
-  parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children  Category[] @relation("CategoryHierarchy")
-  products  Product[]
+  id         Int     @id @default(autoincrement())
+  slug       String  @unique
+  name       String
+  parentId   Int?
+  icon       String?
+  color      String?
+  isActive   Boolean @default(true)
+  isFeatured Boolean @default(false)
+
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
 
   @@index([slug])
 }
 
 // 1.5 Thương hiệu
 model Brand {
-  id          Int        @id @default(autoincrement())
-  slug        String     @unique
+  id          Int     @id @default(autoincrement())
+  slug        String  @unique
   name        String
   logo        String?
-  description String?    @db.Text
-  isActive    Boolean    @default(true)
-  
-  products    Product[]
+  description String? @db.Text
+  isActive    Boolean @default(true)
+
+  products Product[]
 
   @@index([slug])
 }
 
 // 2. Sản phẩm Gốc
 model Product {
-  id          Int       @id @default(autoincrement())
-  slug        String    @unique
-  name        String
-  categoryId  Int
-  brandId     Int?
-  brand       String?
-  images      Json?     // Mảng URL ảnh: ["url1", "url2", ...]
-  description String?   @db.Text
-  productType String    @default("standard") // standard, pre-packaged, custom-build
-  isActive    Boolean   @default(true)
-  isFeatured  Boolean   @default(false)
-  customOptions Json?
-  quickSpecs  Json?
+  id             Int     @id @default(autoincrement())
+  slug           String  @unique
+  name           String
+  categoryId     Int
+  brandId        Int?
+  brand          String?
+  images         Json? // Mảng URL ảnh: ["url1", "url2", ...]
+  description    String? @db.Text
+  productType    String  @default("standard") // standard, pre-packaged, custom-build
+  isActive       Boolean @default(true)
+  isFeatured     Boolean @default(false)
+  customOptions  Json?
+  quickSpecs     Json?
   specifications Json?
-  manuals     Json?
-  drivers     Json?
-  rentalTerms Json?
+  manuals        Json?
+  drivers        Json?
+  rentalTerms    Json?
 
   // SEO
   metaTitle       String?
   metaDescription String?
   metaKeywords    String?
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  category    Category         @relation(fields: [categoryId], references: [id])
-  brandRef    Brand?           @relation(fields: [brandId], references: [id], onDelete: SetNull)
-  variants    ProductVariant[]
-  policies    ProductPolicy[]
-  consumables         Product[] @relation("ProductConsumables")
-  consumableOf        Product[] @relation("ProductConsumables")
+  category       Category         @relation(fields: [categoryId], references: [id])
+  brandRef       Brand?           @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  variants       ProductVariant[]
+  policies       ProductPolicy[]
+  consumables    Product[]        @relation("ProductConsumables")
+  consumableOf   Product[]        @relation("ProductConsumables")
+  rentalMachines RentalMachine[]
 
   @@index([categoryId])
   @@index([slug])
@@ -93,18 +94,18 @@ model ProductPolicy {
 
 // 3. Biến thể Sản phẩm
 model ProductVariant {
-  id            String    @id @default(cuid())
+  id            String  @id @default(cuid())
   productId     Int
-  sku           String    @unique
-  name          String?   
-  price         Float     
-  originalPrice Float?    
-  stockQuantity Int       @default(0)
-  images        Json?     
-  attributes    Json?     
+  sku           String  @unique
+  name          String?
+  price         Float
+  originalPrice Float?
+  stockQuantity Int     @default(0)
+  images        Json?
+  attributes    Json?
 
-  product       Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  orderItems    OrderItem[]
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
 
   @@index([productId])
   @@index([sku])
@@ -132,31 +133,32 @@ enum PaymentStatus {
 }
 
 model Order {
-  id              String      @id @default(uuid())
-  userId          String?     
-  
+  id     String  @id @default(uuid())
+  userId String?
+
   customerName    String
   customerPhone   String
   customerEmail   String?
   shippingAddress String
-  
-  customerId      String?
-  customer        Customer?   @relation(fields: [customerId], references: [id])
-  
-  subTotal        Float
-  shippingFee     Float       @default(0)
-  discount        Float       @default(0)
-  totalAmount     Float       
-  
-  status          OrderStatus @default(PENDING)
-  paymentMethod   PaymentMethod @default(COD)
-  paymentStatus   PaymentStatus @default(UNPAID)
-  
-  notes           String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
 
-  items           OrderItem[]
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+
+  subTotal    Float
+  shippingFee Float @default(0)
+  discount    Float @default(0)
+  totalAmount Float
+
+  status        OrderStatus   @default(PENDING)
+  paymentMethod PaymentMethod @default(COD)
+  paymentStatus PaymentStatus @default(UNPAID)
+
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items          OrderItem[]
+  rentalMachines RentalMachine[]
 
   @@index([customerPhone])
   @@index([createdAt])
@@ -164,19 +166,19 @@ model Order {
 
 // 5. Chi tiết Đơn hàng
 model OrderItem {
-  id              Int      @id @default(autoincrement())
-  orderId         String
-  variantId       String?  
-  
-  productName     String   
-  variantName     String?  
-  sku             String   
-  price           Float    
-  quantity        Int
-  customOptions   Json?    
-  
-  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  variant         ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  id        Int     @id @default(autoincrement())
+  orderId   String
+  variantId String?
+
+  productName   String
+  variantName   String?
+  sku           String
+  price         Float
+  quantity      Int
+  customOptions Json?
+
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
 
   @@index([orderId])
 }
@@ -196,84 +198,84 @@ model Setting {
 
 // 7. Menu Điều hướng Động (Tránh hardcode navbar/footer)
 model Menu {
-  id          String     @id @default(cuid())
-  code        String     @unique // VD: HEADER_MAIN, FOOTER_LINKS
-  name        String
-  items       MenuItem[]
+  id    String     @id @default(cuid())
+  code  String     @unique // VD: HEADER_MAIN, FOOTER_LINKS
+  name  String
+  items MenuItem[]
 }
 
 model MenuItem {
-  id          String     @id @default(cuid())
-  menuId      String
-  label       String
-  url         String
-  icon        String?
-  parentId    String?
-  order       Int        @default(0)
+  id       String  @id @default(cuid())
+  menuId   String
+  label    String
+  url      String
+  icon     String?
+  parentId String?
+  order    Int     @default(0)
 
-  menu        Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
-  parent      MenuItem?  @relation("MenuHierarchy", fields: [parentId], references: [id])
-  children    MenuItem[] @relation("MenuHierarchy")
+  menu     Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  parent   MenuItem?  @relation("MenuHierarchy", fields: [parentId], references: [id])
+  children MenuItem[] @relation("MenuHierarchy")
 
   @@index([menuId])
 }
 
 // 8. Quản lý Trang Tĩnh & SEO (Vd: Về chúng tôi, Liên hệ)
 model Page {
-  id              String   @id @default(cuid())
-  slug            String   @unique
-  title           String
-  content         String?  @db.Text
-  
+  id      String  @id @default(cuid())
+  slug    String  @unique
+  title   String
+  content String? @db.Text
+
   // SEO Metadata
   metaTitle       String?
   metaDescription String?
   metaKeywords    String?
 
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // 9. Bài viết & Tin tức (Blog)
 model PostCategory {
-  id          Int      @id @default(autoincrement())
-  slug        String   @unique
-  name        String
-  posts       Post[]
+  id    Int    @id @default(autoincrement())
+  slug  String @unique
+  name  String
+  posts Post[]
 }
 
 model Post {
-  id              String   @id @default(cuid())
-  slug            String   @unique
-  title           String
-  excerpt         String?
-  content         String   @db.Text
-  image           String?
-  categoryId      Int?
-  
+  id         String  @id @default(cuid())
+  slug       String  @unique
+  title      String
+  excerpt    String?
+  content    String  @db.Text
+  image      String?
+  categoryId Int?
+
   // SEO Metadata
   metaTitle       String?
   metaDescription String?
 
-  isActive        Boolean  @default(true)
-  publishedAt     DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  isActive    Boolean   @default(true)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  category        PostCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category PostCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 }
 
 // 10. Đánh giá Khách hàng (Testimonials)
 model Testimonial {
-  id          Int      @id @default(autoincrement())
-  name        String
-  role        String?
-  content     String   @db.Text
-  rating      Float    @default(5)
-  image       String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  name      String
+  role      String?
+  content   String   @db.Text
+  rating    Float    @default(5)
+  image     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
 }
 
 // 11. Dự án / Portfolio (Trưng bày công trình)
@@ -289,13 +291,26 @@ model Project {
 }
 
 // 12. Quản lý File Media Trung tâm (Assets)
+model MediaFolder {
+  id        String        @id @default(cuid())
+  name      String
+  parentId  String?
+  parent    MediaFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children  MediaFolder[] @relation("FolderHierarchy")
+  assets    Asset[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
 model Asset {
-  id          String   @id @default(cuid())
-  url         String
-  fileName    String
-  mimeType    String
-  sizeBytes   Int
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  url       String
+  fileName  String
+  mimeType  String
+  sizeBytes Int
+  folderId  String?
+  folder    MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
 }
 
 // ==========================================
@@ -303,34 +318,34 @@ model Asset {
 // ==========================================
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  password      String?
-  roleId        String?
-  role          Role?     @relation(fields: [roleId], references: [id], onDelete: SetNull)
-  customer      Customer?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id        String    @id @default(cuid())
+  name      String?
+  email     String?   @unique
+  password  String?
+  roleId    String?
+  role      Role?     @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  customer  Customer?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Role {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String           @id @default(cuid())
+  name        String           @unique
   description String?
-  isSystem    Boolean  @default(false) // Các role hệ thống không cho phép xóa
+  isSystem    Boolean          @default(false) // Các role hệ thống không cho phép xóa
   permissions RolePermission[]
   users       User[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 }
 
 model Permission {
-  id          String   @id @default(cuid())
-  code        String   @unique // vd: MANAGE_USERS, VIEW_PRODUCTS
-  name        String
-  module      String   // vd: SYSTEM, CATALOG, ORDER
-  roles       RolePermission[]
+  id     String           @id @default(cuid())
+  code   String           @unique // vd: MANAGE_USERS, VIEW_PRODUCTS
+  name   String
+  module String // vd: SYSTEM, CATALOG, ORDER
+  roles  RolePermission[]
 }
 
 model RolePermission {
@@ -381,7 +396,7 @@ model WarrantyRecord {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
-  events         WarrantyEvent[]
+  events WarrantyEvent[]
 
   @@index([serialNumber])
   @@index([customerPhone])
@@ -391,15 +406,15 @@ model WarrantyRecord {
 }
 
 model WarrantyEvent {
-  id          Int               @id @default(autoincrement())
-  warrantyId  String
-  type        WarrantyEventType @default(NOTE)
-  title       String
-  note        String?           @db.Text
-  eventDate   DateTime          @default(now())
-  createdAt   DateTime          @default(now())
+  id         Int               @id @default(autoincrement())
+  warrantyId String
+  type       WarrantyEventType @default(NOTE)
+  title      String
+  note       String?           @db.Text
+  eventDate  DateTime          @default(now())
+  createdAt  DateTime          @default(now())
 
-  warranty    WarrantyRecord    @relation(fields: [warrantyId], references: [id], onDelete: Cascade)
+  warranty WarrantyRecord @relation(fields: [warrantyId], references: [id], onDelete: Cascade)
 
   @@index([warrantyId])
   @@index([eventDate])
@@ -410,20 +425,20 @@ model WarrantyEvent {
 // ==========================================
 
 model Customer {
-  id          String    @id @default(cuid())
-  name        String
-  phone       String    @unique
-  email       String?   @unique
-  address     String?
-  
-  userId      String?   @unique
-  user        User?     @relation(fields: [userId], references: [id])
-  
-  orders      Order[]
-  warranties  WarrantyRecord[]
-  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id      String  @id @default(cuid())
+  name    String
+  phone   String  @unique
+  email   String? @unique
+  address String?
+
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id])
+
+  orders     Order[]
+  warranties WarrantyRecord[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([phone])
   @@index([email])
@@ -454,4 +469,49 @@ model ContactRequest {
   status    ContactStatus @default(PENDING)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+}
+
+// ==========================================
+// RENTAL MACHINES (MÁY THUÊ)
+// ==========================================
+
+enum RentalStatus {
+  ACTIVE
+  RETURNED
+  MAINTENANCE
+  OVERDUE
+}
+
+model RentalMachine {
+  id String @id @default(cuid())
+
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  orderItemId Int?
+
+  productId Int?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  productName  String
+  sku          String?
+  serialNumber String? // Có thể cập nhật sau khi xuất kho
+
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  customerAddress String?
+
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+
+  status RentalStatus @default(ACTIVE)
+  notes  String?      @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([customerPhone])
+  @@index([status])
 }

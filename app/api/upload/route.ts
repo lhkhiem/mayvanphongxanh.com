@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { prisma } from '@/lib/db'
+import sharp from 'sharp'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
@@ -10,6 +11,8 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const files = formData.getAll('files') as File[]
+    let folderId = formData.get('folderId') as string | null
+    if (folderId === 'root' || folderId === 'null') folderId = null
 
     if (!files || files.length === 0) {
       return NextResponse.json({ error: 'Không có file nào được chọn' }, { status: 400 })
@@ -33,7 +36,11 @@ export async function POST(request: NextRequest) {
       }
 
       const bytes = await file.arrayBuffer()
-      const buffer = Buffer.from(bytes)
+      let buffer = Buffer.from(bytes)
+      const isSvg = file.type.includes('svg')
+
+      let finalExt = isSvg ? path.extname(file.name) : '.webp'
+      let finalMimeType = isSvg ? file.type : 'image/webp'
 
       // Tạo tên file an toàn và duy nhất
       const ext = path.extname(file.name)
@@ -42,7 +49,17 @@ export async function POST(request: NextRequest) {
         .replace(/[^a-z0-9]/g, '-')
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '')
-      const uniqueName = `${baseName}-${Date.now()}${ext}`
+      const uniqueName = `${baseName}-${Date.now()}${finalExt}`
+
+      if (!isSvg) {
+        try {
+          buffer = await sharp(buffer).webp({ quality: 80 }).toBuffer()
+        } catch (error) {
+          console.warn(`Failed to compress image ${file.name}, using original`, error)
+          finalExt = ext
+          finalMimeType = file.type
+        }
+      }
 
       // Tạo thư mục theo năm/tháng
       const now = new Date()
@@ -59,9 +76,10 @@ export async function POST(request: NextRequest) {
       const asset = await prisma.asset.create({
         data: {
           url: publicUrl,
-          fileName: file.name,
-          mimeType: file.type,
-          sizeBytes: file.size,
+          fileName: isSvg ? file.name : `${baseName}.webp`,
+          mimeType: finalMimeType,
+          sizeBytes: buffer.length,
+          folderId: folderId
         }
       })
 
