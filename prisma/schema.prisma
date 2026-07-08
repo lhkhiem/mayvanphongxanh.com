@@ -303,14 +303,14 @@ model MediaFolder {
 }
 
 model Asset {
-  id        String   @id @default(cuid())
+  id        String       @id @default(cuid())
   url       String
   fileName  String
   mimeType  String
   sizeBytes Int
   folderId  String?
   folder    MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
-  createdAt DateTime @default(now())
+  createdAt DateTime     @default(now())
 }
 
 // ==========================================
@@ -514,4 +514,37 @@ model RentalMachine {
   @@index([orderId])
   @@index([customerPhone])
   @@index([status])
+}
+
+// ==========================================
+// BANNERS & SLIDERS
+// ==========================================
+
+model Slider {
+  id                Int      @id @default(autoincrement())
+  image             String
+  badge             String?
+  title             String?  @db.Text
+  description       String?  @db.Text
+  btnPrimaryLabel   String?
+  btnPrimaryUrl     String?
+  btnSecondaryLabel String?
+  btnSecondaryUrl   String?
+  order             Int      @default(0)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Banner {
+  id        Int      @id @default(autoincrement())
+  title     String
+  subTitle  String?
+  icon      String?
+  url       String?
+  image     String?
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

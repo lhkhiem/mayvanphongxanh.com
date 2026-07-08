@@ -11,7 +11,7 @@ import { prisma } from '@/lib/db';
 
 export default async function Home() {
   // Fetch data directly from Server
-  const [dbCategories, dbProducts, dbTestimonials, dbPosts, dbProjects, dbSettings] = await Promise.all([
+  const [dbCategories, dbProducts, dbTestimonials, dbPosts, dbProjects, dbSettings, dbSliders, dbBanners] = await Promise.all([
     prisma.category.findMany({ 
       where: { isActive: true, parentId: null },
       include: { children: true }
@@ -28,7 +28,9 @@ export default async function Home() {
       take: 6
     }),
     prisma.project.findMany({ where: { isActive: true } }),
-    prisma.setting.findMany()
+    prisma.setting.findMany(),
+    prisma.slider.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } }),
+    prisma.banner.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } })
   ]);
 
   // Format Products for UI
@@ -62,7 +64,7 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-background">
       <Header categories={dbCategories} />
-      <HeroSection categories={dbCategories} />
+      <HeroSection categories={dbCategories} sliders={dbSliders} banners={dbBanners} />
       <FeaturedProducts products={featuredProducts} categories={featuredCategories} />
       <ServicePackagesSection products={products.filter(p => p.category === 'Gói dịch vụ')} />
       <ProjectsSection projects={dbProjects} />

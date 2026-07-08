@@ -116,7 +116,12 @@ const sidebarNavItems = [
     icon: Tags,
   },
   {
-    title: "Banner & Media",
+    title: "Sliders & Banners",
+    href: "/admin/sliders",
+    icon: ImageIcon,
+  },
+  {
+    title: "Thư viện Media",
     href: "/admin/media",
     icon: ImageIcon,
   },

@@ -474,6 +474,9 @@ function CategoryForm({
               maxLength={4}
               className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-gray-100 shadow-sm"
             />
+            <p className="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+              Mẹo: Nhấn <kbd className="px-1 py-0.5 border border-gray-200 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-mono text-[10px]">Win + .</kbd> để mở bảng Emoji, hoặc copy từ <a href="https://getemoji.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">getemoji.com</a>.
+            </p>
           </div>
         </div>
 

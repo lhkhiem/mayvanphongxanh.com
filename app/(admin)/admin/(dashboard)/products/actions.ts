@@ -114,7 +114,6 @@ export async function getProducts(params?: {
           variants: {
             select: { price: true, originalPrice: true, stockQuantity: true },
             orderBy: { price: 'asc' },
-            take: 1,
           },
         },
       }),

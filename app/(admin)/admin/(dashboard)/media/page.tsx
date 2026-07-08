@@ -73,7 +73,7 @@ export default function MediaPage() {
     try {
       const [assetsRes, foldersRes, allFoldersRes] = await Promise.all([
         getAssets(searchQuery || undefined, currentFolderId),
-        !searchQuery ? getFolders(currentFolderId) : Promise.resolve({ data: [] }),
+        !searchQuery ? getFolders(currentFolderId) : Promise.resolve<{ data: MediaFolder[], error?: string }>({ data: [] }),
         getAllFolders()
       ]);
       
@@ -189,7 +189,7 @@ export default function MediaPage() {
       setCurrentFolderId(folder.id);
       
       // Build folder path from allFolders
-      const newPath = [];
+      const newPath: {id: string, name: string}[] = [];
       let current: MediaFolder | undefined = folder;
       while (current) {
         newPath.unshift({ id: current.id, name: current.name });

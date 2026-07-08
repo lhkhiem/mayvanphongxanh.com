@@ -6,86 +6,6 @@ import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { slugify } from '@/lib/utils';
 
 // ─────────────────────────────────────────────────
-// Slides
-// ─────────────────────────────────────────────────
-const slides = [
-  {
-    id: 1,
-    image: 'https://images.unsplash.com/photo-1600298881974-6be191ceeda1?w=1200&h=500&fit=crop',
-    badge: '⭐ Giải pháp #1 doanh nghiệp',
-    title: 'Giải pháp Văn phòng\nChuyên nghiệp & Toàn diện',
-    desc: 'Đối tác tin cậy của hàng nghìn doanh nghiệp — máy in, thiết bị văn phòng, vật tư chính hãng và hỗ trợ kỹ thuật chuyên gia.',
-    btnPrimary: { label: 'Xem Sản phẩm', href: '/products' },
-    btnSecondary: { label: 'Nhận Tư vấn', href: '/contact' },
-  },
-  {
-    id: 2,
-    image: 'https://images.unsplash.com/photo-1544716278-ca5e3af4abd8?w=1200&h=500&fit=crop',
-    badge: '🔥 Khuyến mãi tháng 7',
-    title: 'Máy In Đa Chức Năng\nGiảm Đến 30%',
-    desc: 'Nâng cấp hiệu suất văn phòng với dòng máy in laser tốc độ cao. Tặng 1 năm bảo trì miễn phí và bộ mực in chính hãng.',
-    btnPrimary: { label: 'Mua Ngay', href: '/products' },
-    btnSecondary: { label: 'Tìm hiểu thêm', href: '/contact' },
-  },
-  {
-    id: 3,
-    image: 'https://images.unsplash.com/photo-1556656793-08538906a9f8?w=1200&h=500&fit=crop',
-    badge: '💡 Giải pháp số hóa',
-    title: 'Hệ thống POS &\nMạng Doanh Nghiệp',
-    desc: 'Chuyển đổi số toàn diện cho doanh nghiệp bán lẻ và văn phòng. Wifi Mesh không điểm mù & máy POS cấu hình cao.',
-    btnPrimary: { label: 'Khám phá Dịch vụ', href: '/contact' },
-    btnSecondary: { label: 'Xem thiết bị', href: '/products' },
-  },
-];
-
-// ─────────────────────────────────────────────────
-// Promo tiles (bên phải carousel)
-// ─────────────────────────────────────────────────
-const promoTiles = [
-  {
-    bg: 'from-blue-600 to-blue-800',
-    label: '🖨️ Dịch vụ Máy In',
-    sub: 'Bảo trì – Sửa chữa – Nạp mực',
-    badge: 'Tặng 30%',
-    href: '/danh-muc/dich-vu',
-  },
-  {
-    bg: 'from-orange-500 to-red-600',
-    label: '🎁 Gói Khai Trương',
-    sub: 'Cafe / Nhà hàng / Cửa hàng',
-    badge: 'Hot deal',
-    href: '/danh-muc/goi-dich-vu',
-  },
-];
-
-// ─────────────────────────────────────────────────
-// Bottom promo strip
-// ─────────────────────────────────────────────────
-const bottomTiles = [
-  {
-    bg: 'from-indigo-600 to-purple-700',
-    icon: '💻',
-    title: 'Laptop Doanh Nghiệp',
-    sub: 'Gaming – Đồ họa – Văn phòng',
-    href: '/san-pham',
-  },
-  {
-    bg: 'from-teal-600 to-cyan-700',
-    icon: '🖥️',
-    title: 'PC Văn Phòng & Server',
-    sub: 'Gaming – Workstation – Server',
-    href: '/san-pham',
-  },
-  {
-    bg: 'from-green-600 to-emerald-700',
-    icon: '🔧',
-    title: 'Sửa Chữa – Vệ Sinh',
-    sub: 'Máy in – Scan – Photocopy',
-    href: '/danh-muc/dich-vu',
-  },
-];
-
-// ─────────────────────────────────────────────────
 // Trust bar items
 // ─────────────────────────────────────────────────
 const trustItems = [
@@ -100,7 +20,7 @@ const trustItems = [
 // Sidebar Category Item
 // ─────────────────────────────────────────────────
 
-export function HeroSection({ categories = [] }: { categories?: any[] }) {
+export function HeroSection({ categories = [], sliders = [], banners = [] }: { categories?: any[], sliders?: any[], banners?: any[] }) {
   const [current, setCurrent] = useState(0);
   const [activeSide, setActiveSide] = useState<number | null>(null);
 
@@ -112,7 +32,8 @@ export function HeroSection({ categories = [] }: { categories?: any[] }) {
   const hasMoreCats = allCats.length > MAX_CATS;
 
   useEffect(() => {
-    const t = setInterval(() => setCurrent(p => (p + 1) % slides.length), 5000);
+    if (sliders.length === 0) return;
+    const t = setInterval(() => setCurrent(p => (p + 1) % sliders.length), 5000);
     return () => clearInterval(t);
   }, []);
 
@@ -218,7 +139,11 @@ export function HeroSection({ categories = [] }: { categories?: any[] }) {
           <div className="flex-1 min-w-0 flex flex-col gap-2">
             {/* Carousel */}
             <div className="relative shrink-0 rounded-lg overflow-hidden h-[320px] lg:h-[380px] bg-gray-900 group">
-              {slides.map((slide, i) => (
+              {sliders.length === 0 ? (
+                <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-800">
+                  Chưa có Slider nào
+                </div>
+              ) : sliders.map((slide, i) => (
                 <div
                   key={slide.id}
                   className={`absolute inset-0 transition-opacity duration-700 ${i === current ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
@@ -230,105 +155,117 @@ export function HeroSection({ categories = [] }: { categories?: any[] }) {
                   <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
 
                   <div className="relative h-full flex flex-col justify-center px-4 sm:px-8 max-w-[90%] md:max-w-[65%]">
-                    <span className="inline-block text-xs font-semibold text-yellow-300 bg-yellow-300/20 border border-yellow-300/30 rounded-full px-3 py-1 mb-3 w-fit backdrop-blur-sm">
-                      {slide.badge}
-                    </span>
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-tight mb-3 drop-shadow">
-                      {slide.title.split('\n').map((line, j) => (
-                        <span key={j}>{line}{j === 0 && <br />}</span>
-                      ))}
-                    </h1>
-                    <p className="text-white/85 text-xs sm:text-sm mb-5 line-clamp-2">{slide.desc}</p>
+                    {slide.badge && (
+                      <span className="inline-block text-xs font-semibold text-yellow-300 bg-yellow-300/20 border border-yellow-300/30 rounded-full px-3 py-1 mb-3 w-fit backdrop-blur-sm">
+                        {slide.badge}
+                      </span>
+                    )}
+                    {slide.title && (
+                      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-tight mb-3 drop-shadow">
+                        {slide.title.split('\n').map((line: string, j: number) => (
+                          <span key={j}>{line}{j === 0 && <br />}</span>
+                        ))}
+                      </h1>
+                    )}
+                    {slide.description && (
+                      <p className="text-white/85 text-xs sm:text-sm mb-5 line-clamp-2">{slide.description}</p>
+                    )}
                     <div className="flex gap-2 flex-wrap">
-                      <Link
-                        href={slide.btnPrimary.href}
-                        className="px-4 py-2 sm:px-5 sm:py-2 bg-primary text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-primary/90 transition-colors shadow"
-                      >
-                        {slide.btnPrimary.label}
-                      </Link>
-                      <Link
-                        href={slide.btnSecondary.href}
-                        className="px-4 py-2 sm:px-5 sm:py-2 border border-white/70 text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-white hover:text-primary transition-colors backdrop-blur-sm"
-                      >
-                        {slide.btnSecondary.label}
-                      </Link>
+                      {slide.btnPrimaryLabel && (
+                        <Link
+                          href={slide.btnPrimaryUrl || '#'}
+                          className="px-4 py-2 sm:px-5 sm:py-2 bg-primary text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-primary/90 transition-colors shadow"
+                        >
+                          {slide.btnPrimaryLabel}
+                        </Link>
+                      )}
+                      {slide.btnSecondaryLabel && (
+                        <Link
+                          href={slide.btnSecondaryUrl || '#'}
+                          className="px-4 py-2 sm:px-5 sm:py-2 border border-white/70 text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-white hover:text-primary transition-colors backdrop-blur-sm"
+                        >
+                          {slide.btnSecondaryLabel}
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </div>
               ))}
 
               {/* Arrows */}
-              <button
-                onClick={() => setCurrent(p => (p - 1 + slides.length) % slides.length)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/30 text-white hover:bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setCurrent(p => (p + 1) % slides.length)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/30 text-white hover:bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              {sliders.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setCurrent(p => (p - 1 + sliders.length) % sliders.length)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/30 text-white hover:bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setCurrent(p => (p + 1) % sliders.length)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/30 text-white hover:bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </>
+              )}
 
               {/* Dots */}
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
-                {slides.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrent(i)}
-                    className={`rounded-full transition-all duration-300 ${i === current ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50 hover:bg-white/80'}`}
-                  />
-                ))}
-              </div>
+              {sliders.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+                  {sliders.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrent(i)}
+                      className={`rounded-full transition-all duration-300 ${i === current ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50 hover:bg-white/80'}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Bottom 3 tiles */}
-            <div className="flex overflow-x-auto sm:overflow-hidden sm:grid sm:grid-cols-3 gap-2 h-[110px] pb-1 sm:pb-0 scrollbar-hide snap-x">
-              {bottomTiles.map(tile => (
-                <Link
-                  key={tile.title}
-                  href={tile.href}
-                  className={`relative shrink-0 w-[150px] sm:w-auto h-[110px] rounded-lg overflow-hidden bg-gradient-to-br ${tile.bg} p-3 flex flex-col justify-between hover:opacity-90 hover:scale-[1.02] transition-all duration-200 group snap-start`}
-                >
-                  <div>
-                    <div className="text-xl mb-0.5">{tile.icon}</div>
-                    <p className="text-white font-bold text-xs leading-tight">{tile.title}</p>
-                    <p className="text-white/70 text-[10px] mt-0.5 line-clamp-1">{tile.sub}</p>
-                  </div>
-                  <div className="flex items-center gap-1 text-white/80 text-[10px] font-medium mt-2">
-                    <span>Xem ngay</span>
-                    <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </Link>
-              ))}
+            <div className="flex overflow-x-auto sm:overflow-hidden sm:grid sm:grid-cols-3 gap-2 flex-1 min-h-[110px] pb-1 sm:pb-0 scrollbar-hide snap-x">
+              {banners.map((tile, idx) => {
+                const isImage = tile.icon?.startsWith('http') || tile.icon?.startsWith('/');
+                return (
+                  <Link
+                    key={tile.id || idx}
+                    href={tile.url || '#'}
+                    className={`relative shrink-0 w-[150px] sm:w-auto h-full rounded-lg overflow-hidden p-3 flex flex-col justify-between hover:opacity-90 hover:scale-[1.02] transition-all duration-200 group snap-start`}
+                    style={{
+                      backgroundImage: tile.image ? `url(${tile.image})` : 'none',
+                      backgroundColor: tile.image ? 'transparent' : '#374151',
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
+                    }}
+                  >
+                    {/* Dark overlay for readability if using image */}
+                    {tile.image && <div className="absolute inset-0 bg-black/40 z-0"></div>}
+                    <div className="relative z-10">
+                      {isImage ? (
+                        <div className="w-6 h-6 mb-1">
+                          <img src={tile.icon} alt={tile.title} className="w-full h-full object-contain" />
+                        </div>
+                      ) : (
+                        <div className="text-xl mb-0.5">{tile.icon}</div>
+                      )}
+                      <p className="text-white font-bold text-xs leading-tight">{tile.title}</p>
+                      {tile.subTitle && (
+                        <p className="text-white/70 text-[10px] mt-0.5 line-clamp-1">{tile.subTitle}</p>
+                      )}
+                    </div>
+                    <div className="relative z-10 flex items-center gap-1 text-white/80 text-[10px] font-medium mt-2">
+                      <span>Xem ngay</span>
+                      <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
 
-          {/* ── Right: 2 promo tiles ── */}
-          <div className="hidden xl:flex w-[200px] shrink-0 flex-col gap-2">
-            {promoTiles.map((tile, tileIdx) => (
-              <Link
-                key={tile.label}
-                href={tile.href}
-                className={`relative rounded-lg overflow-hidden bg-gradient-to-br ${tile.bg} p-4 flex flex-col justify-between hover:opacity-90 hover:scale-[1.02] transition-all duration-200 group shrink-0 ${tileIdx === 0 ? 'h-[320px] lg:h-[380px]' : 'h-[110px]'}`}
-              >
-                <div>
-                  <span className="inline-block text-xs font-bold bg-yellow-400 text-gray-900 rounded px-2 py-0.5 mb-2">
-                    {tile.badge}
-                  </span>
-                  <p className="text-white font-bold text-sm leading-snug">{tile.label}</p>
-                  <p className="text-white/70 text-xs mt-1">{tile.sub}</p>
-                </div>
-                <div className="flex items-center gap-1 text-white/80 text-xs font-medium mt-2">
-                  <span>Xem ngay</span>
-                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                </div>
-                {/* Decorative circle */}
-                <div className="absolute -bottom-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
-              </Link>
-            ))}
-          </div>
+
         </div>
       </div>
 

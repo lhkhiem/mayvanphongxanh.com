@@ -157,7 +157,7 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
     } else {
       setCurrentFolderId(folder.id);
       
-      const newPath = [];
+      const newPath: {id: string, name: string}[] = [];
       let current: MediaFolder | undefined = folder;
       while (current) {
         newPath.unshift({ id: current.id, name: current.name });
