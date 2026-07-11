@@ -26,24 +26,28 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
     <section className="py-8 bg-gradient-to-b from-[#F4F7F6] to-[#E8F0EA] border-t border-gray-100">
       <div className="mx-auto max-w-7xl px-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
-            <span className="w-1 h-6 rounded-full bg-primary inline-block" />
-            <MessageSquare className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-bold text-gray-800">Khách hàng nói gì về chúng tôi</h2>
+        <div className="flex items-start sm:items-center justify-between gap-3 mb-4 sm:mb-5">
+          <div className="flex items-start sm:items-center gap-2 flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 mt-0.5 sm:mt-0">
+              <span className="w-1 sm:w-1.5 h-5 sm:h-6 rounded-full bg-primary inline-block" />
+              <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+            </div>
+            <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-800 leading-snug">
+              Khách hàng nói gì về chúng tôi
+            </h2>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 mt-0.5 sm:mt-0">
             <button
               onClick={() => setCurrent(p => (p - 1 + total) % total)}
-              className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-primary hover:text-primary transition-colors"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-primary hover:text-primary transition-colors shrink-0"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
             <button
               onClick={() => setCurrent(p => (p + 1) % total)}
-              className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-primary hover:text-primary transition-colors"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-primary hover:text-primary transition-colors shrink-0"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
         </div>

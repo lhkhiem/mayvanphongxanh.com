@@ -26,18 +26,22 @@ export function FeaturedProducts({ products = [], categories = [] }: { products?
     <section className="py-8 bg-[#F4F7F6]">
       <div className="mx-auto max-w-7xl px-4">
         {/* Section header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <span className="w-1 h-6 rounded-full bg-primary inline-block" />
-            <TrendingUp className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-bold text-gray-800">Sản phẩm Nổi bật</h2>
+        <div className="flex items-start sm:items-center justify-between gap-3 mb-4 sm:mb-5">
+          <div className="flex items-start sm:items-center gap-2 flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 mt-0.5 sm:mt-0">
+              <span className="w-1 sm:w-1.5 h-5 sm:h-6 rounded-full bg-primary inline-block" />
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+            </div>
+            <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-800 leading-snug">
+              Sản phẩm Nổi bật
+            </h2>
           </div>
           <Link
             href="/san-pham"
-            className="flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary/80 transition-colors group"
+            className="flex items-center gap-1 text-xs sm:text-sm font-semibold text-primary hover:text-primary/80 transition-colors group shrink-0 mt-1 sm:mt-0"
           >
             Xem tất cả
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
 
