@@ -92,7 +92,7 @@ export function ProductCard({
     <div className="group bg-white border border-gray-200 hover:border-primary overflow-hidden transition-all duration-300 h-full flex flex-col relative p-3 md:p-4 rounded-lg hover:shadow-[0_0_15px_rgba(46,125,50,0.15)]">
       {/* Image Container */}
       <div 
-        className="relative overflow-hidden bg-white h-48 md:h-52 mb-4 flex items-center justify-center cursor-pointer"
+        className="relative overflow-hidden bg-white h-52 md:h-56 mb-4 flex items-center justify-center cursor-pointer"
         onClick={() => router.push(`/san-pham/${hrefSlug}`)}
       >
         {productType === 'rental' && (
@@ -118,26 +118,26 @@ export function ProductCard({
       {/* Content */}
       <div className="flex-1 flex flex-col">
         <Link href={`/san-pham/${hrefSlug}`}>
-          <h3 className="font-bold text-gray-800 mb-2 line-clamp-2 text-[13px] leading-snug hover:text-primary transition-colors min-h-[36px]">
+          <h3 className="font-bold text-gray-800 mb-2 line-clamp-2 text-sm sm:text-[15px] leading-snug hover:text-primary transition-colors min-h-[44px]">
             {name}
           </h3>
         </Link>
 
         {/* Rating and SKU */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-0.5">
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-1">
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
-                className="w-3 h-3"
+                className="w-3.5 h-3.5"
                 fill={i < Math.floor(rating) ? '#FBBF24' : '#E5E7EB'}
                 color={i < Math.floor(rating) ? '#FBBF24' : '#E5E7EB'}
               />
             ))}
           </div>
-          <span className="text-[11px] text-gray-500">({reviews})</span>
+          <span className="text-xs text-gray-500">({reviews})</span>
         </div>
-        <div className="text-[11px] text-primary/80 font-medium uppercase tracking-wider mb-3 line-clamp-1">
+        <div className="text-xs text-primary/80 font-medium uppercase tracking-wider mb-3 line-clamp-1">
           {category}
         </div>
 
@@ -147,34 +147,34 @@ export function ProductCard({
             <div className="flex items-end gap-2 justify-between">
               <div>
                 {originalPrice && (
-                  <div className="text-[11px] text-gray-400 line-through mb-0.5">
+                  <div className="text-xs text-gray-400 line-through mb-0.5">
                     {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(originalPrice)}
                   </div>
                 )}
-                <div className="font-bold text-[17px] text-primary">
+                <div className="font-bold text-lg sm:text-[19px] text-primary">
                   {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)}
                   {productType === 'rental' && <span className="text-xs font-normal text-muted-foreground ml-0.5">/ tháng</span>}
                 </div>
               </div>
               {/* Discount Badge on the right of price */}
               {discount > 0 && (
-                <div className="bg-primary text-white px-1.5 py-0.5 text-[10px] font-bold rounded mb-1">
+                <div className="bg-primary text-white px-2 py-1 text-[11px] font-bold rounded mb-1">
                   -{discount}%
                 </div>
               )}
             </div>
           ) : (
-            <div className="font-bold text-[17px] text-primary mt-4">Liên hệ</div>
+            <div className="font-bold text-lg sm:text-[19px] text-primary mt-4">Liên hệ</div>
           )}
         </div>
       </div>
 
       {/* Footer Actions */}
-      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-        <div className="flex gap-3">
+      <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+        <div className="flex gap-4">
           <button 
             onClick={handleToggleCompare}
-            className={`flex items-center gap-1 text-[11px] transition-colors font-medium ${
+            className={`flex items-center gap-1.5 text-xs transition-colors font-medium ${
               isCompared ? 'text-primary' : 'text-gray-500 hover:text-primary'
             }`}
           >
@@ -182,18 +182,18 @@ export function ProductCard({
           </button>
           
           {stock > 0 ? (
-            <div className="flex items-center gap-1 text-[11px] text-green-600 font-medium">
-              <span className="text-sm leading-none mt-[-2px]">✓</span> Còn hàng
+            <div className="flex items-center gap-1 text-xs text-green-600 font-medium">
+              <span className="text-[15px] leading-none mt-[-2px]">✓</span> Còn hàng
             </div>
           ) : (
-            <div className="text-[11px] text-red-500 font-medium">Hết hàng</div>
+            <div className="text-xs text-red-500 font-medium">Hết hàng</div>
           )}
         </div>
 
         <button 
           onClick={handleAddToCart}
           disabled={stock === 0}
-          className="w-8 h-8 flex items-center justify-center bg-primary text-white rounded shadow-sm hover:bg-primary/90 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="w-9 h-9 flex items-center justify-center bg-primary text-white rounded-md shadow hover:bg-primary/90 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
           title={productType === 'rental' ? "Đăng ký thuê" : "Thêm vào giỏ"}
         >
           <ShoppingCart className="w-4 h-4" />

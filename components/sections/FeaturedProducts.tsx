@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ProductCard } from '@/components/products/ProductCard';
 import { ChevronRight, ChevronLeft, TrendingUp } from 'lucide-react';
 
-const CARD_WIDTH = 228; // px
+
 
 export function FeaturedProducts({ products = [], categories = [] }: { products?: any[], categories?: any[] }) {
   const allCategories = ['Tất cả', ...categories.map(c => c.name)];
@@ -18,7 +18,7 @@ export function FeaturedProducts({ products = [], categories = [] }: { products?
 
   const scroll = (dir: 'left' | 'right') => {
     if (!scrollRef.current) return;
-    const amount = CARD_WIDTH * 2 + 16;
+    const amount = scrollRef.current.clientWidth;
     scrollRef.current.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
   };
 
@@ -75,10 +75,10 @@ export function FeaturedProducts({ products = [], categories = [] }: { products?
           {/* Scrollable row */}
           <div
             ref={scrollRef}
-            className="flex gap-3 sm:gap-4 overflow-x-auto scroll-smooth pb-2 snap-x snap-mandatory scrollbar-hide"
+            className="flex gap-4 overflow-x-auto scroll-smooth pb-2 snap-x snap-mandatory scrollbar-hide"
           >
             {filtered.map(product => (
-              <div key={product.id} className="shrink-0 w-full sm:w-[228px] snap-center">
+              <div key={product.id} className="shrink-0 w-full min-[400px]:w-[calc(50%-8px)] md:w-[calc(33.333333%-10.666667px)] xl:w-[calc(25%-12px)] snap-center">
                 <ProductCard
                   id={product.id}
                   name={product.name}
