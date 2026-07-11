@@ -302,6 +302,26 @@ model MediaFolder {
   updatedAt DateTime      @updatedAt
 }
 
+// 13. Dịch vụ trọn gói
+model Service {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  title       String
+  excerpt     String?
+  content     String?  @db.Text
+  image       String?
+  icon        String?
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+
+  // SEO Metadata
+  metaTitle       String?
+  metaDescription String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model Asset {
   id        String       @id @default(cuid())
   url       String

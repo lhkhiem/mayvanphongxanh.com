@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   Settings,
   Layers,
+  Briefcase,
 } from "lucide-react";
 
 const sidebarNavItems = [
@@ -73,6 +74,11 @@ const sidebarNavItems = [
     badge: "3",
   },
   {
+    title: "Dịch vụ trọn gói",
+    href: "/admin/services",
+    icon: Layers,
+  },
+  {
     title: "KINH DOANH",
     isHeader: true,
   },
@@ -114,6 +120,11 @@ const sidebarNavItems = [
     title: "Danh mục Bài viết",
     href: "/admin/post-categories",
     icon: Tags,
+  },
+  {
+    title: "Dự án tiêu biểu",
+    href: "/admin/projects",
+    icon: Briefcase,
   },
   {
     title: "Sliders & Banners",

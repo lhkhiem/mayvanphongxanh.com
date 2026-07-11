@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Header } from '@/components/common/Header';
+import { prisma } from '@/lib/db';
 import { Footer } from '@/components/common/Footer';
 import { 
   CheckCircle2, 
@@ -24,32 +25,7 @@ export const metadata = {
   description: 'Đối tác công nghệ cung cấp thiết bị văn phòng, dịch vụ kỹ thuật và giải pháp hạ tầng CNTT toàn diện cho doanh nghiệp hiện đại.',
 };
 
-const SERVICES = [
-  {
-    id: '01',
-    title: 'Cung cấp thiết bị công nghệ',
-    desc: 'Danh mục thiết bị đầy đủ cho văn phòng, giáo dục, vận hành và hạ tầng CNTT.',
-    items: ['Laptop & Máy tính để bàn', 'Máy chủ & NAS', 'Máy in & Máy photocopy', 'Máy scan chuyên dụng', 'Thiết bị mạng & Router'],
-    image: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=800&q=80',
-    color: 'bg-primary'
-  },
-  {
-    id: '02',
-    title: 'Dịch vụ kỹ thuật & bảo trì',
-    desc: 'Đội ngũ kỹ thuật hỗ trợ từ tư vấn, thiết kế đến vận hành sau triển khai.',
-    items: ['Bảo trì thiết bị CNTT', 'Sửa chữa máy in & PC', 'Tư vấn giải pháp công nghệ', 'Thiết kế hệ thống mạng', 'Hỗ trợ kỹ thuật tận nơi'],
-    image: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=800&q=80',
-    color: 'bg-teal-600'
-  },
-  {
-    id: '03',
-    title: 'Giải pháp hạ tầng tổng thể',
-    desc: 'Triển khai hạ tầng công nghệ thông tin toàn diện cho doanh nghiệp và tổ chức.',
-    items: ['Hạ tầng mạng LAN / WiFi', 'Hệ thống Camera CCTV', 'Âm thanh hội nghị', 'Data Center doanh nghiệp', 'Hệ thống POS bán lẻ'],
-    image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&q=80',
-    color: 'bg-orange-600'
-  }
-];
+// import { prisma } from '@/lib/db'; (We will import it at the top)
 
 const PROCESS_STEPS = [
   { icon: Search, title: 'Khảo sát', desc: 'Ghi nhận hiện trạng & nhu cầu' },
@@ -71,7 +47,11 @@ const BRANDS = [
   "HP", "Dell", "Lenovo", "Canon", "Epson", "Brother", "Ricoh", "TP-Link"
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const dbServices = await prisma.service.findMany({
+    where: { isActive: true },
+    orderBy: { order: 'asc' }
+  });
   return (
     <main className="min-h-screen bg-background flex flex-col">
       <Header />
@@ -161,33 +141,46 @@ export default function AboutPage() {
         {/* 2. Dịch vụ chủ lực (3 Columns) */}
         <section className="mx-auto max-w-7xl px-4 py-8 mb-12">
           <div className="grid lg:grid-cols-3 gap-8">
-            {SERVICES.map((srv) => (
+            {dbServices.map((srv, index) => {
+              // Phân tích content HTML list thành mảng các items để giữ nguyên UI cũ
+              let items: string[] = [];
+              if (srv.content) {
+                const matches = srv.content.match(/<li>(.*?)<\/li>/g);
+                if (matches) {
+                  items = matches.map(m => m.replace(/<\/?li>/g, ''));
+                }
+              }
+
+              const formattedId = `0${index + 1}`.slice(-2);
+
+              return (
               <div key={srv.id} className="bg-card rounded-xl shadow-md border border-border p-8 flex flex-col hover:shadow-lg transition-shadow">
                 <div className="flex items-start gap-4 mb-6">
-                  <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-md text-white font-black text-lg ${srv.color}`}>
-                    {srv.id}
+                  <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-md text-white font-black text-lg ${srv.icon || 'bg-primary'}`}>
+                    {formattedId}
                   </span>
                   <h2 className="text-xl font-bold leading-tight text-foreground pt-1">{srv.title}</h2>
                 </div>
                 
                 <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-                  {srv.desc}
+                  {srv.excerpt}
                 </p>
                 
                 <ul className="space-y-3 mb-8 flex-1">
-                  {srv.items.map((item, idx) => (
+                  {items.map((item, idx) => (
                     <li key={idx} className="flex gap-3 text-sm font-semibold text-foreground items-start">
-                      <CheckCircle2 className={`w-4 h-4 mt-0.5 shrink-0 ${srv.id === '01' ? 'text-primary' : srv.id === '02' ? 'text-teal-600' : 'text-orange-600'}`} />
+                      <CheckCircle2 className={`w-4 h-4 mt-0.5 shrink-0 ${srv.icon === 'bg-primary' ? 'text-primary' : srv.icon === 'bg-teal-600' ? 'text-teal-600' : srv.icon === 'bg-orange-600' ? 'text-orange-600' : 'text-primary'}`} />
                       <span>{item}</span>
                     </li>
                   ))}
                 </ul>
                 
                 <div className="relative h-40 w-full rounded-lg overflow-hidden mt-auto">
-                  <img src={srv.image} alt={srv.title} className="object-cover w-full h-full hover:scale-105 transition-transform duration-500" />
+                  <img src={srv.image || ''} alt={srv.title} className="object-cover w-full h-full hover:scale-105 transition-transform duration-500" />
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 

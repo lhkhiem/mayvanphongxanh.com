@@ -84,9 +84,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6">
                 {project.title}
               </h1>
-              <p className="text-gray-300 text-lg md:text-xl max-w-3xl leading-relaxed mb-8">
-                {project.description}
-              </p>
+              <div 
+                className="text-gray-300 text-lg md:text-xl max-w-3xl leading-relaxed mb-8 prose prose-invert max-w-none"
+                dangerouslySetInnerHTML={{ __html: project.description || '' }}
+              />
               
               <div className="flex flex-wrap items-center gap-6 text-sm text-gray-300 border-t border-white/10 pt-6">
                 <div className="flex items-center">
@@ -122,39 +123,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 
                 <div className="prose prose-lg max-w-none text-gray-700">
                   <h2 className="text-2xl font-bold text-[#0d2a45] mb-4">Tổng quan dự án</h2>
-                  <p>
-                    {project.description}
-                  </p>
-                  {project.content ? (
-                    <div dangerouslySetInnerHTML={{ __html: project.content }} className="mt-8" />
-                  ) : (
-                    <>
-                      <h3 className="text-xl font-bold text-[#0d2a45] mb-4 mt-8">Phạm vi công việc (Scope of Work)</h3>
-                      <ul className="list-disc pl-6 mb-6 space-y-2">
-                        <li>Khảo sát hiện trạng hệ thống thiết bị và hạ tầng mạng tại các chi nhánh.</li>
-                        <li>Cung cấp và lắp đặt toàn bộ thiết bị văn phòng, máy in, máy tính chuyên dụng.</li>
-                        <li>Thiết lập hệ thống bảo mật, tường lửa và phân quyền truy cập nội bộ.</li>
-                        <li>Đào tạo nhân sự sử dụng, chuyển giao công nghệ và quy trình vận hành.</li>
-                        <li>Ký kết hợp đồng bảo trì, hỗ trợ kỹ thuật tận nơi 24/7 trong suốt quá trình sử dụng.</li>
-                      </ul>
-
-                      <h3 className="text-xl font-bold text-[#0d2a45] mb-4 mt-8">Kết quả đạt được</h3>
-                      <div className="bg-gray-50 rounded-lg p-6 mb-6 border border-gray-100">
-                        <div className="flex items-start mb-4">
-                          <CheckCircle2 className="w-6 h-6 text-primary shrink-0 mr-3 mt-1" />
-                          <div>
-                            <h4 className="font-bold text-gray-900 mb-1">Tối ưu hóa chi phí vận hành</h4>
-                            <p className="text-gray-600 text-sm">Giảm 25% chi phí in ấn và bảo trì so với hệ thống cũ nhờ giải pháp đồng bộ và quản lý tập trung.</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <blockquote className="border-l-4 border-yellow-500 pl-4 py-2 italic text-lg text-[#0d2a45] bg-yellow-50 rounded-r mb-6 font-medium">
-                        "Máy Văn Phòng Xanh đã chứng minh năng lực triển khai tuyệt vời, vượt tiến độ 10 ngày so với hợp đồng mà vẫn đảm bảo tiêu chuẩn chất lượng khắt khe nhất của chúng tôi."
-                        <footer className="text-sm text-gray-500 mt-2 font-normal">— Đại diện {project.client}</footer>
-                      </blockquote>
-                    </>
-                  )}
+                  <div dangerouslySetInnerHTML={{ __html: project.description || '' }} />
                 </div>
               </div>
             </div>
