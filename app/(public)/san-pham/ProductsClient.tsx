@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
 import { ProductCard } from '@/components/products/ProductCard';
-import { ChevronDown, ChevronRight, Search, Home, Filter } from 'lucide-react';
+import { ChevronDown, ChevronRight, Search, Home, Filter, X } from 'lucide-react';
 
 const SORT_OPTIONS = [
   { label: 'Phù hợp nhất', value: 'featured' },
@@ -28,6 +28,7 @@ export default function ProductsClient({
 }) {
   const [sortBy, setSortBy] = useState('featured');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   
   // Multiple selections for Category and Brand
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategory ? [initialCategory] : []);
@@ -221,22 +222,40 @@ export default function ProductsClient({
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
           
+          {/* Mobile Overlay */}
+          {isMobileFilterOpen && (
+            <div 
+              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+              onClick={() => setIsMobileFilterOpen(false)}
+            />
+          )}
+
           {/* Sidebar Filters */}
-          <aside className="w-full lg:w-[250px] shrink-0">
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+          <aside className={`
+            fixed lg:static inset-y-0 left-0 z-50 w-[280px] lg:w-[250px] bg-white lg:bg-transparent h-full lg:h-auto transition-transform duration-300
+            ${isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+            shrink-0
+          `}>
+            <div className="bg-white lg:border border-gray-200 lg:rounded-lg overflow-hidden flex flex-col h-full lg:h-auto shadow-xl lg:shadow-none">
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
                 <h2 className="font-bold text-gray-800 text-[15px] flex items-center gap-2">
                   <Filter className="w-4 h-4 text-primary" />
                   Bộ lọc
                 </h2>
-                <button 
-                  onClick={clearFilters}
-                  className="text-[12px] text-blue-500 hover:text-blue-700 hover:underline"
-                >
-                  Xóa tất cả
-                </button>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={clearFilters}
+                    className="text-[12px] text-blue-500 hover:text-blue-700 hover:underline"
+                  >
+                    Xóa
+                  </button>
+                  <button onClick={() => setIsMobileFilterOpen(false)} className="lg:hidden text-gray-500 hover:text-gray-800">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
+              <div className="flex-1 overflow-y-auto lg:overflow-visible">
               {/* Danh Mục (Moved above Khoảng giá) */}
               <div className="p-4 border-b border-gray-200">
                 <h3 className="font-bold text-gray-800 text-[13px] uppercase mb-3 flex items-center justify-between cursor-pointer">
@@ -361,6 +380,17 @@ export default function ProductsClient({
                   </div>
                 </div>
               ))}
+              </div>
+              
+              {/* Mobile Apply Button */}
+              <div className="p-4 border-t border-gray-200 bg-white sticky bottom-0 lg:hidden">
+                <button 
+                  onClick={() => setIsMobileFilterOpen(false)}
+                  className="w-full bg-primary text-white py-2.5 rounded font-semibold text-sm hover:bg-primary/90"
+                >
+                  Áp dụng
+                </button>
+              </div>
             </div>
           </aside>
 
@@ -379,25 +409,34 @@ export default function ProductsClient({
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               </div>
               
-              <div className="relative shrink-0 sm:w-56 w-full">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="appearance-none w-full h-10 bg-white border border-gray-200 px-4 py-2 rounded text-sm text-gray-700 pr-10 cursor-pointer focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+              <div className="flex gap-2 w-full sm:w-auto">
+                <button 
+                  className="lg:hidden flex-1 sm:w-auto flex items-center justify-center gap-2 bg-white border border-gray-200 rounded px-4 py-2 text-sm text-gray-700 font-medium active:bg-gray-50"
+                  onClick={() => setIsMobileFilterOpen(true)}
                 >
+                  <Filter className="w-4 h-4" />
+                  Bộ lọc
+                </button>
+                <div className="relative shrink-0 flex-1 sm:flex-none sm:w-56">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="appearance-none w-full h-10 bg-white border border-gray-200 px-4 py-2 rounded text-sm text-gray-700 pr-10 cursor-pointer focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                  >
                   {SORT_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
                       Sắp xếp: {option.label}
                     </option>
                   ))}
-                </select>
-                <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500" />
+                  </select>
+                  <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500" />
+                </div>
               </div>
             </div>
 
             {/* Products Grid */}
             {sortedProducts.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 {sortedProducts.map((product) => (
                   <ProductCard key={product.id} {...product} productType={product.productType} />
                 ))}
