@@ -75,8 +75,7 @@ export function FeaturedProducts({ products = [], categories = [] }: { products?
           {/* Scrollable row */}
           <div
             ref={scrollRef}
-            className="flex gap-3 sm:gap-4 overflow-x-auto scroll-smooth pb-2 snap-x snap-mandatory"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            className="flex gap-3 sm:gap-4 overflow-x-auto scroll-smooth pb-2 snap-x snap-mandatory scrollbar-hide"
           >
             {filtered.map(product => (
               <div key={product.id} className="shrink-0 w-full sm:w-[228px] snap-center">

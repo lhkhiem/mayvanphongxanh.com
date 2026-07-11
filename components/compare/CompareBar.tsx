@@ -26,7 +26,7 @@ export function CompareBar() {
         {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
       </button>
 
-      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4 overflow-x-auto">
+      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4 overflow-x-auto scrollbar-hide">
         {/* Products List */}
         <div className="flex gap-4 items-center flex-1 min-w-max">
           {[0, 1, 2].map((index) => {
