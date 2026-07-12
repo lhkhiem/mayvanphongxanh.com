@@ -4,7 +4,7 @@ import { Footer } from '@/components/common/Footer';
 import { prisma as db } from '@/lib/db';
 import { Metadata } from 'next';
 
-const SLUG = 'chinh-sach-bao-mat';
+const SLUG = 'dieu-khoan-su-dung';
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = await db.page.findUnique({
@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 
   if (!page) {
-    return { title: 'Chính sách bảo mật | Máy Văn Phòng Xanh' };
+    return { title: 'Điều khoản sử dụng | Máy Văn Phòng Xanh' };
   }
 
   return {
@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function PrivacyPolicyPage() {
+export default async function TermsOfUsePage() {
   const page = await db.page.findUnique({
     where: { slug: SLUG, isActive: true },
   });

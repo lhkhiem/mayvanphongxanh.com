@@ -80,6 +80,7 @@ async function main() {
   await prisma.testimonial.deleteMany()
   await prisma.project.deleteMany()
   await prisma.asset.deleteMany()
+  await prisma.faq.deleteMany()
 
   // 1. Seed Settings (Company Info)
   console.log('Seed Settings...')
@@ -104,6 +105,41 @@ async function main() {
         rating: t.rating,
         image: t.image
       }
+    })
+  }
+
+  // 2.5 Seed FAQ
+  console.log('Seed FAQs...')
+  const faqs = [
+    {
+      question: "Máy Văn Phòng Xanh có giao hàng toàn quốc không?",
+      answer: "Có, chúng tôi hỗ trợ giao hàng và lắp đặt tận nơi trên toàn quốc. Đối với khu vực nội thành, thời gian giao hàng thường trong vòng 24h.",
+      category: "Giao hàng",
+      order: 1
+    },
+    {
+      question: "Chính sách bảo hành như thế nào?",
+      answer: "Tất cả sản phẩm đều được bảo hành chính hãng từ 12-36 tháng tùy model. Chúng tôi còn cung cấp dịch vụ bảo hành tận nơi để tiết kiệm thời gian cho doanh nghiệp.",
+      category: "Bảo hành",
+      order: 2
+    },
+    {
+      question: "Tôi có thể thuê máy photocopy thay vì mua không?",
+      answer: "Có, Máy Văn Phòng Xanh cung cấp dịch vụ cho thuê máy photocopy trọn gói với chi phí linh hoạt, không cần lo lắng về chi phí mực in hay bảo trì.",
+      category: "Dịch vụ",
+      order: 3
+    },
+    {
+      question: "Hình thức thanh toán nào được chấp nhận?",
+      answer: "Chúng tôi hỗ trợ nhiều hình thức thanh toán bao gồm: Tiền mặt, Chuyển khoản ngân hàng, và Thanh toán công nợ dành cho khách hàng doanh nghiệp.",
+      category: "Thanh toán",
+      order: 4
+    }
+  ];
+
+  for (const faq of faqs) {
+    await prisma.faq.create({
+      data: faq
     })
   }
 

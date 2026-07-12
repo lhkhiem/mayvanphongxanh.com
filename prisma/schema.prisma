@@ -568,3 +568,18 @@ model Banner {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ==========================================
+// FAQ (Câu hỏi thường gặp)
+// ==========================================
+
+model Faq {
+  id        Int      @id @default(autoincrement())
+  question  String   @db.Text
+  answer    String   @db.Text
+  category  String?
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

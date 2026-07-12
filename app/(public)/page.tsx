@@ -7,11 +7,12 @@ import { ProjectsSection } from '@/components/sections/ProjectsSection';
 import { CompanyIntro } from '@/components/sections/CompanyIntro';
 import { CustomerReviews } from '@/components/sections/CustomerReviews';
 import { BlogSection } from '@/components/sections/BlogSection';
+import { FaqSection } from '@/components/sections/FaqSection';
 import { prisma } from '@/lib/db';
 
 export default async function Home() {
   // Fetch data directly from Server
-  const [dbCategories, dbProducts, dbTestimonials, dbPosts, dbProjects, dbSettings, dbSliders, dbBanners] = await Promise.all([
+  const [dbCategories, dbProducts, dbTestimonials, dbPosts, dbProjects, dbSettings, dbSliders, dbBanners, dbFaqs] = await Promise.all([
     prisma.category.findMany({ 
       where: { isActive: true, parentId: null },
       include: { children: true }
@@ -30,7 +31,8 @@ export default async function Home() {
     prisma.project.findMany({ where: { isActive: true } }),
     prisma.setting.findMany(),
     prisma.slider.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } }),
-    prisma.banner.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } })
+    prisma.banner.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } }),
+    prisma.faq.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } })
   ]);
 
   // Format Products for UI
@@ -70,6 +72,7 @@ export default async function Home() {
       <ProjectsSection projects={dbProjects} />
       <CompanyIntro />
       <CustomerReviews testimonials={dbTestimonials} />
+      <FaqSection faqs={dbFaqs} />
       <BlogSection posts={dbPosts} />
 
       <Footer />

@@ -21,6 +21,7 @@ import {
   Settings,
   Layers,
   Briefcase,
+  FileText,
 } from "lucide-react";
 
 const sidebarNavItems = [
@@ -120,6 +121,11 @@ const sidebarNavItems = [
     title: "Danh mục Bài viết",
     href: "/admin/post-categories",
     icon: Tags,
+  },
+  {
+    title: "Trang Giới Thiệu",
+    href: "/admin/about",
+    icon: FileText,
   },
   {
     title: "Dự án tiêu biểu",
