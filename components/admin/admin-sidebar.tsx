@@ -22,6 +22,7 @@ import {
   Layers,
   Briefcase,
   FileText,
+  HelpCircle,
 } from "lucide-react";
 
 const sidebarNavItems = [
@@ -131,6 +132,11 @@ const sidebarNavItems = [
     title: "Dự án tiêu biểu",
     href: "/admin/projects",
     icon: Briefcase,
+  },
+  {
+    title: "Câu hỏi thường gặp",
+    href: "/admin/faqs",
+    icon: HelpCircle,
   },
   {
     title: "Sliders & Banners",

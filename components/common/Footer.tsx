@@ -274,8 +274,8 @@ export function Footer() {
           </p>
           <div className="flex gap-4 text-xs text-gray-500">
             <Link href="/chinh-sach-bao-mat" className="hover:text-gray-300 transition-colors">Chính sách bảo mật</Link>
-            <Link href="#" className="hover:text-gray-300 transition-colors">Điều khoản sử dụng</Link>
-            <Link href="#" className="hover:text-gray-300 transition-colors">Cookie</Link>
+            <Link href="/dieu-khoan-su-dung" className="hover:text-gray-300 transition-colors">Điều khoản sử dụng</Link>
+            <Link href="/chinh-sach-cookie" className="hover:text-gray-300 transition-colors">Cookie</Link>
           </div>
         </div>
       </div>
