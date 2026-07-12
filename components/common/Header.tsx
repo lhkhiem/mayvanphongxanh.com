@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   ShoppingCart, Search, Menu, X, Phone, Mail, Clock,
-  ChevronDown, ArrowRightLeft, Tag, Headphones, User
+  ChevronDown, ArrowRightLeft, Tag, Headphones, LayoutGrid, ArrowRight
 } from 'lucide-react';
 import { Navigation } from './Navigation';
 import { MobileMenu } from './MobileMenu';
@@ -14,6 +14,7 @@ import { CartDrawer } from './CartDrawer';
 import { useCompare } from '@/context/CompareContext';
 import { slugify, productSlug } from '@/lib/utils';
 import { useSettings } from '@/context/SettingsContext';
+
 
 
 // ──────────────────────────────────────────
@@ -31,7 +32,7 @@ function InlineSearchBar({ categories = [] }: { categories?: any[] }) {
 
   useEffect(() => {
     if (query.trim() === '') { setResults([]); return; }
-    
+
     const fetchResults = async () => {
       try {
         const res = await fetch(`/api/products?search=${encodeURIComponent(query)}${selectedCategory !== 'Tất cả' ? `&categoryName=${encodeURIComponent(selectedCategory)}` : ''}`);
@@ -39,9 +40,9 @@ function InlineSearchBar({ categories = [] }: { categories?: any[] }) {
           const data = await res.json();
           setResults(data.slice(0, 6));
         }
-      } catch (err) {}
+      } catch (err) { }
     }
-    
+
     // Simple debounce
     const timeout = setTimeout(fetchResults, 300);
     return () => clearTimeout(timeout);
@@ -159,10 +160,115 @@ function InlineSearchBar({ categories = [] }: { categories?: any[] }) {
 }
 
 // ──────────────────────────────────────────
+// Compact Category Dropdown (kiểu CellphoneS, xuất hiện dưới nút)
+// ──────────────────────────────────────────
+function CompactCategoryMenu({ categories = [] }: { categories?: any[] }) {
+  const [open, setOpen] = useState(false);
+  const [activeSide, setActiveSide] = useState<number | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Click outside để đóng
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setActiveSide(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button
+        onClick={() => { setOpen(!open); setActiveSide(null); }}
+        className="flex items-center gap-2 px-3 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-bold uppercase tracking-wide transition-colors whitespace-nowrap"
+      >
+        <LayoutGrid className="w-4 h-4" />
+        <span className="hidden lg:inline">Danh Mục</span>
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 mt-2 z-[999] flex pointer-events-auto" onMouseLeave={() => setActiveSide(null)}>
+          {/* Main category list */}
+          <div className="w-[240px] bg-white border border-gray-200 shadow-xl rounded-lg overflow-hidden flex flex-col max-h-[80vh]">
+            <div className="overflow-y-auto py-2">
+              {categories.length > 0 ? (
+                categories.map((cat: any, idx: number) => (
+                  <div
+                    key={cat.id ?? cat.slug ?? cat.name}
+                    className="relative"
+                    onMouseEnter={() => setActiveSide(idx)}
+                  >
+                    <Link
+                      href={`/danh-muc/${cat.slug ?? encodeURIComponent(cat.name)}`}
+                      onClick={() => setOpen(false)}
+                      className={`flex items-center gap-3 px-4 py-2 text-[13px] font-medium transition-all ${
+                        activeSide === idx
+                          ? 'bg-gray-50 text-primary'
+                          : 'text-gray-700 hover:bg-gray-50 hover:text-primary'
+                      }`}
+                    >
+                      <span className="text-base w-5 text-center shrink-0">
+                        {cat.icon || '📦'}
+                      </span>
+                      <span className="flex-1 truncate">{cat.name}</span>
+                      {cat.children && cat.children.length > 0 && (
+                        <ChevronDown className="w-3.5 h-3.5 -rotate-90 text-gray-400 shrink-0" />
+                      )}
+                    </Link>
+                  </div>
+                ))
+              ) : (
+                <Link
+                  href="/san-pham"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-all"
+                >
+                  <span className="text-base w-5 text-center">📦</span>
+                  Tất cả sản phẩm
+                </Link>
+              )}
+            </div>
+          </div>
+
+          {/* Flyout submenu */}
+          {activeSide !== null && categories[activeSide]?.children?.length > 0 && (
+            <div className="ml-1 w-[280px] bg-white border border-gray-200 shadow-xl rounded-lg p-4 max-h-[80vh] overflow-y-auto">
+              <div className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2 pb-2 border-b border-gray-100">
+                <span>{categories[activeSide].icon || '📦'}</span>
+                {categories[activeSide].name}
+              </div>
+              <div className="grid grid-cols-1 gap-1">
+                {categories[activeSide].children.map((sub: any) => (
+                  <Link
+                    key={sub.slug ?? sub.name}
+                    href={`/danh-muc/${sub.slug ?? encodeURIComponent(sub.name)}`}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2 py-1.5 px-2 text-[13px] text-gray-600 hover:text-primary hover:bg-primary/5 rounded-md transition-colors group"
+                  >
+                    <span className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-primary transition-colors shrink-0" />
+                    {sub.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+// ──────────────────────────────────────────
 // Main Header
 // ──────────────────────────────────────────
 export function Header({ categories = [] }: { categories?: any[] }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { cartCount, setIsOpen } = useCart();
   const { items: compareItems } = useCompare();
   const { getSetting } = useSettings();
@@ -172,10 +278,22 @@ export function Header({ categories = [] }: { categories?: any[] }) {
   const workTime = getSetting('work_time', '08:00 – 17:30 (Thứ 2 – Thứ 7)');
   const siteLogo = getSetting('site_logo', '/logo.png');
 
+  // Theo dõi scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 80);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <header className="sticky top-0 z-50 w-full shadow-md">
       {/* ── Tier 1: Topbar ── */}
-      <div className="bg-[#1B5E20] text-white py-1.5 text-xs">
+      <div
+        className={`bg-[#1B5E20] text-white text-xs overflow-hidden transition-all duration-300 ease-in-out ${isScrolled ? 'max-h-0 py-0 opacity-0' : 'max-h-10 py-1.5 opacity-100'
+          }`}
+      >
         <div className="mx-auto max-w-7xl px-4 flex justify-between items-center">
           <div className="hidden sm:flex items-center gap-5">
             <a href={`mailto:${email}`} className="flex items-center gap-1.5 hover:text-green-200 transition-colors">
@@ -210,12 +328,22 @@ export function Header({ categories = [] }: { categories?: any[] }) {
                 <Image src={siteLogo} alt="Máy Văn Phòng Xanh" fill className="object-contain object-left scale-[3] md:scale-[3.5] origin-left" priority />
               </div>
             </Link>
-            
+
+            {/* Compact Category Menu - chỉ hiện khi đã scroll */}
+            <div
+              className={`hidden md:flex items-center shrink-0 transition-all duration-300 ease-in-out ${isScrolled
+                  ? 'opacity-100 w-auto pointer-events-auto'
+                  : 'opacity-0 w-0 overflow-hidden pointer-events-none'
+                }`}
+            >
+              <CompactCategoryMenu categories={categories} />
+            </div>
+
             {/* Mobile Icons */}
             <div className="flex items-center gap-1 md:hidden">
               <button onClick={() => setIsOpen(true)} className="relative p-2 rounded-lg hover:bg-gray-100">
-                 <ShoppingCart className="w-6 h-6 text-gray-700" />
-                 {cartCount > 0 && (
+                <ShoppingCart className="w-6 h-6 text-gray-700" />
+                {cartCount > 0 && (
                   <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
                     {cartCount}
                   </span>
@@ -230,7 +358,7 @@ export function Header({ categories = [] }: { categories?: any[] }) {
             </div>
 
             {/* Search bar */}
-            <div className="w-full md:w-auto md:flex-1 order-3 md:order-none">
+            <div className="w-full md:w-auto md:flex-1 md:min-w-0 order-3 md:order-none">
               <InlineSearchBar categories={categories} />
             </div>
 
@@ -253,8 +381,6 @@ export function Header({ categories = [] }: { categories?: any[] }) {
                 <Phone className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-bold text-gray-900 mt-1 whitespace-nowrap">{hotline}</span>
               </a>
-
-
 
               {/* Compare */}
               <Link
@@ -289,7 +415,10 @@ export function Header({ categories = [] }: { categories?: any[] }) {
       </div>
 
       {/* ── Tier 3: Navbar ── */}
-      <div className="hidden lg:block bg-[#2E7D32]">
+      <div
+        className={`hidden lg:block bg-[#2E7D32] overflow-hidden transition-all duration-300 ease-in-out ${isScrolled ? 'max-h-0 opacity-0' : 'max-h-16 opacity-100'
+          }`}
+      >
         <div className="mx-auto max-w-7xl px-4">
           <Navigation />
         </div>
