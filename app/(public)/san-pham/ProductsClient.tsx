@@ -232,12 +232,12 @@ export default function ProductsClient({
 
           {/* Sidebar Filters */}
           <aside className={`
-            fixed lg:static inset-y-0 left-0 z-50 w-[280px] lg:w-[250px] bg-white lg:bg-transparent h-full lg:h-auto transition-transform duration-300
+            fixed lg:static inset-y-0 left-0 z-50 lg:z-auto w-[280px] lg:w-[250px] bg-white lg:bg-transparent h-full lg:h-auto transition-transform duration-300
             ${isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             shrink-0
           `}>
             <div className="bg-white lg:border border-gray-200 lg:rounded-lg overflow-hidden flex flex-col h-full lg:h-auto shadow-xl lg:shadow-none">
-              <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white sticky lg:static top-0 z-10">
                 <h2 className="font-bold text-gray-800 text-[15px] flex items-center gap-2">
                   <Filter className="w-4 h-4 text-primary" />
                   Bộ lọc

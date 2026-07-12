@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
-    "db:push:neon": "dotenv -e .env.neon -- prisma db push"
+    "db:push:neon": "dotenv -e .env.neon -- prisma db push",
+    "db:seed:neon": "dotenv -e .env.neon -- tsx prisma/seed.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
