@@ -8,7 +8,7 @@ export const metadata = {
 
 export default async function ProductsPage() {
   const dbProducts = await prisma.product.findMany({
-    where: { isActive: true, productType: { not: 'rental' } },
+    where: { isActive: true, productType: { not: 'rental' }, deletedAt: null },
     include: { category: true, variants: true }
   });
 

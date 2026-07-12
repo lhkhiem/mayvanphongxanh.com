@@ -10,6 +10,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const dbProducts = keyword ? await prisma.product.findMany({
     where: { 
       isActive: true,
+      deletedAt: null,
       name: { contains: keyword } // simple search
     },
     include: { variants: true, category: true }

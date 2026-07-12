@@ -32,6 +32,8 @@ import {
   Trash2,
   ExternalLink,
   Loader2,
+  Settings,
+  ArrowUpRight,
 } from "lucide-react";
 
 // ── Tab config ───────────────────────────────────────────────────────────────
@@ -39,6 +41,7 @@ import {
 const TABS = [
   { id: "hero", label: "Hero", icon: LayoutTemplate },
   { id: "stats", label: "Thống kê", icon: BarChart3 },
+  { id: "services", label: "Dịch vụ", icon: Settings },
   { id: "process", label: "Quy trình", icon: GitBranch },
   { id: "brands", label: "Thương hiệu", icon: Building2 },
   { id: "values", label: "Năng lực", icon: Trophy },
@@ -420,6 +423,73 @@ function CtaTab({ initial }: { initial: typeof DEFAULT_ABOUT_CTA }) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// Services Tab
+// ══════════════════════════════════════════════════════════════════════════════
+
+function ServicesTab() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2 mb-5 pb-3 border-b border-gray-200 dark:border-gray-700">
+        <span className="text-base font-bold text-gray-900 dark:text-gray-100">Dịch vụ chủ lực (3 cột)</span>
+      </div>
+
+      <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-6">
+        <div className="flex items-start gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300">
+            <Settings className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-bold text-blue-900 dark:text-blue-100 mb-1">
+              Section này được quản lý riêng tại trang Dịch vụ trọn gói
+            </h3>
+            <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed mb-4">
+              Ba thẻ dịch vụ (01, 02, 03) hiển thị trên trang Giới thiệu được lấy động từ bảng{" "}
+              <code className="font-mono bg-blue-100 dark:bg-blue-800 px-1.5 py-0.5 rounded text-xs">Service</code>{" "}
+              trong database. Bạn có thể thêm, sửa, xóa hoặc thay đổi thứ tự các dịch vụ tại đây:
+            </p>
+            <a
+              href="/admin/services"
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors shadow-sm"
+            >
+              <Settings className="h-4 w-4" />
+              Quản lý Dịch vụ trọn gói
+              <ArrowUpRight className="h-4 w-4" />
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Preview info */}
+      <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#1e2330] p-5">
+        <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Những gì bạn có thể chỉnh sửa tại /admin/services</p>
+        <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+          <li className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+            Tên dịch vụ & mô tả ngắn (excerpt)
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+            Danh sách tính năng (dạng HTML list <code className="font-mono text-xs bg-gray-200 dark:bg-gray-700 px-1 rounded">&lt;li&gt;</code>)
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+            Ảnh minh họa dịch vụ
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+            Màu sắc số thứ tự (icon color)
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+            Thứ tự hiển thị & bật/tắt dịch vụ
+          </li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // Main Page
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -493,6 +563,7 @@ export default function AboutAdminPage() {
           <>
             {activeTab === "hero" && <HeroTab initial={settings.hero} />}
             {activeTab === "stats" && <StatsTab initial={settings.stats} />}
+            {activeTab === "services" && <ServicesTab />}
             {activeTab === "process" && <ProcessTab initial={settings.process} />}
             {activeTab === "brands" && <BrandsTab initial={settings.brands} />}
             {activeTab === "values" && <ValuesTab initial={settings.values} />}

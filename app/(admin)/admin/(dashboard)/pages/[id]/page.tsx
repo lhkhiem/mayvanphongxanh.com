@@ -5,11 +5,13 @@ import { PageForm } from "@/components/admin/page-form";
 export default async function EditPagePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const page = await db.page.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
+
 
   if (!page) {
     notFound();

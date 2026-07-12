@@ -212,7 +212,7 @@ async function main() {
     const createdProduct = await prisma.product.create({
       data: {
         name: prod.name,
-        slug: generateSlug(removeVietnameseTones(prod.name)),
+        slug: generateSlug(removeVietnameseTones(prod.name)) + '-' + prod.id,
         categoryId,
         brand: prod.brand,
         description: prod.description,

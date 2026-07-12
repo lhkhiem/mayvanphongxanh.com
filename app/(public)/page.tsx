@@ -18,7 +18,7 @@ export default async function Home() {
       include: { children: true }
     }),
     prisma.product.findMany({
-      where: { isActive: true },
+      where: { isActive: true, deletedAt: null },
       include: { category: true, variants: true }
     }),
     prisma.testimonial.findMany({ where: { isActive: true } }),

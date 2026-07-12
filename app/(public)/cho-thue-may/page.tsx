@@ -10,6 +10,7 @@ export default async function RentalPage() {
   const dbProducts = await prisma.product.findMany({
     where: { 
       isActive: true,
+      deletedAt: null,
       productType: 'rental'
     },
     include: { category: true, variants: true }

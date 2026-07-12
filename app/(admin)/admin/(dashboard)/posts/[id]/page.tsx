@@ -6,12 +6,14 @@ import { getPostCategories } from "@/app/(admin)/admin/(dashboard)/post-categori
 export default async function EditPostPage({
   params
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params;
   const [postRes, categoriesRes] = await Promise.all([
-    getPost(params.id),
+    getPost(id),
     getPostCategories()
   ]);
+
 
   if (!postRes.data) {
     notFound();

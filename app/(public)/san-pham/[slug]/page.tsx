@@ -9,11 +9,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   let dbProduct = null;
   
   if (!isNaN(id)) {
-    dbProduct = await prisma.product.findUnique({ where: { id } });
+    dbProduct = await prisma.product.findFirst({ where: { id, deletedAt: null } });
   }
   
   if (!dbProduct) {
-    dbProduct = await prisma.product.findUnique({ where: { slug } });
+    dbProduct = await prisma.product.findFirst({ where: { slug, deletedAt: null } });
   }
 
   if (!dbProduct) {
@@ -34,15 +34,15 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   let dbProduct = null;
 
   if (!isNaN(id)) {
-    dbProduct = await prisma.product.findUnique({
-      where: { id },
+    dbProduct = await prisma.product.findFirst({
+      where: { id, deletedAt: null },
       include: { category: true, variants: true, policies: true, consumables: { include: { category: true, variants: true } } }
     });
   }
   
   if (!dbProduct) {
-    dbProduct = await prisma.product.findUnique({
-      where: { slug },
+    dbProduct = await prisma.product.findFirst({
+      where: { slug, deletedAt: null },
       include: { category: true, variants: true, policies: true, consumables: { include: { category: true, variants: true } } }
     });
   }
@@ -85,20 +85,20 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const [similarDb, sameBrandDb, relatedDb, consumablesDb] = await Promise.all([
     // Similar products (same category)
     prisma.product.findMany({
-      where: { categoryId: categoryId, id: { not: dbProduct.id }, isActive: true },
+      where: { categoryId: categoryId, id: { not: dbProduct.id }, isActive: true, deletedAt: null },
       include: { category: true, variants: true },
       take: 4
     }),
     // Same brand
     prisma.product.findMany({
-      where: { brand: dbProduct.brand, id: { not: dbProduct.id }, isActive: true },
+      where: { brand: dbProduct.brand, id: { not: dbProduct.id }, isActive: true, deletedAt: null },
       include: { category: true, variants: true },
       take: 4,
       orderBy: { id: 'desc' }
     }),
     // Related products (random or just some latest)
     prisma.product.findMany({
-      where: { id: { not: dbProduct.id }, isActive: true },
+      where: { id: { not: dbProduct.id }, isActive: true, deletedAt: null },
       include: { category: true, variants: true },
       take: 4,
       orderBy: { createdAt: 'desc' }
