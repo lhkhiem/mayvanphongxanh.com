@@ -18,18 +18,28 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin', 'vietnamese'],
 })
 
-export const metadata: Metadata = {
-  title: 'Máy Văn Phòng Xanh - Chuyên cung cấp máy in, mực in & Thiết bị văn phòng',
-  description: 'Giải pháp thiết bị văn phòng chuyên nghiệp và dịch vụ kỹ thuật. Máy in tốc độ cao, mực in chính hãng, máy tính tiền POS, giải pháp mạng và hợp đồng bảo trì cho doanh nghiệp.',
-  generator: 'v0.app',
-  icons: {
-    icon: [
-      { url: '/icon-light-32x32.png', media: '(prefers-color-scheme: light)' },
-      { url: '/icon-dark-32x32.png', media: '(prefers-color-scheme: dark)' },
-      { url: '/icon.svg', type: 'image/svg+xml' },
-    ],
-    apple: '/apple-icon.png',
-  },
+export const revalidate = 0;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const dbSettings = await prisma.setting.findMany();
+  const settingsMap = dbSettings.reduce((acc, curr) => {
+    acc[curr.key] = curr.value;
+    return acc;
+  }, {} as Record<string, string>);
+
+  const faviconUrl = settingsMap['site_favicon'] || '/favicon.png';
+
+  return {
+    title: 'Máy Văn Phòng Xanh - Chuyên cung cấp máy in, mực in & Thiết bị văn phòng',
+    description: 'Giải pháp thiết bị văn phòng chuyên nghiệp và dịch vụ kỹ thuật. Máy in tốc độ cao, mực in chính hãng, máy tính tiền POS, giải pháp mạng và hợp đồng bảo trì cho doanh nghiệp.',
+    generator: 'v0.app',
+    icons: {
+      icon: [
+        { url: faviconUrl, type: faviconUrl.endsWith('.webp') ? 'image/webp' : undefined },
+      ],
+      apple: faviconUrl,
+    },
+  };
 }
 
 export const viewport: Viewport = {

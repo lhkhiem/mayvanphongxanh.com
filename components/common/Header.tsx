@@ -323,9 +323,9 @@ export function Header({ categories = [] }: { categories?: any[] }) {
         <div className="mx-auto max-w-7xl px-4">
           <div className="flex flex-wrap items-center justify-between gap-3 py-3 md:py-0 md:h-[88px]">
             {/* Logo */}
-            <Link href="/" className="shrink-0 flex items-center overflow-hidden w-36 md:w-52 h-12 md:h-16">
+            <Link href="/" className="shrink-0 flex items-center overflow-hidden w-36 md:w-52 h-[45px]">
               <div className="relative w-full h-full mix-blend-multiply">
-                <Image src={siteLogo} alt="Máy Văn Phòng Xanh" fill className="object-contain object-left scale-[3] md:scale-[3.5] origin-left" priority />
+                <Image src={siteLogo} alt="Máy Văn Phòng Xanh" fill className="object-contain object-left" priority />
               </div>
             </Link>
 

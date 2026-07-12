@@ -127,8 +127,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Col 1: Company Info */}
           <div className="lg:col-span-1">
-            <div className="relative w-40 h-12 mb-4 overflow-hidden mix-blend-screen">
-              <Image src={siteLogo} alt={companyName} fill className="object-contain object-left scale-[3] origin-left invert grayscale brightness-200" />
+            <div className="relative w-40 h-[45px] mb-4 overflow-hidden mix-blend-screen">
+              <Image src={siteLogo} alt={companyName} fill className="object-contain object-left invert grayscale brightness-200" />
             </div>
             <p className="text-xs text-gray-400 leading-relaxed mb-4">{companyDescription}</p>
 
