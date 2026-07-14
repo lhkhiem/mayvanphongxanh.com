@@ -83,7 +83,7 @@ export function HeroSection({ categories = [], sliders = [], banners = [] }: { c
             {activeSide !== null && (categories && categories.length > 0) && (
               <div className="absolute top-0 left-full ml-1 w-[550px] min-h-[420px] bg-white border border-gray-200 shadow-2xl rounded-lg z-[60] p-6 pointer-events-auto flex">
                 {/* Left: subcategories */}
-                <div className="flex-1 pr-6 border-r border-gray-100">
+                <div className={`flex-1 ${categories[activeSide].hasPromo ? 'pr-6 border-r border-gray-100' : ''}`}>
                   <div className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-5 flex items-center gap-2">
                     <span>{categories[activeSide].icon || '📦'}</span> {categories[activeSide].name}
                   </div>
@@ -110,27 +110,43 @@ export function HeroSection({ categories = [], sliders = [], banners = [] }: { c
                   </div>
                 </div>
                 {/* Right: promo block */}
-                <div className="w-[220px] pl-6 flex flex-col">
-                  <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-5 flex-1 flex flex-col relative overflow-hidden group/promo border border-primary/20 hover:border-primary/40 transition-colors shadow-sm">
-                    <div className="absolute -top-6 -right-6 p-2 opacity-5 group-hover/promo:scale-110 group-hover/promo:rotate-12 transition-all duration-700">
-                      <span className="text-9xl">{categories[activeSide].icon || '📦'}</span>
-                    </div>
-                    <div className="relative z-10 flex-1 flex flex-col justify-end">
-                      <span className="inline-block text-[11px] font-bold bg-destructive text-white px-2 py-0.5 rounded w-fit mb-3 uppercase tracking-wide shadow-sm">
-                        Ưu đãi đặc biệt
-                      </span>
-                      <h4 className="text-[15px] font-bold text-gray-900 mt-1 leading-snug">
-                        Sắm {categories[activeSide].name.toLowerCase()}
-                      </h4>
-                      <p className="text-[13px] text-gray-600 mt-2 mb-4 leading-relaxed">
-                        Tặng gói dịch vụ bảo trì 1 năm trị giá 2.000.000đ khi mua số lượng từ 3 thiết bị.
-                      </p>
-                      <Link href={`/danh-muc/${categories[activeSide].slug}`} className="text-[13px] font-bold text-primary hover:text-primary/80 flex items-center gap-1 group-hover/promo:gap-2 transition-all">
-                        Xem chi tiết <ArrowRight className="w-4 h-4" />
-                      </Link>
+                {categories[activeSide].hasPromo && (
+                  <div className="w-[220px] pl-6 flex flex-col">
+                    <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-5 flex-1 flex flex-col relative overflow-hidden group/promo border border-primary/20 hover:border-primary/40 transition-colors shadow-sm">
+                      {categories[activeSide].promoImageUrl ? (
+                        <div className="mb-4 -mx-2 -mt-2 rounded-lg overflow-hidden shrink-0">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img 
+                            src={categories[activeSide].promoImageUrl} 
+                            alt={categories[activeSide].promoTitle || ''}
+                            className="w-full h-28 object-cover group-hover/promo:scale-105 transition-transform duration-500 bg-white"
+                          />
+                        </div>
+                      ) : (
+                        <div className="absolute -top-6 -right-6 p-2 opacity-5 group-hover/promo:scale-110 group-hover/promo:rotate-12 transition-all duration-700 pointer-events-none">
+                          <span className="text-9xl">{categories[activeSide].icon || '📦'}</span>
+                        </div>
+                      )}
+                      <div className="relative z-10 flex-1 flex flex-col justify-end">
+                        <span 
+                          className="inline-block text-[11px] font-bold text-white px-2 py-0.5 rounded w-fit mb-3 uppercase tracking-wide shadow-sm"
+                          style={{ backgroundColor: categories[activeSide].promoBadgeColor || '#ef4444' }}
+                        >
+                          {categories[activeSide].promoBadgeText || 'Ưu đãi đặc biệt'}
+                        </span>
+                        <h4 className="text-[15px] font-bold text-gray-900 mt-1 leading-snug">
+                          {categories[activeSide].promoTitle || `Sắm ${categories[activeSide].name.toLowerCase()}`}
+                        </h4>
+                        <p className="text-[13px] text-gray-600 mt-2 mb-4 leading-relaxed line-clamp-3">
+                          {categories[activeSide].promoDescription || 'Đang cập nhật ưu đãi...'}
+                        </p>
+                        <Link href={categories[activeSide].promoTargetUrl || `/danh-muc/${categories[activeSide].slug}`} className="text-[13px] font-bold text-primary hover:text-primary/80 flex items-center gap-1 group-hover/promo:gap-2 transition-all">
+                          Xem chi tiết <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </div>

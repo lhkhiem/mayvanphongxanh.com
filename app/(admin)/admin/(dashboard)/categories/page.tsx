@@ -42,6 +42,13 @@ type Category = {
   color: string | null;
   isActive: boolean;
   isFeatured: boolean;
+  hasPromo: boolean;
+  promoTitle: string | null;
+  promoDescription: string | null;
+  promoBadgeText: string | null;
+  promoBadgeColor: string | null;
+  promoTargetUrl: string | null;
+  promoImageUrl: string | null;
   _count: { products: number };
 };
 
@@ -62,6 +69,13 @@ const DEFAULT_FORM: CategoryFormData = {
   color: "#3b82f6",
   isActive: true,
   isFeatured: false,
+  hasPromo: false,
+  promoTitle: "",
+  promoDescription: "",
+  promoBadgeText: "",
+  promoBadgeColor: "",
+  promoTargetUrl: "",
+  promoImageUrl: "",
 };
 
 // ── Main Component ─────────────────────────────────────────────────────────────
@@ -188,6 +202,13 @@ export default function CategoriesPage() {
                         color: parent.color || "#3b82f6",
                         isActive: parent.isActive,
                         isFeatured: parent.isFeatured,
+                        hasPromo: parent.hasPromo,
+                        promoTitle: parent.promoTitle || "",
+                        promoDescription: parent.promoDescription || "",
+                        promoBadgeText: parent.promoBadgeText || "",
+                        promoBadgeColor: parent.promoBadgeColor || "",
+                        promoTargetUrl: parent.promoTargetUrl || "",
+                        promoImageUrl: parent.promoImageUrl || "",
                       }}
                       onSubmit={(data) => handleUpdate(parent.id, data)}
                       onCancel={() => setEditingId(null)}
@@ -222,6 +243,13 @@ export default function CategoriesPage() {
                                 color: child.color || "#3b82f6",
                                 isActive: child.isActive,
                                 isFeatured: child.isFeatured,
+                                hasPromo: child.hasPromo,
+                                promoTitle: child.promoTitle || "",
+                                promoDescription: child.promoDescription || "",
+                                promoBadgeText: child.promoBadgeText || "",
+                                promoBadgeColor: child.promoBadgeColor || "",
+                                promoTargetUrl: child.promoTargetUrl || "",
+                                promoImageUrl: child.promoImageUrl || "",
                               }}
                               onSubmit={(data) => handleUpdate(child.id, data)}
                               onCancel={() => setEditingId(null)}
@@ -515,6 +543,83 @@ function CategoryForm({
             </div>
             <span className="text-xs text-gray-400 dark:text-gray-500">Xem trước</span>
           </div>
+        </div>
+
+        {/* Promo Banner Settings */}
+        <div className="pt-4 mt-2 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Cấu hình Promo Banner</h3>
+              <p className="text-xs text-gray-500">Hiển thị banner quảng cáo ở Mega Menu khi rê chuột vào danh mục.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, hasPromo: !form.hasPromo })}
+                className={cn(
+                  "relative inline-flex h-5 w-9 items-center rounded-full transition-colors",
+                  form.hasPromo ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
+                )}
+              >
+                <span className={cn("inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform", form.hasPromo ? "translate-x-4" : "translate-x-0.5")} />
+              </button>
+            </div>
+          </div>
+
+          {form.hasPromo && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
+              <div>
+                <label className="block text-xs font-medium mb-1.5 text-gray-700 dark:text-gray-300">Tiêu đề quảng cáo</label>
+                <input
+                  type="text"
+                  value={form.promoTitle || ""}
+                  onChange={(e) => setForm({ ...form, promoTitle: e.target.value })}
+                  placeholder="VD: Sắm mạng viễn thông"
+                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1.5 text-gray-700 dark:text-gray-300">Nhãn nổi bật (Badge)</label>
+                <input
+                  type="text"
+                  value={form.promoBadgeText || ""}
+                  onChange={(e) => setForm({ ...form, promoBadgeText: e.target.value })}
+                  placeholder="VD: ƯU ĐÃI ĐẶC BIỆT"
+                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium mb-1.5 text-gray-700 dark:text-gray-300">Mô tả chi tiết</label>
+                <textarea
+                  value={form.promoDescription || ""}
+                  onChange={(e) => setForm({ ...form, promoDescription: e.target.value })}
+                  placeholder="VD: Tặng gói dịch vụ bảo trì 1 năm..."
+                  rows={2}
+                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium mb-1.5 text-gray-700 dark:text-gray-300">Link đích khi click</label>
+                <input
+                  type="text"
+                  value={form.promoTargetUrl || ""}
+                  onChange={(e) => setForm({ ...form, promoTargetUrl: e.target.value })}
+                  placeholder="VD: /danh-muc/mang-vien-thong"
+                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium mb-1.5 text-gray-700 dark:text-gray-300">Link hình ảnh Promo</label>
+                <input
+                  type="text"
+                  value={form.promoImageUrl || ""}
+                  onChange={(e) => setForm({ ...form, promoImageUrl: e.target.value })}
+                  placeholder="VD: /images/promo.jpg hoặc https://..."
+                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Toggles */}

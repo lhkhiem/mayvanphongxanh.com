@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { X, Upload, Search, Grid3x3, List, Check, ImageIcon, Copy, Folder, Link as LinkIcon, ChevronRight, ChevronDown, FolderOpen } from "lucide-react";
+import { createPortal } from "react-dom";
+import { X, Upload, Search, Grid3x3, List, Check, ImageIcon, Copy, Folder, Link as LinkIcon, ChevronRight, ChevronDown, FolderOpen, FolderPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { createFolder } from "@/app/(admin)/admin/(dashboard)/media/actions";
 
 interface Asset {
   id: string;
@@ -62,6 +64,10 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
   // URL Upload states
   const [isUploadUrlOpen, setIsUploadUrlOpen] = useState(false);
   const [uploadUrl, setUploadUrl] = useState('');
+
+  // Create Folder states
+  const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -134,19 +140,30 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
         body: JSON.stringify({ url: uploadUrl, folderId: currentFolderId })
       });
       const data = await res.json();
-      if (!res.ok || data.error) {
+      if (data.error) {
         toast.error(data.error || 'Upload thất bại');
       } else {
-        toast.success('Đã tải ảnh từ URL thành công');
+        toast.success('Đã upload ảnh thành công');
         setIsUploadUrlOpen(false);
         setUploadUrl('');
-        await fetchAssets();
-        if (!multiple) setSelectedIds([data.data.id]);
+        fetchAssets();
       }
-    } catch (err) {
+    } catch {
       toast.error('Lỗi kết nối. Không thể upload.');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+    const res = await createFolder(newFolderName, currentFolderId);
+    if (res.error) toast.error(res.error);
+    else {
+      toast.success('Đã tạo thư mục');
+      setIsCreateFolderOpen(false);
+      setNewFolderName('');
+      fetchAssets();
     }
   };
 
@@ -238,8 +255,8 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+  const modalContent = (
+    <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div
         className="bg-white dark:bg-[#1e2332] rounded-xl shadow-2xl w-full max-w-6xl h-[85vh] flex flex-col overflow-hidden"
         onDragEnter={handleDragEnter}
@@ -315,6 +332,14 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
                 </div>
 
                 <button
+                  onClick={() => setIsCreateFolderOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm"
+                  title="Tạo thư mục"
+                >
+                  <FolderPlus className="h-4 w-4" />
+                </button>
+
+                <button
                   onClick={() => setIsUploadUrlOpen(true)}
                   className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm"
                   title="Upload từ Link"
@@ -347,6 +372,41 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
                   <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border-2 border-dashed border-primary flex flex-col items-center gap-3">
                     <Upload className="h-12 w-12 text-primary" />
                     <p className="font-semibold text-gray-900 dark:text-gray-100">Thả ảnh vào thư mục này</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Create Folder Dialog */}
+              {isCreateFolderOpen && (
+                <div className="absolute inset-0 z-20 bg-white/95 dark:bg-gray-900/95 flex items-center justify-center p-4">
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6 border border-gray-200 dark:border-gray-700">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      Tạo thư mục mới
+                    </h3>
+                    <input
+                      type="text"
+                      value={newFolderName}
+                      onChange={e => setNewFolderName(e.target.value)}
+                      placeholder="Tên thư mục..."
+                      autoFocus
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white mb-4 focus:ring-2 focus:ring-primary outline-none"
+                      onKeyDown={e => e.key === 'Enter' && handleCreateFolder()}
+                    />
+                    <div className="flex justify-end gap-3">
+                      <button
+                        onClick={() => setIsCreateFolderOpen(false)}
+                        className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        Hủy
+                      </button>
+                      <button
+                        onClick={handleCreateFolder}
+                        disabled={!newFolderName.trim()}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50"
+                      >
+                        Tạo
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -537,4 +597,6 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 }

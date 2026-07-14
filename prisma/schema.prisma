@@ -21,6 +21,15 @@ model Category {
   isActive   Boolean @default(true)
   isFeatured Boolean @default(false)
 
+  // Promo Banner fields
+  hasPromo         Boolean @default(false)
+  promoTitle       String?
+  promoDescription String?
+  promoBadgeText   String?
+  promoBadgeColor  String?
+  promoTargetUrl   String?
+  promoImageUrl    String?
+
   parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children Category[] @relation("CategoryHierarchy")
   products Product[]
@@ -38,6 +47,8 @@ model Brand {
   isActive    Boolean @default(true)
 
   products Product[]
+  certificates PartnerCertificate[]
+  isPartner    Boolean @default(false)
 
   @@index([slug])
 }
@@ -582,4 +593,37 @@ model Faq {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ==========================================
+// PARTNER (Đối tác chiến lược & Thương hiệu phân phối)
+// ==========================================
+
+model PartnerCertificate {
+  id         Int      @id @default(autoincrement())
+  brandId    Int
+  brand      Brand    @relation(fields: [brandId], references: [id])
+  badge      String   // Vd: Đối tác Bạc, Đại lý Ủy quyền
+  scope      String   // Phạm vi
+  region     String   // Khu vực
+  validDate  String   // Hiệu lực (e.g., 01/01/2026 - 31/12/2026)
+  link       String?  // Link xem chi tiết
+  image      String?  // Ảnh giấy chứng nhận / ủy quyền
+  order      Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([brandId])
+}
+
+model PartnerBenefit {
+  id          Int      @id @default(autoincrement())
+  icon        String   // Icon name (e.g., CheckCircle, ShieldCheck)
+  title       String
+  description String   @db.Text
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

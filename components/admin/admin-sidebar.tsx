@@ -23,6 +23,7 @@ import {
   Briefcase,
   FileText,
   HelpCircle,
+  Handshake,
 } from "lucide-react";
 
 const sidebarNavItems = [
@@ -132,6 +133,11 @@ const sidebarNavItems = [
     title: "Dự án tiêu biểu",
     href: "/admin/projects",
     icon: Briefcase,
+  },
+  {
+    title: "Đối tác",
+    href: "/admin/partners",
+    icon: Handshake,
   },
   {
     title: "Câu hỏi thường gặp",

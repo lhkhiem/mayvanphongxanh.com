@@ -41,6 +41,13 @@ export type CategoryFormData = {
   color: string
   isActive: boolean
   isFeatured?: boolean
+  hasPromo?: boolean
+  promoTitle?: string
+  promoDescription?: string
+  promoBadgeText?: string
+  promoBadgeColor?: string
+  promoTargetUrl?: string
+  promoImageUrl?: string
 }
 
 export async function createCategory(data: CategoryFormData) {
@@ -54,6 +61,13 @@ export async function createCategory(data: CategoryFormData) {
         color: data.color || null,
         isActive: data.isActive,
         isFeatured: data.isFeatured || false,
+        hasPromo: data.hasPromo || false,
+        promoTitle: data.promoTitle || null,
+        promoDescription: data.promoDescription || null,
+        promoBadgeText: data.promoBadgeText || null,
+        promoBadgeColor: data.promoBadgeColor || null,
+        promoTargetUrl: data.promoTargetUrl || null,
+        promoImageUrl: data.promoImageUrl || null,
       },
     })
     revalidatePath("/admin/categories")
@@ -83,6 +97,13 @@ export async function updateCategory(id: number, data: CategoryFormData) {
         color: data.color || null,
         isActive: data.isActive,
         isFeatured: data.isFeatured ?? false,
+        hasPromo: data.hasPromo ?? false,
+        promoTitle: data.promoTitle || null,
+        promoDescription: data.promoDescription || null,
+        promoBadgeText: data.promoBadgeText || null,
+        promoBadgeColor: data.promoBadgeColor || null,
+        promoTargetUrl: data.promoTargetUrl || null,
+        promoImageUrl: data.promoImageUrl || null,
       },
     })
     revalidatePath("/admin/categories")
