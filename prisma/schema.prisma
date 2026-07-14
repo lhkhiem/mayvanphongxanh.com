@@ -20,6 +20,7 @@ model Category {
   color      String?
   isActive   Boolean @default(true)
   isFeatured Boolean @default(false)
+  showInFooter Boolean @default(false)
 
   // Promo Banner fields
   hasPromo         Boolean @default(false)

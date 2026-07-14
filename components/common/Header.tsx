@@ -281,7 +281,11 @@ export function Header({ categories = [] }: { categories?: any[] }) {
   // Theo dõi scroll
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 80);
+      setIsScrolled(prev => {
+        if (window.scrollY > 200) return true;
+        if (window.scrollY < 50) return false;
+        return prev;
+      });
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);

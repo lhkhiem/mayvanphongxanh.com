@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Phone, Mail, MapPin, Clock, Send, ArrowRight, Shield, Truck, Award, Loader2 } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 const FacebookIcon = ({ className }: { className?: string }) => (
@@ -39,19 +39,31 @@ const supportLinks = [
   { label: 'So sánh sản phẩm', href: '/so-sanh' },
 ];
 
-const categories = [
-  { label: 'Máy in các loại', href: '/danh-muc/may-in' },
-  { label: 'Vật tư & Mực in', href: '/danh-muc/vat-tu' },
-  { label: 'Hệ thống POS', href: '/danh-muc/he-thong-pos' },
-  { label: 'Thiết bị mạng', href: '/danh-muc/mang-vien-thong' },
-  { label: 'Thiết bị văn phòng', href: '/danh-muc/thiet-bi' },
-  { label: 'Gói dịch vụ', href: '/danh-muc/goi-dich-vu' },
-];
+
 
 export function Footer() {
   const { getSetting } = useSettings();
   const [subscriberEmail, setSubscriberEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<{label: string, href: string}[]>([
+    { label: 'Máy in các loại', href: '/danh-muc/may-in' },
+    { label: 'Vật tư & Mực in', href: '/danh-muc/vat-tu' },
+    { label: 'Hệ thống POS', href: '/danh-muc/he-thong-pos' },
+    { label: 'Thiết bị mạng', href: '/danh-muc/mang-vien-thong' },
+    { label: 'Thiết bị văn phòng', href: '/danh-muc/thiet-bi' },
+    { label: 'Gói dịch vụ', href: '/danh-muc/goi-dich-vu' },
+  ]);
+
+  useEffect(() => {
+    fetch('/api/categories/footer')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setCategories(data.map(c => ({ label: c.name, href: `/danh-muc/${c.slug}` })));
+        }
+      })
+      .catch(err => console.error('Lỗi fetch danh mục footer:', err));
+  }, []);
 
   const handleSubscribe = async () => {
     if (!subscriberEmail || !subscriberEmail.includes('@')) {

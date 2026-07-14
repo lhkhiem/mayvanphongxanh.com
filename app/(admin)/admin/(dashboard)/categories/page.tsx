@@ -42,6 +42,7 @@ type Category = {
   color: string | null;
   isActive: boolean;
   isFeatured: boolean;
+  showInFooter: boolean;
   hasPromo: boolean;
   promoTitle: string | null;
   promoDescription: string | null;
@@ -68,7 +69,8 @@ const DEFAULT_FORM: CategoryFormData = {
   icon: "",
   color: "#3b82f6",
   isActive: true,
-  isFeatured: false,
+  isFeatured: true,
+  showInFooter: true,
   hasPromo: false,
   promoTitle: "",
   promoDescription: "",
@@ -202,6 +204,7 @@ export default function CategoriesPage() {
                         color: parent.color || "#3b82f6",
                         isActive: parent.isActive,
                         isFeatured: parent.isFeatured,
+                        showInFooter: parent.showInFooter,
                         hasPromo: parent.hasPromo,
                         promoTitle: parent.promoTitle || "",
                         promoDescription: parent.promoDescription || "",
@@ -243,6 +246,7 @@ export default function CategoriesPage() {
                                 color: child.color || "#3b82f6",
                                 isActive: child.isActive,
                                 isFeatured: child.isFeatured,
+                                showInFooter: child.showInFooter,
                                 hasPromo: child.hasPromo,
                                 promoTitle: child.promoTitle || "",
                                 promoDescription: child.promoDescription || "",
@@ -547,22 +551,20 @@ function CategoryForm({
 
         {/* Promo Banner Settings */}
         <div className="pt-4 mt-2 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div>
+          <div className="flex items-start gap-3 mb-4">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, hasPromo: !form.hasPromo })}
+              className={cn(
+                "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors mt-0.5",
+                form.hasPromo ? "bg-purple-500" : "bg-gray-300 dark:bg-gray-600"
+              )}
+            >
+              <span className={cn("inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform", form.hasPromo ? "translate-x-4" : "translate-x-0.5")} />
+            </button>
+            <div className="cursor-pointer select-none" onClick={() => setForm({ ...form, hasPromo: !form.hasPromo })}>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Cấu hình Promo Banner</h3>
-              <p className="text-xs text-gray-500">Hiển thị banner quảng cáo ở Mega Menu khi rê chuột vào danh mục.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setForm({ ...form, hasPromo: !form.hasPromo })}
-                className={cn(
-                  "relative inline-flex h-5 w-9 items-center rounded-full transition-colors",
-                  form.hasPromo ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
-                )}
-              >
-                <span className={cn("inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform", form.hasPromo ? "translate-x-4" : "translate-x-0.5")} />
-              </button>
+              <p className="text-xs text-gray-500 mt-0.5">Hiển thị banner quảng cáo ở Mega Menu khi rê chuột vào danh mục.</p>
             </div>
           </div>
 
@@ -623,39 +625,59 @@ function CategoryForm({
         </div>
 
         {/* Toggles */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
-          {/* Active Toggle */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setForm({ ...form, isActive: !form.isActive })}
-              className={cn(
-                "relative inline-flex h-5 w-9 items-center rounded-full transition-colors",
-                form.isActive ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
-              )}
-            >
-              <span className={cn("inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform", form.isActive ? "translate-x-4" : "translate-x-0.5")} />
-            </button>
-            <span className="text-sm text-gray-700 dark:text-gray-300">
-              {form.isActive ? "Hiển thị trên website" : "Ẩn khỏi website"}
-            </span>
-          </div>
+        <div className="pt-4 mt-2 border-t border-gray-200 dark:border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Tùy chọn hiển thị</h3>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
+            {/* Active Toggle */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, isActive: !form.isActive })}
+                className={cn(
+                  "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
+                  form.isActive ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"
+                )}
+              >
+                <span className={cn("inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform", form.isActive ? "translate-x-4" : "translate-x-0.5")} />
+              </button>
+              <span className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none" onClick={() => setForm({ ...form, isActive: !form.isActive })}>
+                {form.isActive ? "Hiển thị trên website" : "Ẩn khỏi website"}
+              </span>
+            </div>
 
-          {/* Featured Toggle */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setForm({ ...form, isFeatured: !form.isFeatured })}
-              className={cn(
-                "relative inline-flex h-5 w-9 items-center rounded-full transition-colors",
-                form.isFeatured ? "bg-amber-500" : "bg-gray-300 dark:bg-gray-600"
-              )}
-            >
-              <span className={cn("inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform", form.isFeatured ? "translate-x-4" : "translate-x-0.5")} />
-            </button>
-            <span className="text-sm text-gray-700 dark:text-gray-300">
-              Danh mục nổi bật
-            </span>
+            {/* Featured Toggle */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, isFeatured: !form.isFeatured })}
+                className={cn(
+                  "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
+                  form.isFeatured ? "bg-amber-500" : "bg-gray-300 dark:bg-gray-600"
+                )}
+              >
+                <span className={cn("inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform", form.isFeatured ? "translate-x-4" : "translate-x-0.5")} />
+              </button>
+              <span className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none" onClick={() => setForm({ ...form, isFeatured: !form.isFeatured })}>
+                Danh mục nổi bật
+              </span>
+            </div>
+
+            {/* Show in Footer Toggle */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, showInFooter: !form.showInFooter })}
+                className={cn(
+                  "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
+                  form.showInFooter ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-600"
+                )}
+              >
+                <span className={cn("inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform", form.showInFooter ? "translate-x-4" : "translate-x-0.5")} />
+              </button>
+              <span className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none" onClick={() => setForm({ ...form, showInFooter: !form.showInFooter })}>
+                Hiển thị ở Footer
+              </span>
+            </div>
           </div>
         </div>
 

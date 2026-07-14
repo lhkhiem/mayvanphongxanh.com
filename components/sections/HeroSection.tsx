@@ -81,7 +81,7 @@ export function HeroSection({ categories = [], sliders = [], banners = [] }: { c
 
             {/* Sub-Categories Mega Menu Flyout */}
             {activeSide !== null && (categories && categories.length > 0) && (
-              <div className="absolute top-0 left-full ml-1 w-[550px] min-h-[420px] bg-white border border-gray-200 shadow-2xl rounded-lg z-[60] p-6 pointer-events-auto flex">
+              <div className="absolute top-0 left-full ml-1 w-[550px] min-h-[420px] bg-white border border-gray-200 shadow-2xl rounded-lg z-40 p-6 pointer-events-auto flex">
                 {/* Left: subcategories */}
                 <div className={`flex-1 ${categories[activeSide].hasPromo ? 'pr-6 border-r border-gray-100' : ''}`}>
                   <div className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-5 flex items-center gap-2">

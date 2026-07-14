@@ -48,6 +48,7 @@ export type CategoryFormData = {
   promoBadgeColor?: string
   promoTargetUrl?: string
   promoImageUrl?: string
+  showInFooter?: boolean
 }
 
 export async function createCategory(data: CategoryFormData) {
@@ -68,6 +69,7 @@ export async function createCategory(data: CategoryFormData) {
         promoBadgeColor: data.promoBadgeColor || null,
         promoTargetUrl: data.promoTargetUrl || null,
         promoImageUrl: data.promoImageUrl || null,
+        showInFooter: data.showInFooter || false,
       },
     })
     revalidatePath("/admin/categories")
@@ -104,6 +106,7 @@ export async function updateCategory(id: number, data: CategoryFormData) {
         promoBadgeColor: data.promoBadgeColor || null,
         promoTargetUrl: data.promoTargetUrl || null,
         promoImageUrl: data.promoImageUrl || null,
+        showInFooter: data.showInFooter ?? false,
       },
     })
     revalidatePath("/admin/categories")
