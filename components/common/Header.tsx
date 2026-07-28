@@ -420,7 +420,7 @@ export function Header({ categories = [] }: { categories?: any[] }) {
 
       {/* ── Tier 3: Navbar ── */}
       <div
-        className={`hidden lg:block bg-[#2E7D32] overflow-hidden transition-all duration-300 ease-in-out ${isScrolled ? 'max-h-0 opacity-0' : 'max-h-16 opacity-100'
+        className={`hidden lg:block bg-[#2E7D32] transition-all duration-300 ease-in-out ${isScrolled ? 'max-h-0 opacity-0 overflow-hidden' : 'max-h-16 opacity-100 overflow-visible'
           }`}
       >
         <div className="mx-auto max-w-7xl px-4">
