@@ -293,6 +293,11 @@ export async function updateProduct(id: number, input: ProductInput) {
 
     revalidatePath("/admin/products")
     revalidatePath(`/admin/products/${id}`)
+    revalidatePath("/")
+    revalidatePath("/san-pham")
+    if (input.slug) {
+      revalidatePath(`/san-pham/${input.slug}`)
+    }
     return { success: true }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {

@@ -43,7 +43,7 @@ export default async function TechNewsPage() {
         
         {/* SUB NAVIGATION */}
         <div className="bg-white border-b border-gray-200 sticky top-[88px] lg:top-[132px] z-40">
-          <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-7xl px-4">
             <div className="flex overflow-x-auto hide-scrollbar gap-2 py-3">
               <Link href="#" className="flex items-center whitespace-nowrap px-4 py-2 text-primary font-bold text-sm bg-primary/10 rounded-md">
                 <LayoutGrid className="w-4 h-4 mr-2" /> Tổng quan
@@ -64,7 +64,7 @@ export default async function TechNewsPage() {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 mt-6">
+        <div className="mx-auto max-w-7xl px-4 mt-6">
           <div className="flex flex-col lg:flex-row gap-8">
             
             {/* LEFT COLUMN - MAIN CONTENT */}
@@ -73,7 +73,7 @@ export default async function TechNewsPage() {
               {/* Featured Main Post */}
               {featuredPost && (
                 <div className="mb-8 group">
-                  <Link href={`/blog/tin-tuc/${featuredPost.slug}`} className="block">
+                  <Link href={`/tin-tuc/${featuredPost.slug}`} className="block">
                     <div className="relative w-full h-[400px] md:h-[480px] overflow-hidden rounded-lg mb-4">
                       <Image 
                         src={featuredPost.image} 
@@ -101,11 +101,11 @@ export default async function TechNewsPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 border-b border-gray-200 pb-10">
                 {topThreePosts.map(post => (
                   <div key={post.id} className="group flex flex-col">
-                    <Link href={`/blog/tin-tuc/${post.slug}`} className="block relative h-40 w-full overflow-hidden rounded-md mb-3">
+                    <Link href={`/tin-tuc/${post.slug}`} className="block relative h-40 w-full overflow-hidden rounded-md mb-3">
                       <Image src={post.image} alt={post.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
                     </Link>
                     <h3 className="font-bold text-[#0d2a45] text-[15px] leading-snug group-hover:text-primary transition-colors mb-2 line-clamp-3">
-                      <Link href={`/blog/tin-tuc/${post.slug}`}>{post.title}</Link>
+                      <Link href={`/tin-tuc/${post.slug}`}>{post.title}</Link>
                     </h3>
                     <div className="mt-auto flex items-center text-xs text-gray-500 gap-2">
                       <span className="flex items-center"><Calendar className="w-3.5 h-3.5 mr-1" /> {post.date}</span>
@@ -124,12 +124,12 @@ export default async function TechNewsPage() {
               <div className="flex flex-col gap-6">
                 {horizontalPosts.map(post => (
                   <div key={post.id} className="group flex flex-col md:flex-row gap-5 items-start">
-                    <Link href={`/blog/tin-tuc/${post.slug}`} className="block relative w-full md:w-[220px] h-[140px] shrink-0 overflow-hidden rounded-md">
+                    <Link href={`/tin-tuc/${post.slug}`} className="block relative w-full md:w-[220px] h-[140px] shrink-0 overflow-hidden rounded-md">
                       <Image src={post.image} alt={post.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
                     </Link>
                     <div className="flex flex-col pt-1">
                       <h4 className="font-bold text-[#0d2a45] text-[17px] leading-snug group-hover:text-primary transition-colors mb-2">
-                        <Link href={`/blog/tin-tuc/${post.slug}`}>{post.title}</Link>
+                        <Link href={`/tin-tuc/${post.slug}`}>{post.title}</Link>
                       </h4>
                       <div className="flex items-center text-xs text-gray-500 gap-3 mb-2.5">
                         <span className="flex items-center"><Calendar className="w-3.5 h-3.5 mr-1" /> {post.date}</span>
@@ -159,12 +159,12 @@ export default async function TechNewsPage() {
                 <div className="flex flex-col gap-4">
                   {latestPosts.map(post => (
                     <div key={`latest-${post.id}`} className="group flex gap-3">
-                      <Link href={`/blog/tin-tuc/${post.slug}`} className="block relative w-[100px] h-[70px] shrink-0 overflow-hidden rounded">
+                      <Link href={`/tin-tuc/${post.slug}`} className="block relative w-[100px] h-[70px] shrink-0 overflow-hidden rounded">
                         <Image src={post.image} alt={post.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
                       </Link>
                       <div className="flex flex-col">
                         <h4 className="font-bold text-[#0d2a45] text-sm leading-snug group-hover:text-primary transition-colors mb-1 line-clamp-2">
-                          <Link href={`/blog/tin-tuc/${post.slug}`}>{post.title}</Link>
+                          <Link href={`/tin-tuc/${post.slug}`}>{post.title}</Link>
                         </h4>
                         <div className="flex items-center text-xs text-gray-500 mt-auto">
                           <Calendar className="w-3 h-3 mr-1" /> {post.date}
@@ -186,11 +186,11 @@ export default async function TechNewsPage() {
                 {/* Highlight top 1 of trending */}
                 {trendingPosts[0] && (
                   <div className="mb-5 group">
-                    <Link href={`/blog/tin-tuc/${trendingPosts[0].slug}`} className="block relative w-full h-[180px] overflow-hidden rounded mb-3">
+                    <Link href={`/tin-tuc/${trendingPosts[0].slug}`} className="block relative w-full h-[180px] overflow-hidden rounded mb-3">
                       <Image src={trendingPosts[0].image} alt={trendingPosts[0].title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
                     </Link>
                     <h4 className="font-bold text-[#0d2a45] text-[15px] leading-snug group-hover:text-primary transition-colors line-clamp-2">
-                      <Link href={`/blog/tin-tuc/${trendingPosts[0].slug}`}>{trendingPosts[0].title}</Link>
+                      <Link href={`/tin-tuc/${trendingPosts[0].slug}`}>{trendingPosts[0].title}</Link>
                     </h4>
                   </div>
                 )}
@@ -203,7 +203,7 @@ export default async function TechNewsPage() {
                       </span>
                       <div className="flex flex-col pt-0.5">
                         <h4 className="font-semibold text-[#0d2a45] text-[13px] leading-snug group-hover:text-primary transition-colors mb-1.5">
-                          <Link href={`/blog/tin-tuc/${post.slug}`}>{post.title}</Link>
+                          <Link href={`/tin-tuc/${post.slug}`}>{post.title}</Link>
                         </h4>
                         <div className="flex items-center text-[11px] text-gray-400">
                           <Calendar className="w-3 h-3 mr-1" /> {post.date}

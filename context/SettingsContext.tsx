@@ -20,7 +20,17 @@ export function SettingsProvider({
   initialSettings: SettingsMap;
 }) {
   const getSetting = (key: string, defaultValue = '') => {
-    return initialSettings[key] || defaultValue;
+    let val = initialSettings[key];
+    if (!val && key === 'site_logo') val = initialSettings['company_logo'];
+    if (!val && key === 'company_logo') val = initialSettings['site_logo'];
+    if (!val && key === 'site_favicon') val = initialSettings['company_favicon'];
+    if (!val && key === 'company_favicon') val = initialSettings['site_favicon'];
+    val = val || defaultValue;
+
+    if (val && typeof val === 'string') {
+      val = val.replace(/^https?:\/\/(0\.0\.0\.0|localhost|127\.0\.0\.1)(:\d+)?/i, '');
+    }
+    return val;
   };
 
   return (

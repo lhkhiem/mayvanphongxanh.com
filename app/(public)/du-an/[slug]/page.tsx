@@ -72,7 +72,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-[#0d2a45] via-[#0d2a45]/90 to-[#0d2a45]/80"></div>
           
-          <div className="container mx-auto px-4 relative z-10">
+          <div className="mx-auto max-w-7xl px-4 relative z-10">
             <Link href="/du-an" className="inline-flex items-center text-sm font-semibold text-gray-400 hover:text-white mb-6 transition-colors">
               <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại danh sách dự án
             </Link>
@@ -111,7 +111,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         </div>
 
         {/* MAIN CONTENT */}
-        <div className="container mx-auto px-4 -mt-10 relative z-20">
+        <div className="mx-auto max-w-7xl px-4 -mt-10 relative z-20">
           <div className="flex flex-col lg:flex-row gap-8">
             
             {/* Left Content */}

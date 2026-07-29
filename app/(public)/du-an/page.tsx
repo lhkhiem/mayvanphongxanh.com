@@ -45,7 +45,7 @@ export default async function ImplementedProjectsPage() {
             <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a45] via-[#0d2a45]/80 to-transparent"></div>
           </div>
           
-          <div className="container mx-auto px-4 py-20 lg:py-28 relative z-10">
+          <div className="mx-auto max-w-7xl px-4 py-16 lg:py-24 relative z-10">
             <div className="max-w-3xl">
               <span className="inline-block uppercase tracking-wider text-sm font-bold text-yellow-400 mb-4 border-b border-yellow-400 pb-1">
                 Dự án tiêu biểu
@@ -62,7 +62,7 @@ export default async function ImplementedProjectsPage() {
                   Xem dự án tiêu biểu
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </a>
-                <Link href="/contact" className="bg-transparent hover:bg-white/10 border border-white/40 text-white font-semibold px-8 py-3.5 rounded flex items-center justify-center transition-colors">
+                <Link href="/lien-he" className="bg-transparent hover:bg-white/10 border border-white/40 text-white font-semibold px-8 py-3.5 rounded flex items-center justify-center transition-colors">
                   Liên hệ tư vấn hồ sơ thầu
                   <FileCheck2 className="w-5 h-5 ml-2" />
                 </Link>
@@ -72,7 +72,7 @@ export default async function ImplementedProjectsPage() {
         </div>
 
         {/* STATS SECTION */}
-        <div className="container mx-auto px-4 relative -mt-8 z-20">
+        <div className="mx-auto max-w-7xl px-4 relative -mt-8 z-20">
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 flex flex-wrap justify-between p-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
             <div className="w-full md:w-1/4 p-6 flex flex-col items-center justify-center text-center">
               <Building2 className="w-8 h-8 text-yellow-500 mb-3" />
@@ -98,7 +98,7 @@ export default async function ImplementedProjectsPage() {
         </div>
 
         {/* PROJECTS LIST */}
-        <div id="projects-list" className="container mx-auto px-4 mt-16 pt-8">
+        <div id="projects-list" className="mx-auto max-w-7xl px-4 mt-16 pt-8">
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.map((project) => (
@@ -147,7 +147,7 @@ export default async function ImplementedProjectsPage() {
         </div>
 
         {/* COMMITMENT / CTA SECTION */}
-        <div className="container mx-auto px-4 mt-20">
+        <div className="mx-auto max-w-7xl px-4 mt-20">
           <div className="bg-[#0b1c31] rounded-2xl p-8 lg:p-12 flex flex-col lg:flex-row gap-12 items-center">
             
             <div className="w-full lg:w-2/3">
@@ -178,7 +178,7 @@ export default async function ImplementedProjectsPage() {
                 <p className="text-gray-400 text-sm mb-6">
                   Đội ngũ kỹ thuật của Máy Văn Phòng Xanh sẽ phối hợp khảo sát, tư vấn và cung cấp hồ sơ năng lực theo yêu cầu.
                 </p>
-                <Link href="/contact" className="inline-flex items-center justify-center bg-yellow-500 hover:bg-yellow-600 text-[#0d2a45] font-bold px-6 py-3 rounded transition-colors w-full">
+                <Link href="/lien-he" className="inline-flex items-center justify-center bg-yellow-500 hover:bg-yellow-600 text-[#0d2a45] font-bold px-6 py-3 rounded transition-colors w-full">
                   Liên hệ ngay
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Link>

@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import ProductDetailClient from './ProductDetailClient';
-import { idFromSlug } from '@/lib/utils';
+import { idFromSlug, cleanUrl } from '@/lib/utils';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -52,6 +52,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   }
 
   const defaultVariant = dbProduct.variants[0];
+  const rawProductImages = (dbProduct.images as string[] || []).map(cleanUrl).filter(Boolean);
+  const mainImage = rawProductImages[0] || cleanUrl((defaultVariant?.images as string[])?.[0]) || '/placeholder.jpg';
+
   const product = {
     id: dbProduct.id,
     name: dbProduct.name,
@@ -63,8 +66,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     originalPrice: defaultVariant?.originalPrice,
     rating: 5,
     reviews: 120,
-    image: (dbProduct.images as string[])?.[0] || (defaultVariant?.images as string[])?.[0] || '/placeholder.jpg',
-    images: dbProduct.images as string[] || [],
+    image: mainImage,
+    images: rawProductImages.length > 0 ? rawProductImages : [mainImage],
     stock: defaultVariant?.stockQuantity || 0,
     description: dbProduct.description,
     productType: dbProduct.productType,

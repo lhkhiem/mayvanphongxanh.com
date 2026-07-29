@@ -4,8 +4,8 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import {
   Upload, Search, Grid3x3, List, Trash2, Eye, Copy,
-  X, Image as ImageIcon, Check, File, CheckSquare,
-  Folder, FolderPlus, Link as LinkIcon, ChevronRight, ChevronDown, Edit2, FolderOpen
+  X, Image as ImageIcon, Check, CheckSquare,
+  Folder, FolderPlus, Link as LinkIcon, ChevronRight, ChevronDown, Edit2, FolderOpen, Clipboard, Camera
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAssets, deleteAsset, deleteMultipleAssets, getFolders, getAllFolders, createFolder, deleteFolder, renameFolder } from "./actions";
@@ -68,6 +68,107 @@ export default function MediaPage() {
     fetchData();
   }, [searchQuery, currentFolderId]);
 
+  // Tự động lắng nghe sự kiện Dán (Ctrl + V / Cmd + V) từ Bộ nhớ tạm (Screenshot)
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const files: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.indexOf('image') !== -1) {
+          const blob = item.getAsFile();
+          if (blob) {
+            const fileName = `screenshot-${Date.now()}.png`;
+            const file = new File([blob], fileName, { type: blob.type || 'image/png' });
+            files.push(file);
+          }
+        }
+      }
+
+      if (files.length > 0) {
+        e.preventDefault();
+        toast.info(`Đang upload ${files.length} ảnh dán từ bộ nhớ tạm (Ctrl+V)...`);
+        handleFileUpload(files);
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => {
+      window.removeEventListener('paste', handlePaste);
+    };
+  }, [currentFolderId]);
+
+  const handlePasteFromClipboard = async () => {
+    try {
+      if (!navigator.clipboard?.read) {
+        toast.error("Trình duyệt chưa cấp quyền đọc tự động. Hãy bấm Ctrl+V để dán!");
+        return;
+      }
+      const items = await navigator.clipboard.read();
+      const files: File[] = [];
+      for (const item of items) {
+        for (const type of item.types) {
+          if (type.startsWith("image/")) {
+            const blob = await item.getType(type);
+            const file = new File([blob], `clipboard-${Date.now()}.png`, { type });
+            files.push(file);
+          }
+        }
+      }
+      if (files.length > 0) {
+        toast.info(`Đã lấy ${files.length} ảnh từ bộ nhớ tạm!`);
+        handleFileUpload(files);
+      } else {
+        toast.warning("Bộ nhớ tạm chưa có ảnh. Hãy chụp màn hình (PrintScreen / Win+Shift+S) trước!");
+      }
+    } catch {
+      toast.error("Hãy bấm Ctrl + V để dán ảnh màn hình trực tiếp!");
+    }
+  };
+
+  const handleScreenCapture = async () => {
+    try {
+      if (!navigator.mediaDevices?.getDisplayMedia) {
+        toast.error("Trình duyệt không hỗ trợ chụp màn hình!");
+        return;
+      }
+      toast.info("Vui lòng chọn màn hình / cửa sổ cần chụp...");
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: "monitor" } as any,
+        audio: false,
+      });
+
+      const video = document.createElement("video");
+      video.srcObject = stream;
+      await video.play();
+
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      stream.getTracks().forEach((track) => track.stop());
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const file = new File([blob], `capture-${Date.now()}.png`, { type: "image/png" });
+          toast.success("Đã chụp màn hình! Đang tải ảnh lên...");
+          handleFileUpload([file]);
+        }
+      }, "image/png");
+    } catch (err: any) {
+      if (err.name !== "NotAllowedError") {
+        toast.error("Không thể chụp màn hình: " + (err.message || String(err)));
+      }
+    }
+  };
+
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -106,16 +207,22 @@ export default function MediaPage() {
       }
 
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text();
+        data = { error: text || `HTTP ${res.status}: Upload thất bại` };
+      }
 
       if (!res.ok || data.error) {
-        toast.error(data.error || 'Upload thất bại');
+        toast.error(data.error || data.details || 'Upload thất bại');
       } else {
-        toast.success(`Đã upload ${data.data.length} file thành công`);
+        toast.success(`Đã upload ${data.data?.length || 1} file thành công`);
         fetchData();
       }
-    } catch (err) {
-      toast.error('Lỗi kết nối. Không thể upload file.');
+    } catch (err: any) {
+      toast.error(err?.message || 'Lỗi kết nối. Không thể upload file.');
     } finally {
       setUploading(false);
     }
@@ -130,17 +237,24 @@ export default function MediaPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: uploadUrl, folderId: currentFolderId })
       });
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text();
+        data = { error: text || `HTTP ${res.status}: Upload thất bại` };
+      }
+
       if (!res.ok || data.error) {
-        toast.error(data.error || 'Upload thất bại');
+        toast.error(data.error || data.details || 'Upload thất bại');
       } else {
         toast.success('Đã tải ảnh từ URL thành công');
         setIsUploadUrlOpen(false);
         setUploadUrl('');
         fetchData();
       }
-    } catch (err) {
-      toast.error('Lỗi kết nối. Không thể upload.');
+    } catch (err: any) {
+      toast.error(err?.message || 'Lỗi kết nối. Không thể upload.');
     } finally {
       setUploading(false);
     }
@@ -333,8 +447,28 @@ export default function MediaPage() {
           )}
           
           <button
+            onClick={handleScreenCapture}
+            disabled={uploading}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-3.5 py-2 text-sm font-medium bg-white dark:bg-[#2a303d] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm"
+            title="Kích hoạt chụp màn hình và tự động upload"
+          >
+            <Camera className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <span>Chụp màn hình</span>
+          </button>
+
+          <button
+            onClick={handlePasteFromClipboard}
+            disabled={uploading}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-3.5 py-2 text-sm font-medium bg-white dark:bg-[#2a303d] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm"
+            title="Dán ảnh từ bộ nhớ tạm (PrintScreen/Ctrl+V)"
+          >
+            <Clipboard className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <span>Dán bộ nhớ tạm</span>
+          </button>
+
+          <button
             onClick={() => setIsUploadUrlOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium bg-white dark:bg-[#2a303d] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-3.5 py-2 text-sm font-medium bg-white dark:bg-[#2a303d] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm"
           >
             <LinkIcon className="h-4 w-4" />
             Upload từ Link
@@ -342,7 +476,7 @@ export default function MediaPage() {
 
           <button
             onClick={() => { setIsCreateFolderOpen(true); setNewFolderName(''); }}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium bg-white dark:bg-[#2a303d] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-3.5 py-2 text-sm font-medium bg-white dark:bg-[#2a303d] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm"
           >
             <FolderPlus className="h-4 w-4" />
             Tạo thư mục

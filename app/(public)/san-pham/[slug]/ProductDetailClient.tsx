@@ -12,6 +12,8 @@ import { useCart } from '@/context/CartContext';
 import { QuoteTemplate } from '@/components/print/QuoteTemplate';
 import { ProductCard } from '@/components/products/ProductCard';
 
+import { cleanUrl } from '@/lib/utils';
+
 export default function ProductDetailClient({ 
   product, 
   similarProducts = [], 
@@ -97,9 +99,21 @@ export default function ProductDetailClient({
   if (!product) {
     notFound();
   }
-  
+
+  const cleanProductImages = (Array.isArray(product.images) ? product.images : [])
+    .map((img: string) => cleanUrl(img))
+    .filter(Boolean);
+
+  const cleanVariantImages = (Array.isArray(currentVariant?.images) ? currentVariant.images : [])
+    .map((img: string) => cleanUrl(img))
+    .filter(Boolean);
+
+  const gallery = cleanProductImages.length > 0
+    ? cleanProductImages
+    : (cleanVariantImages.length > 0 ? cleanVariantImages : [cleanUrl(product.image) || '/placeholder.jpg']);
+
   // Add state for image gallery
-  const [activeImage, setActiveImage] = useState(product.image);
+  const [activeImage, setActiveImage] = useState(() => gallery[0] || cleanUrl(product.image) || '/placeholder.jpg');
   const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
   const [isZooming, setIsZooming] = useState(false);
 
@@ -107,21 +121,11 @@ export default function ProductDetailClient({
   const [activeTab, setActiveTab] = useState('specs');
   const [activeRelatedTab, setActiveRelatedTab] = useState(product.category === 'Máy in' ? 'consumables' : 'similar');
 
-  // Related products are passed as props
-
-  // Create gallery from variant images if available, else product images
-  const gallery = currentVariant?.images && (currentVariant.images as string[]).length > 0 
-    ? (currentVariant.images as string[])
-    : (product.images?.length > 0 ? product.images : [product.image]);
-
   useEffect(() => {
     if (gallery.length > 0 && !gallery.includes(activeImage)) {
       setActiveImage(gallery[0]);
-    } else if (gallery.length > 0 && selectedVariantId) {
-      // Force update active image to the first image of the variant when variant changes
-      setActiveImage(gallery[0]);
     }
-  }, [selectedVariantId]);
+  }, [selectedVariantId, gallery]);
 
   const { addToCart } = useCart();
 

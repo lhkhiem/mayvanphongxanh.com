@@ -12,8 +12,8 @@ import { MediaPickerInput } from "@/components/admin/media-picker-input"
 
 export function SettingsForm({ initialData }: { initialData: Record<string, string> }) {
   const [isLoading, setIsLoading] = useState(false)
-  const [companyLogo, setCompanyLogo] = useState(initialData['company_logo'] || '')
-  const [companyFavicon, setCompanyFavicon] = useState(initialData['company_favicon'] || '')
+  const [companyLogo, setCompanyLogo] = useState(initialData['company_logo'] || initialData['site_logo'] || '')
+  const [companyFavicon, setCompanyFavicon] = useState(initialData['company_favicon'] || initialData['site_favicon'] || '')
   const [seoImage, setSeoImage] = useState(initialData['seo_image'] || '')
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

@@ -102,7 +102,11 @@ export async function deleteAsset(id: string, url: string) {
 
     // Delete file from disk
     try {
-      const filePath = path.join(process.cwd(), 'public', url)
+      let rootDir = process.cwd()
+      if (rootDir.includes('.next/standalone') || rootDir.includes('.next\\standalone')) {
+        rootDir = path.join(rootDir, '../../')
+      }
+      const filePath = path.join(rootDir, 'public', url)
       await unlink(filePath)
     } catch (fileErr) {
       console.warn("Could not delete file from disk (may already be gone):", fileErr)
@@ -120,10 +124,15 @@ export async function deleteMultipleAssets(ids: string[], urls: string[]) {
   try {
     await prisma.asset.deleteMany({ where: { id: { in: ids } } })
 
+    let rootDir = process.cwd()
+    if (rootDir.includes('.next/standalone') || rootDir.includes('.next\\standalone')) {
+      rootDir = path.join(rootDir, '../../')
+    }
+
     // Delete files from disk
     await Promise.allSettled(
       urls.map(async (url) => {
-        const filePath = path.join(process.cwd(), 'public', url)
+        const filePath = path.join(rootDir, 'public', url)
         await unlink(filePath)
       })
     )

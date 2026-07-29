@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
 import { HeroSection } from '@/components/sections/HeroSection';
@@ -9,6 +10,47 @@ import { CustomerReviews } from '@/components/sections/CustomerReviews';
 import { BlogSection } from '@/components/sections/BlogSection';
 import { FaqSection } from '@/components/sections/FaqSection';
 import { prisma } from '@/lib/db';
+
+import { cleanUrl } from '@/lib/utils';
+
+export async function generateMetadata(): Promise<Metadata> {
+  let dbSettings: any[] = [];
+  try {
+    dbSettings = await prisma.setting.findMany();
+  } catch (err) {
+    console.warn('Could not fetch dbSettings in page generateMetadata:', err);
+  }
+  const settingsMap = dbSettings.reduce((acc, curr) => {
+    acc[curr.key] = curr.value;
+    return acc;
+  }, {} as Record<string, string>);
+
+  const defaultTitle = 'Máy Văn Phòng Xanh - Chuyên cung cấp máy in, mực in & Thiết bị văn phòng';
+  const defaultDesc = 'Giải pháp thiết bị văn phòng chuyên nghiệp và dịch vụ kỹ thuật. Máy in tốc độ cao, mực in chính hãng, máy tính tiền POS, giải pháp mạng và hợp đồng bảo trì cho doanh nghiệp.';
+
+  const title = settingsMap['seo_title']?.trim() || settingsMap['company_name']?.trim() || defaultTitle;
+  const description = settingsMap['seo_description']?.trim() || settingsMap['company_description']?.trim() || defaultDesc;
+  const ogImage = cleanUrl(settingsMap['seo_image'] || settingsMap['company_logo'] || settingsMap['site_logo']);
+
+  return {
+    title: { absolute: title },
+    description,
+    openGraph: {
+      title,
+      description,
+      images: ogImage ? [{ url: ogImage }] : undefined,
+      type: 'website',
+      locale: 'vi_VN',
+      siteName: settingsMap['company_name'] || 'Máy Văn Phòng Xanh',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
+  };
+}
 
 export default async function Home() {
   // Fetch data directly from Server
@@ -35,9 +77,14 @@ export default async function Home() {
     prisma.faq.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } })
   ]);
 
+  // Clean slider & banner URLs
+  const sliders = dbSliders.map(s => ({ ...s, image: cleanUrl(s.image) }));
+  const banners = dbBanners.map(b => ({ ...b, image: cleanUrl(b.image) }));
+
   // Format Products for UI
   const products = dbProducts.map(p => {
     const defaultVariant = p.variants[0];
+    const rawImage = (p.images as string[])?.[0] || (defaultVariant?.images as string[])?.[0] || '';
     return {
       id: p.id,
       name: p.name,
@@ -48,7 +95,7 @@ export default async function Home() {
       originalPrice: defaultVariant?.originalPrice,
       rating: 5,
       reviews: 120,
-      image: (p.images as string[])?.[0] || (defaultVariant?.images as string[])?.[0] || '',
+      image: cleanUrl(rawImage),
       stock: defaultVariant?.stockQuantity || 0,
       description: p.description,
       productType: p.productType,
@@ -66,7 +113,7 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-background">
       <Header categories={dbCategories} />
-      <HeroSection categories={dbCategories} sliders={dbSliders} banners={dbBanners} />
+      <HeroSection categories={dbCategories} sliders={sliders} banners={banners} />
       <FeaturedProducts products={featuredProducts} categories={featuredCategories} />
       <ServicePackagesSection products={products.filter(p => p.category === 'Gói dịch vụ')} />
       <ProjectsSection projects={dbProjects} />

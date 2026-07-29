@@ -16,6 +16,11 @@ const trustItems = [
   { icon: '🧾', label: 'Xuất VAT đầy đủ' },
 ];
 
+const cleanUrl = (url?: string) => {
+  if (!url) return '';
+  return url.replace(/^https?:\/\/(0\.0\.0\.0|localhost|127\.0\.0\.1)(:\d+)?/i, '');
+};
+
 // ─────────────────────────────────────────────────
 // Sidebar Category Item
 // ─────────────────────────────────────────────────

@@ -2,15 +2,33 @@ import { NextRequest, NextResponse } from 'next/server'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { prisma } from '@/lib/db'
-import sharp from 'sharp'
 import crypto from 'crypto'
+
+let sharp: any = null
+try {
+  sharp = require('sharp')
+} catch (e) {
+  console.warn('Sharp native module is not available:', e)
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { url, folderId } = await request.json()
+    const { url, folderId: rawFolderId } = await request.json()
 
     if (!url) {
       return NextResponse.json({ error: 'URL không được để trống' }, { status: 400 })
+    }
+
+    let folderId: string | null = null
+    if (rawFolderId && rawFolderId !== 'root' && rawFolderId !== 'null' && rawFolderId !== 'undefined' && rawFolderId.trim() !== '') {
+      try {
+        const folderExists = await prisma.mediaFolder.findUnique({ where: { id: rawFolderId } })
+        if (folderExists) {
+          folderId = rawFolderId
+        }
+      } catch (dbErr) {
+        console.warn('Could not verify folderId existence:', dbErr)
+      }
     }
 
     let parsedUrl;
@@ -34,8 +52,6 @@ export async function POST(request: NextRequest) {
     let buffer = Buffer.from(arrayBuffer)
     
     const isSvg = contentType.includes('svg');
-    let finalExt = isSvg ? '.svg' : '.webp';
-    let finalMimeType = isSvg ? contentType : 'image/webp';
     let originalName = path.basename(parsedUrl.pathname) || 'downloaded-image'
     
     // Remove query params or hashes from original name
@@ -47,13 +63,22 @@ export async function POST(request: NextRequest) {
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '') || crypto.randomBytes(8).toString('hex')
 
-    if (!isSvg) {
+    let finalExt = ext || '.jpg'
+    let finalMimeType = contentType
+    let finalFileName = originalName
+
+    if (isSvg) {
+      finalExt = '.svg'
+      finalMimeType = contentType
+    } else if (sharp) {
       try {
-        buffer = await sharp(buffer).webp({ quality: 80 }).toBuffer()
+        const compressed = await sharp(buffer).webp({ quality: 80 }).toBuffer()
+        buffer = compressed
+        finalExt = '.webp'
+        finalMimeType = 'image/webp'
+        finalFileName = `${baseName}.webp`
       } catch (error) {
         console.warn(`Failed to compress image from URL ${url}, using original`, error)
-        finalExt = ext || '.jpg' // Fallback
-        finalMimeType = contentType
       }
     }
 
@@ -61,7 +86,12 @@ export async function POST(request: NextRequest) {
 
     const now = new Date()
     const yearMonth = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', yearMonth)
+    
+    let rootDir = process.cwd()
+    if (rootDir.includes('.next/standalone') || rootDir.includes('.next\\standalone')) {
+      rootDir = path.join(rootDir, '../../')
+    }
+    const uploadDir = path.join(rootDir, 'public', 'uploads', yearMonth)
     await mkdir(uploadDir, { recursive: true })
 
     const filePath = path.join(uploadDir, uniqueName)
@@ -69,22 +99,23 @@ export async function POST(request: NextRequest) {
 
     const publicUrl = `/uploads/${yearMonth}/${uniqueName}`
 
-    let resolvedFolderId = folderId
-    if (resolvedFolderId === 'root' || resolvedFolderId === 'null') resolvedFolderId = null
-
     const asset = await prisma.asset.create({
       data: {
         url: publicUrl,
-        fileName: isSvg ? originalName : `${baseName}.webp`,
+        fileName: finalFileName,
         mimeType: finalMimeType,
         sizeBytes: buffer.length,
-        folderId: resolvedFolderId
+        folderId: folderId
       }
     })
 
     return NextResponse.json({ success: true, data: asset })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Upload URL error:', error)
-    return NextResponse.json({ error: 'Lỗi hệ thống. Không thể tải file từ URL.' }, { status: 500 })
+    return NextResponse.json({ 
+      error: 'Lỗi hệ thống. Không thể tải file từ URL.',
+      details: error?.message || String(error)
+    }, { status: 500 })
   }
 }
+

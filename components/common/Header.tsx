@@ -327,9 +327,17 @@ export function Header({ categories = [] }: { categories?: any[] }) {
         <div className="mx-auto max-w-7xl px-4">
           <div className="flex flex-wrap items-center justify-between gap-3 py-3 md:py-0 md:h-[88px]">
             {/* Logo */}
-            <Link href="/" className="shrink-0 flex items-center overflow-hidden w-36 md:w-52 h-[45px]">
-              <div className="relative w-full h-full mix-blend-multiply">
-                <Image src={siteLogo} alt="Máy Văn Phòng Xanh" fill className="object-contain object-left" priority />
+            <Link href="/" className="shrink-0 flex items-center overflow-hidden w-36 md:w-52 h-[45px]" style={{ maxWidth: '208px', maxHeight: '45px', display: 'inline-flex' }}>
+              <div className="relative w-full h-full mix-blend-multiply" style={{ width: '100%', height: '100%', position: 'relative' }}>
+                <Image
+                  src={siteLogo}
+                  alt="Máy Văn Phòng Xanh"
+                  fill
+                  sizes="(max-width: 768px) 144px, 208px"
+                  className="object-contain object-left"
+                  style={{ objectFit: 'contain', objectPosition: 'left', maxWidth: '100%', maxHeight: '100%' }}
+                  priority
+                />
               </div>
             </Link>
 

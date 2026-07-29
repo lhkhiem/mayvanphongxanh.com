@@ -5,7 +5,7 @@ export const revalidate = 0; // ensure this is not cached
 
 export async function GET(request: Request) {
   const settings = await prisma.setting.findMany();
-  const faviconSetting = settings.find(s => s.key === 'site_favicon');
+  const faviconSetting = settings.find(s => s.key === 'site_favicon') || settings.find(s => s.key === 'company_favicon');
   
   if (faviconSetting?.value) {
     const url = new URL(faviconSetting.value, request.url);
