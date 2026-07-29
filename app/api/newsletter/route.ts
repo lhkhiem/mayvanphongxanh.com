@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { sendRegisterNotification } from "@/lib/mailer";
 
 export async function POST(request: Request) {
   try {
@@ -24,6 +25,9 @@ export async function POST(request: Request) {
           where: { email },
           data: { isActive: true },
         });
+
+        sendRegisterNotification({ email, name: "Đăng ký nhận tin tức" }).catch(() => {});
+
         return NextResponse.json({ message: "Đăng ký nhận tin thành công!" });
       }
       return NextResponse.json(
@@ -37,6 +41,8 @@ export async function POST(request: Request) {
       data: { email },
     });
 
+    sendRegisterNotification({ email, name: "Đăng ký nhận tin tức" }).catch(() => {});
+
     return NextResponse.json(
       { message: "Đăng ký nhận tin thành công!" },
       { status: 201 }
@@ -49,3 +55,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

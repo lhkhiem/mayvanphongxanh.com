@@ -59,7 +59,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     id: dbProduct.id,
     name: dbProduct.name,
     slug: dbProduct.slug,
-    sku: dbProduct.sku,
+    sku: defaultVariant?.sku || '',
     category: dbProduct.category?.name || 'Chưa phân loại',
     brand: dbProduct.brand || 'HP',
     price: defaultVariant?.price || 0,
@@ -71,6 +71,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     stock: defaultVariant?.stockQuantity || 0,
     description: dbProduct.description,
     productType: dbProduct.productType,
+    isContactPrice: dbProduct.isContactPrice,
     attributes: defaultVariant?.attributes,
     variants: dbProduct.variants,
     customOptions: dbProduct.customOptions,
@@ -85,7 +86,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   // Fetch related products
   const categoryId = dbProduct.categoryId;
   
-  const [similarDb, sameBrandDb, relatedDb, consumablesDb] = await Promise.all([
+  const [similarDb, sameBrandDb, relatedDb] = await Promise.all([
     // Similar products (same category)
     prisma.product.findMany({
       where: { categoryId: categoryId, id: { not: dbProduct.id }, isActive: true, deletedAt: null },
@@ -122,6 +123,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       reviews: 12,
       image: (v?.images as string[])?.[0] || '/placeholder.jpg',
       stock: v?.stockQuantity || 0,
+      isContactPrice: p.isContactPrice,
+      productType: p.productType,
     }
   });
 

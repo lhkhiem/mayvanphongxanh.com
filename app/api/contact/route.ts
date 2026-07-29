@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { sendContactNotification } from "@/lib/mailer";
 
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    const { name, phone, service, message } = data;
+    const { name, phone, service, message, email } = data;
 
     if (!name || !phone || !message) {
       return NextResponse.json(
@@ -23,8 +24,19 @@ export async function POST(request: Request) {
       },
     });
 
+    // Trigger email notification
+    sendContactNotification({
+      name,
+      phone,
+      service: service || "Khác",
+      message,
+      email: email || undefined,
+    }).catch((err) => {
+      console.error("[Contact Route] Lỗi gửi email thông báo:", err);
+    });
+
     return NextResponse.json(
-      { message: "Gửi yêu cầu thành công!", data: contactRequest },
+      { message: "Gửi yêu cầu thành công! Chúng tôi sẽ liên hệ sớm nhất có thể.", data: contactRequest },
       { status: 201 }
     );
   } catch (error) {
@@ -35,3 +47,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

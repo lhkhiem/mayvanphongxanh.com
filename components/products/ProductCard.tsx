@@ -23,6 +23,7 @@ export interface ProductCardProps {
   slug?: string;
   variantId?: string;
   productType?: string;
+  isContactPrice?: boolean;
 }
 
 export function ProductCard({
@@ -39,6 +40,7 @@ export function ProductCard({
   slug,
   variantId,
   productType,
+  isContactPrice = false,
 }: ProductCardProps) {
   const [showCompareToast, setShowCompareToast] = useState(false);
   const [showCompareErrorToast, setShowCompareErrorToast] = useState('');
@@ -50,11 +52,17 @@ export function ProductCard({
   const { addCompareItem, removeCompareItem, hasItem } = useCompare();
   
   const router = useRouter();
-  const discount = originalPrice && price > 0 ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
+  const showContactPrice = isContactPrice || price <= 0;
+  const discount = !showContactPrice && originalPrice && price > 0 ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
   
   const isCompared = hasItem(id);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (showContactPrice) {
+      router.push(`/san-pham/${hrefSlug}`);
+      return;
+    }
     addToCart({ id, variantId, cartItemId: variantId ? `${id}-${variantId}` : String(id), name, price, image, sku });
   };
 
@@ -143,7 +151,7 @@ export function ProductCard({
 
         {/* Price */}
         <div className="mt-auto">
-          {price > 0 ? (
+          {!showContactPrice ? (
             <div className="flex items-end gap-2 justify-between">
               <div>
                 {originalPrice && (
@@ -164,7 +172,7 @@ export function ProductCard({
               )}
             </div>
           ) : (
-            <div className="font-bold text-lg sm:text-[19px] text-primary mt-4">Liên hệ</div>
+            <div className="font-bold text-lg sm:text-[19px] text-amber-600 mt-4">Liên hệ</div>
           )}
         </div>
       </div>
@@ -192,11 +200,15 @@ export function ProductCard({
 
         <button 
           onClick={handleAddToCart}
-          disabled={stock === 0}
-          className="w-9 h-9 flex items-center justify-center bg-primary text-white rounded-md shadow hover:bg-primary/90 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-          title={productType === 'rental' ? "Đăng ký thuê" : "Thêm vào giỏ"}
+          disabled={!showContactPrice && stock === 0}
+          className={`h-9 flex items-center justify-center text-white rounded-md shadow transition-colors ${
+            showContactPrice
+              ? 'px-3 bg-amber-600 hover:bg-amber-700 text-xs font-semibold'
+              : 'w-9 bg-primary hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed'
+          }`}
+          title={showContactPrice ? "Liên hệ báo giá" : productType === 'rental' ? "Đăng ký thuê" : "Thêm vào giỏ"}
         >
-          <ShoppingCart className="w-4 h-4" />
+          {showContactPrice ? 'Liên hệ' : <ShoppingCart className="w-4 h-4" />}
         </button>
       </div>
 

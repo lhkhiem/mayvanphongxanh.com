@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
+import { sendTestEmail } from "@/lib/mailer"
 
 export async function updateSettings(data: FormData) {
   try {
@@ -31,3 +32,11 @@ export async function updateSettings(data: FormData) {
     return { error: "Lỗi hệ thống. Không thể lưu cài đặt." }
   }
 }
+
+export async function sendTestEmailAction(toEmail: string) {
+  if (!toEmail || !toEmail.includes("@")) {
+    return { error: "Địa chỉ email không hợp lệ." }
+  }
+  return await sendTestEmail(toEmail)
+}
+

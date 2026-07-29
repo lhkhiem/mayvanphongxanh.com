@@ -85,6 +85,7 @@ export function ProductForm({
     productType: initialData?.productType || 'standard',
     isActive: initialData?.isActive ?? true,
     isFeatured: initialData?.isFeatured ?? false,
+    isContactPrice: initialData?.isContactPrice ?? false,
     metaTitle: initialData?.metaTitle || '',
     metaDescription: initialData?.metaDescription || '',
     metaKeywords: initialData?.metaKeywords || '',
@@ -283,7 +284,7 @@ export function ProductForm({
     
     for (const [i, v] of variants.entries()) {
       if (!v.sku.trim()) { toast.error(`Biến thể #${i + 1} chưa có SKU.`); setTab(isStandard ? 'variants' : 'info'); return; }
-      if (v.price <= 0) { toast.error(`Biến thể #${i + 1} phải có giá bán > 0.`); setTab(isStandard ? 'variants' : 'info'); return; }
+      if (!form.isContactPrice && v.price <= 0) { toast.error(`Biến thể #${i + 1} phải có giá bán > 0.`); setTab(isStandard ? 'variants' : 'info'); return; }
     }
 
     if (isCustomBuild) {
@@ -411,6 +412,27 @@ export function ProductForm({
                     </label>
                   </div>
                   <input type="text" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} disabled={autoSlug} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-gray-800 shadow-sm font-mono" />
+                </div>
+              </div>
+
+              {/* Setting Contact Price */}
+              <div className="rounded-lg border border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20 p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <label className="text-sm font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-2 cursor-pointer">
+                      <span>Ẩn giá sản phẩm (Hiển thị "Giá Liên hệ")</span>
+                    </label>
+                    <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                      Khi bật tùy chọn này, giá niêm yết sẽ được ẩn và thay bằng chữ "Liên hệ". Nút mua hàng chuyển sang liên hệ báo giá.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, isContactPrice: !form.isContactPrice })}
+                    className={cn("relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0", form.isContactPrice ? "bg-amber-600" : "bg-gray-300 dark:bg-gray-600")}
+                  >
+                    <span className={cn("inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform", form.isContactPrice ? "translate-x-6" : "translate-x-1")} />
+                  </button>
                 </div>
               </div>
 

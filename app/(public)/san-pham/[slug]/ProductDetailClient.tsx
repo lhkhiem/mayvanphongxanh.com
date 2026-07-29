@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
-import { Star, ShoppingCart, Truck, ShieldCheck, ArrowLeft, Plus, Minus, CheckCircle2, Printer, Phone, Mail, MapPin, CreditCard, ChevronRight, Download, Info, Package } from 'lucide-react';
+import { Star, ShoppingCart, Truck, ShieldCheck, ArrowLeft, Plus, Minus, CheckCircle2, Printer, Phone, PhoneCall, Mail, MapPin, CreditCard, ChevronRight, Download, Info, Package } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
@@ -36,7 +36,7 @@ export default function ProductDetailClient({
   const [selectedCustomOptions, setSelectedCustomOptions] = useState<Record<string, string>>(() => {
     if (product?.productType === 'custom-build' && product.customOptions) {
       const initial: Record<string, string> = {};
-      product.customOptions.forEach(group => {
+      product.customOptions.forEach((group: any) => {
         if (group.choices.length > 0) {
           initial[group.name] = group.choices[0].id;
         }
@@ -46,7 +46,7 @@ export default function ProductDetailClient({
     return {};
   });
 
-  const currentVariant = product?.variants?.find(v => v.id === selectedVariantId) || product?.variants?.[0];
+  const currentVariant = product?.variants?.find((v: any) => v.id === selectedVariantId) || product?.variants?.[0];
 
   const currentPrice = () => {
     if (product?.productType === 'custom-build' && product.customOptions) {
@@ -148,7 +148,8 @@ export default function ProductDetailClient({
   const originalPrice = currentOriginalPrice();
   const stock = currentStock();
 
-  const discount = originalPrice 
+  const showContactPrice = product?.isContactPrice || price <= 0;
+  const discount = !showContactPrice && originalPrice 
     ? Math.round(((originalPrice - price) / originalPrice) * 100) 
     : 0;
 
@@ -216,7 +217,7 @@ export default function ProductDetailClient({
             
             {/* Thumbnails */}
             <div className="grid grid-cols-4 gap-2">
-              {gallery.map((img, idx) => (
+              {gallery.map((img: string, idx: number) => (
                 <button
                   key={idx}
                   onClick={() => setActiveImage(img)}
@@ -269,24 +270,37 @@ export default function ProductDetailClient({
 
             <div className="mb-4 bg-secondary/20 rounded-2xl p-4 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1 mb-1">
-                  <span className="text-4xl font-extrabold text-foreground tracking-tight">
-                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)}
-                    {isRental && <span className="text-2xl font-semibold text-muted-foreground ml-1">/ tháng</span>}
-                  </span>
-                  {!isRental && (
-                    <span className="text-sm font-medium text-muted-foreground">
-                      (Đã bao gồm VAT)
+                {!showContactPrice ? (
+                  <>
+                    <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1 mb-1">
+                      <span className="text-4xl font-extrabold text-foreground tracking-tight">
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)}
+                        {isRental && <span className="text-2xl font-semibold text-muted-foreground ml-1">/ tháng</span>}
+                      </span>
+                      {!isRental && (
+                        <span className="text-sm font-medium text-muted-foreground">
+                          (Đã bao gồm VAT)
+                        </span>
+                      )}
+                    </div>
+                    {originalPrice && discount > 0 && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-sm text-muted-foreground line-through">
+                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(originalPrice)}
+                        </span>
+                        <span className="text-xs font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">
+                          Giảm {discount}%
+                        </span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-extrabold text-amber-600 dark:text-amber-500 tracking-tight">
+                      Giá: Liên hệ
                     </span>
-                  )}
-                </div>
-                {originalPrice && discount > 0 && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-sm text-muted-foreground line-through">
-                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(originalPrice)}
-                    </span>
-                    <span className="text-xs font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">
-                      Giảm {discount}%
+                    <span className="text-xs text-muted-foreground font-medium">
+                      (Vui lòng liên hệ để nhận báo giá chi tiết)
                     </span>
                   </div>
                 )}
@@ -347,11 +361,11 @@ export default function ProductDetailClient({
             {/* Custom Build Selection UI */}
             {product.productType === 'custom-build' && product.customOptions && (
               <div className="mb-6 space-y-4">
-                {product.customOptions.map((group) => (
+                {product.customOptions.map((group: any) => (
                   <div key={group.name} className="bg-secondary/30 p-4 rounded-xl border border-border">
                     <h3 className="text-sm font-semibold text-foreground mb-3">{group.name}:</h3>
                     <div className="space-y-2">
-                      {group.choices.map((choice) => (
+                      {group.choices.map((choice: any) => (
                         <label key={choice.id} className="flex items-center gap-3 cursor-pointer group/label">
                           <input
                             type="radio"
@@ -382,7 +396,7 @@ export default function ProductDetailClient({
                   Trọn gói bao gồm:
                 </h3>
                 <ul className="space-y-3">
-                  {product.includedItems.map((item, idx) => (
+                  {product.includedItems.map((item: any, idx: number) => (
                     <li key={idx} className="flex gap-3 text-muted-foreground">
                       <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
                       <span>{item}</span>
@@ -460,52 +474,72 @@ export default function ProductDetailClient({
 
             {/* Actions */}
             <div className="mb-4">
-              <div className="flex flex-col lg:flex-row gap-3">
-                <div className="flex items-center border-2 border-primary/20 bg-background rounded-xl h-12 w-full lg:w-32 flex-shrink-0">
-                  <button 
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-10 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-l-xl"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="flex-1 text-center font-bold text-lg">{quantity}</span>
-                  <button 
-                    onClick={() => setQuantity(Math.min(stock, quantity + 1))}
-                    className="w-10 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-r-xl"
-                    disabled={quantity >= stock}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
+              {!showContactPrice ? (
+                <div className="flex flex-col lg:flex-row gap-3">
+                  <div className="flex items-center border-2 border-primary/20 bg-background rounded-xl h-12 w-full lg:w-32 flex-shrink-0">
+                    <button 
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="w-10 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-l-xl"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="flex-1 text-center font-bold text-lg">{quantity}</span>
+                    <button 
+                      onClick={() => setQuantity(Math.min(stock, quantity + 1))}
+                      className="w-10 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-r-xl"
+                      disabled={quantity >= stock}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+    
+                  <div className="flex flex-1 gap-2 sm:gap-3">
+                    <button 
+                      onClick={handleAddToCart}
+                      disabled={stock === 0}
+                      className="w-12 h-12 bg-primary/10 text-primary border-2 border-primary/20 rounded-xl hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
+                      title={isRental ? "Thêm vào giỏ (Thuê)" : "Thêm vào giỏ"}
+                    >
+                      <ShoppingCart className="w-5 h-5" />
+                    </button>
+
+                    <button 
+                      onClick={handleAddToCart}
+                      disabled={stock === 0}
+                      className="flex-1 h-12 bg-primary text-primary-foreground rounded-xl font-bold text-sm sm:text-base hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 px-2"
+                    >
+                      {isRental ? 'ĐĂNG KÝ THUÊ' : 'MUA NGAY'}
+                    </button>
+
+                    <button 
+                      onClick={() => window.print()}
+                      className="px-3 sm:px-4 h-12 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-bold text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 flex-shrink-0"
+                      title="Yêu cầu báo giá"
+                    >
+                      <Printer className="w-5 h-5" />
+                      <span className="hidden xl:inline">BÁO GIÁ</span>
+                    </button>
+                  </div>
                 </div>
-  
-                <div className="flex flex-1 gap-2 sm:gap-3">
-                  <button 
-                    onClick={handleAddToCart}
-                    disabled={stock === 0}
-                    className="w-12 h-12 bg-primary/10 text-primary border-2 border-primary/20 rounded-xl hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
-                    title={isRental ? "Thêm vào giỏ (Thuê)" : "Thêm vào giỏ"}
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <a
+                    href="/lien-he"
+                    className="flex-1 h-12 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-base transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-600/25 hover:shadow-amber-600/40 hover:-translate-y-0.5 px-4"
                   >
-                    <ShoppingCart className="w-5 h-5" />
-                  </button>
-
-                  <button 
-                    onClick={handleAddToCart}
-                    disabled={stock === 0}
-                    className="flex-1 h-12 bg-primary text-primary-foreground rounded-xl font-bold text-sm sm:text-base hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 px-2"
-                  >
-                    {isRental ? 'ĐĂNG KÝ THUÊ' : 'MUA NGAY'}
-                  </button>
-
+                    <PhoneCall className="w-5 h-5" />
+                    LIÊN HỆ BÁO GIÁ NGAY
+                  </a>
                   <button 
                     onClick={() => window.print()}
-                    className="px-3 sm:px-4 h-12 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-bold text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 flex-shrink-0"
-                    title="Yêu cầu báo giá"
+                    className="px-4 h-12 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-bold text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 flex-shrink-0"
+                    title="In báo giá"
                   >
                     <Printer className="w-5 h-5" />
-                    <span className="hidden xl:inline">BÁO GIÁ</span>
+                    <span>IN BÁO GIÁ</span>
                   </button>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Features / Policies */}

@@ -90,13 +90,21 @@ export function ServicePackagesSection({ products = [] }: { products?: any[] }) 
                   {/* Price & CTA */}
                   <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between">
                     <div>
-                      <p className="text-lg font-extrabold text-primary">
-                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(pkg.price)}
-                      </p>
-                      {pkg.originalPrice && (
-                        <p className="text-xs text-gray-400 line-through">
-                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(pkg.originalPrice)}
+                      {pkg.isContactPrice || pkg.price <= 0 ? (
+                        <p className="text-lg font-extrabold text-amber-600">
+                          Liên hệ
                         </p>
+                      ) : (
+                        <>
+                          <p className="text-lg font-extrabold text-primary">
+                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(pkg.price)}
+                          </p>
+                          {pkg.originalPrice && (
+                            <p className="text-xs text-gray-400 line-through">
+                              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(pkg.originalPrice)}
+                            </p>
+                          )}
+                        </>
                       )}
                     </div>
                     <Link 

@@ -100,6 +100,7 @@ export default async function Home() {
       description: p.description,
       productType: p.productType,
       isFeatured: p.isFeatured,
+      isContactPrice: p.isContactPrice,
       attributes: defaultVariant?.attributes,
       variants: p.variants,
       customOptions: p.customOptions

@@ -57,6 +57,7 @@ export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    email: '',
     service: 'Báo giá sản phẩm',
     message: '',
   });
@@ -74,7 +75,7 @@ export default function ContactPage() {
       const data = await res.json();
       if (res.ok) {
         toast.success(data.message || 'Cảm ơn bạn đã liên hệ. Chúng tôi sẽ phản hồi sớm nhất có thể!');
-        setFormData({ name: '', phone: '', service: 'Báo giá sản phẩm', message: '' });
+        setFormData({ name: '', phone: '', email: '', service: 'Báo giá sản phẩm', message: '' });
       } else {
         toast.error(data.error || 'Đã có lỗi xảy ra.');
       }
@@ -161,19 +162,32 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              <div className="grid gap-2 mb-5">
-                <label className="text-sm font-semibold text-foreground">Nhu cầu</label>
-                <select 
-                  value={formData.service}
-                  onChange={(e) => setFormData({...formData, service: e.target.value})}
-                  className="h-12 rounded-md border border-input px-4 font-normal outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-background"
-                >
-                  <option value="Báo giá sản phẩm">Báo giá sản phẩm</option>
-                  <option value="Tư vấn giải pháp">Tư vấn giải pháp</option>
-                  <option value="Hỗ trợ kỹ thuật">Hỗ trợ kỹ thuật</option>
-                  <option value="Khác">Khác</option>
-                </select>
+              <div className="grid gap-5 sm:grid-cols-2 mb-5">
+                <div className="grid gap-2">
+                  <label className="text-sm font-semibold text-foreground">Email (Tùy chọn)</label>
+                  <input 
+                    type="email" 
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    className="h-12 rounded-md border border-input px-4 font-normal outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-background" 
+                    placeholder="name@example.com" 
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label className="text-sm font-semibold text-foreground">Nhu cầu</label>
+                  <select 
+                    value={formData.service}
+                    onChange={(e) => setFormData({...formData, service: e.target.value})}
+                    className="h-12 rounded-md border border-input px-4 font-normal outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-background"
+                  >
+                    <option value="Báo giá sản phẩm">Báo giá sản phẩm</option>
+                    <option value="Tư vấn giải pháp">Tư vấn giải pháp</option>
+                    <option value="Hỗ trợ kỹ thuật">Hỗ trợ kỹ thuật</option>
+                    <option value="Khác">Khác</option>
+                  </select>
+                </div>
               </div>
+
 
               <div className="grid gap-2 mb-6">
                 <label className="text-sm font-semibold text-foreground">Nội dung *</label>

@@ -67,6 +67,7 @@ model Product {
   productType    String  @default("standard") // standard, pre-packaged, custom-build
   isActive       Boolean @default(true)
   isFeatured     Boolean @default(false)
+  isContactPrice Boolean @default(false)
   customOptions  Json?
   quickSpecs     Json?
   specifications Json?
@@ -323,6 +324,9 @@ model Service {
   content     String?  @db.Text
   image       String?
   icon        String?
+  price       Float?
+  originalPrice Float?
+  isContactPrice Boolean @default(true)
   isActive    Boolean  @default(true)
   order       Int      @default(0)
 

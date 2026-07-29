@@ -30,6 +30,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       reviews: 120,
       image: (defaultVariant?.images as string[])?.[0] || '/placeholder.jpg',
       stock: defaultVariant?.stockQuantity || 0,
+      isContactPrice: p.isContactPrice,
+      productType: p.productType,
     };
   });
 
@@ -52,13 +54,14 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                 id={product.id}
                 name={product.name}
                 price={product.price}
-                originalPrice={product.originalPrice}
+                originalPrice={product.originalPrice ?? undefined}
                 rating={product.rating}
                 reviews={product.reviews}
                 image={product.image}
                 stock={product.stock}
                 slug={product.slug}
                 category={product.category}
+                isContactPrice={product.isContactPrice}
                 productType={product.productType}
               />
             ))}

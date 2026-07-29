@@ -32,6 +32,7 @@ export default async function RentalPage() {
       stock: defaultVariant?.stockQuantity || 0,
       description: p.description,
       productType: p.productType,
+      isContactPrice: p.isContactPrice,
       attributes: defaultVariant?.attributes,
       variants: p.variants,
       customOptions: p.customOptions

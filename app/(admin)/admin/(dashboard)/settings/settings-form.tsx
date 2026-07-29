@@ -5,9 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { updateSettings } from "./actions"
+import { updateSettings, sendTestEmailAction } from "./actions"
 import { toast } from "sonner"
-import { Save, Building2, Phone, LineChart, CreditCard } from "lucide-react"
+import { Save, Building2, Phone, LineChart, CreditCard, Mail, Send, Loader2, CheckCircle2 } from "lucide-react"
 import { MediaPickerInput } from "@/components/admin/media-picker-input"
 
 export function SettingsForm({ initialData }: { initialData: Record<string, string> }) {
@@ -15,6 +15,10 @@ export function SettingsForm({ initialData }: { initialData: Record<string, stri
   const [companyLogo, setCompanyLogo] = useState(initialData['company_logo'] || initialData['site_logo'] || '')
   const [companyFavicon, setCompanyFavicon] = useState(initialData['company_favicon'] || initialData['site_favicon'] || '')
   const [seoImage, setSeoImage] = useState(initialData['seo_image'] || '')
+
+  // State cho Test Email
+  const [testEmail, setTestEmail] = useState(initialData['admin_receive_email'] || initialData['contact_email'] || '')
+  const [isTestingEmail, setIsTestingEmail] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -28,6 +32,25 @@ export function SettingsForm({ initialData }: { initialData: Record<string, stri
       toast.success("Đã lưu các thay đổi!")
     }
     setIsLoading(false)
+  }
+
+  const handleTestEmail = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (!testEmail || !testEmail.includes("@")) {
+      toast.error("Vui lòng nhập địa chỉ email nhận kiểm tra hợp lệ.")
+      return
+    }
+
+    setIsTestingEmail(true)
+    toast.info("Đang gửi email thử nghiệm...")
+    const res = await sendTestEmailAction(testEmail)
+    setIsTestingEmail(false)
+
+    if (res?.success) {
+      toast.success("Gửi email thử nghiệm thành công! Vui lòng kiểm tra hộp thư của bạn.")
+    } else {
+      toast.error(`Gửi email thử nghiệm thất bại: ${res?.error || "Không xác định"}`)
+    }
   }
 
   return (
@@ -49,6 +72,13 @@ export function SettingsForm({ initialData }: { initialData: Record<string, stri
             >
               <Phone className="w-4 h-4 mr-3 text-current" /> 
               Liên hệ & MXH
+            </TabsTrigger>
+            <TabsTrigger 
+              value="email" 
+              className="w-full justify-start px-4 py-2.5 text-sm font-medium transition-all rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-l-4 data-[state=active]:border-primary data-[state=active]:rounded-l-none"
+            >
+              <Mail className="w-4 h-4 mr-3 text-current" /> 
+              Cấu hình Email (SMTP)
             </TabsTrigger>
             <TabsTrigger 
               value="seo" 
@@ -131,6 +161,109 @@ export function SettingsForm({ initialData }: { initialData: Record<string, stri
               </div>
             </TabsContent>
 
+            <TabsContent value="email" className="space-y-5 max-w-2xl mt-0">
+              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-md p-4 text-xs sm:text-sm text-amber-800 dark:text-amber-300">
+                <p className="font-semibold mb-1">💡 Hướng dẫn cấu hình Email gửi tự động (SMTP):</p>
+                <p>Nên sử dụng dịch vụ Gmail (tạo Mật khẩu ứng dụng - App Password) hoặc các dịch vụ mail máy chủ như SMTP cPanel, SendGrid, Amazon SES.</p>
+              </div>
+
+              <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100 border-b pb-2">1. Thông số Máy chủ SMTP</h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2 flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">SMTP Host</label>
+                  <Input name="smtp_host" defaultValue={initialData['smtp_host'] || 'smtp.gmail.com'} placeholder="smtp.gmail.com" className="shadow-sm" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">SMTP Port</label>
+                  <Input name="smtp_port" defaultValue={initialData['smtp_port'] || '587'} placeholder="587" className="shadow-sm" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2 flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Tên đăng nhập / Email gửi</label>
+                  <Input type="email" name="smtp_user" defaultValue={initialData['smtp_user']} placeholder="your-email@gmail.com" className="shadow-sm" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Mã hóa (TLS/SSL)</label>
+                  <select name="smtp_secure" defaultValue={initialData['smtp_secure'] || 'tls'} className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                    <option value="tls">STARTTLS (Port 587)</option>
+                    <option value="ssl">SSL / TLS (Port 465)</option>
+                    <option value="none">Không mã hóa</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Mật khẩu SMTP / App Password</label>
+                <Input type="password" name="smtp_pass" defaultValue={initialData['smtp_pass']} placeholder="••••••••••••••••" className="shadow-sm" />
+              </div>
+
+              <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100 border-b pb-2 pt-2">2. Địa chỉ Người gửi & Người nhận thông báo</h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Tên hiển thị người gửi</label>
+                  <Input name="smtp_from_name" defaultValue={initialData['smtp_from_name'] || initialData['company_name'] || 'Máy Văn Phòng Xanh'} placeholder="Máy Văn Phòng Xanh" className="shadow-sm" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Email người gửi (Tùy chọn)</label>
+                  <Input type="email" name="smtp_from_email" defaultValue={initialData['smtp_from_email']} placeholder="Để trống nếu trùng Email đăng nhập" className="shadow-sm" />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Email Admin nhận thông báo (Khi có liên hệ/đăng ký)</label>
+                <Input type="email" name="admin_receive_email" defaultValue={initialData['admin_receive_email'] || initialData['contact_email']} placeholder="admin@mayvanphongxanh.com" className="shadow-sm" />
+              </div>
+
+              <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100 border-b pb-2 pt-2">3. Tùy chọn Bật/Tắt Gửi Email</h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Gửi mail khi có Liên hệ mới</label>
+                  <select name="email_notify_contact" defaultValue={initialData['email_notify_contact'] ?? 'true'} className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                    <option value="true">Bật (Tự động gửi mail)</option>
+                    <option value="false">Tắt (Không gửi mail)</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Gửi mail khi có Đăng ký tài khoản</label>
+                  <select name="email_notify_register" defaultValue={initialData['email_notify_register'] ?? 'true'} className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                    <option value="true">Bật (Tự động gửi mail)</option>
+                    <option value="false">Tắt (Không gửi mail)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-dashed border-gray-200 dark:border-gray-700">
+                <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center">
+                  <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
+                  Kiểm tra kết nối gửi email thử nghiệm
+                </h4>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Input 
+                    type="email" 
+                    value={testEmail} 
+                    onChange={(e) => setTestEmail(e.target.value)} 
+                    placeholder="Nhập email của bạn để nhận mail thử..." 
+                    className="flex-1 shadow-sm" 
+                  />
+                  <Button 
+                    type="button" 
+                    onClick={handleTestEmail} 
+                    disabled={isTestingEmail} 
+                    variant="outline" 
+                    className="shrink-0 border-primary text-primary hover:bg-primary/10"
+                  >
+                    {isTestingEmail ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                    {isTestingEmail ? 'Đang gửi test...' : 'Gửi email thử'}
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+
             <TabsContent value="seo" className="space-y-4 max-w-2xl mt-0">
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Tiêu đề (Title Tag)</label>
@@ -195,3 +328,4 @@ export function SettingsForm({ initialData }: { initialData: Record<string, stri
     </div>
   )
 }
+

@@ -40,6 +40,9 @@ export function ServiceForm({
     image: initialData?.image || "",
     icon: initialData?.icon || "",
     order: initialData?.order || 0,
+    price: initialData?.price || "",
+    originalPrice: initialData?.originalPrice || "",
+    isContactPrice: initialData?.isContactPrice ?? true,
     metaTitle: initialData?.metaTitle || "",
     metaDescription: initialData?.metaDescription || "",
     isActive: initialData?.isActive ?? true,
@@ -196,6 +199,50 @@ export function ServiceForm({
               <label htmlFor="is-active" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Hiển thị dịch vụ
               </label>
+            </div>
+
+            <div className="pt-2 border-t border-gray-100 dark:border-gray-700 space-y-3">
+              <div className="flex items-center gap-3">
+                <input
+                  id="is-contact-price"
+                  type="checkbox"
+                  checked={formData.isContactPrice}
+                  onChange={(e) => setFormData({ ...formData, isContactPrice: e.target.checked })}
+                  className="rounded border-gray-300 h-5 w-5 text-amber-600 focus:ring-amber-500"
+                />
+                <label htmlFor="is-contact-price" className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                  Giá Liên Hệ (Ẩn giá tiền)
+                </label>
+              </div>
+
+              {!formData.isContactPrice && (
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                      Giá dịch vụ (VNĐ)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      placeholder="VD: 500000"
+                      className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-gray-100 shadow-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                      Giá gốc / Niêm yết (nếu có giảm giá)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.originalPrice}
+                      onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
+                      placeholder="VD: 700000"
+                      className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-gray-100 shadow-sm"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
