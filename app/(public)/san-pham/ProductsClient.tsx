@@ -45,29 +45,39 @@ export default function ProductsClient({
   // Dynamic attributes state
   const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string[]>>({});
 
-  // Extract all unique attributes from all products & variants that match current category filter
+  // Extract all unique attributes from products matching current category & brand filters
   const availableAttributes = useMemo(() => {
     const attrs: Record<string, Set<string>> = {};
     
     products.forEach(p => {
-      // Only extract attributes from products matching the category (if category selected)
+      // Filter by selected category if active
       if (selectedCategories.length > 0 && !selectedCategories.includes(p.category)) return;
+
+      // Filter by selected brand if active
+      if (selectedBrands.length > 0) {
+        const productBrand = p.brand || (p.attributes && p.attributes['Thương hiệu']);
+        if (!productBrand || !selectedBrands.includes(productBrand)) return;
+      }
 
       // Extract from base attributes
       if (p.attributes) {
         Object.entries(p.attributes).forEach(([key, value]) => {
-          if (!attrs[key]) attrs[key] = new Set();
-          attrs[key].add(value);
+          if (typeof value === 'string' && value.trim()) {
+            if (!attrs[key]) attrs[key] = new Set();
+            attrs[key].add(value);
+          }
         });
       }
 
       // Extract from variants
       if (p.productType === 'pre-packaged' && p.variants) {
-        p.variants.forEach(variant => {
+        p.variants.forEach((variant: any) => {
           if (variant.attributes) {
             Object.entries(variant.attributes).forEach(([key, value]) => {
-              if (!attrs[key]) attrs[key] = new Set();
-              attrs[key].add(value);
+              if (typeof value === 'string' && value.trim()) {
+                if (!attrs[key]) attrs[key] = new Set();
+                attrs[key].add(value as string);
+              }
             });
           }
         });
@@ -75,11 +85,12 @@ export default function ProductsClient({
 
       // Extract from custom-build options
       if (p.productType === 'custom-build' && p.customOptions) {
-        p.customOptions.forEach(group => {
+        p.customOptions.forEach((group: any) => {
           if (!attrs[group.name]) attrs[group.name] = new Set();
-          group.choices.forEach(choice => {
-            // Removing pricing part to just use the name as an attribute value
-            attrs[group.name].add(choice.name);
+          group.choices.forEach((choice: any) => {
+            if (choice.name) {
+              attrs[group.name].add(choice.name);
+            }
           });
         });
       }
@@ -88,14 +99,14 @@ export default function ProductsClient({
     // Clean up and sort
     const result: Record<string, string[]> = {};
     Object.entries(attrs).forEach(([key, valueSet]) => {
-      // Skip generic ones that have their own section
       if (key !== 'Thương hiệu' && key !== 'Dòng máy' && key !== 'Loại SP') {
         result[key] = Array.from(valueSet).sort();
       }
     });
     return result;
-  }, [selectedCategories]);
+  }, [products, selectedCategories, selectedBrands]);
 
+  // Total product count for each category
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     products.forEach(p => {
@@ -104,16 +115,34 @@ export default function ProductsClient({
     return Object.entries(counts).map(([name, count]) => ({ name, count }));
   }, [products]);
 
+  // Dynamic brand list & counts (Category is Root Filter -> Brands depend on selected categories)
   const brandCounts = useMemo(() => {
     const counts: Record<string, number> = {};
+    
     products.forEach(p => {
+      // Only count brands for products matching the selected category (if any)
+      if (selectedCategories.length > 0 && !selectedCategories.includes(p.category)) {
+        return;
+      }
+
       const brand = p.brand || (p.attributes && p.attributes['Thương hiệu']);
       if (brand) {
         counts[brand] = (counts[brand] || 0) + 1;
       }
     });
-    return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
-  }, [products]);
+
+    // Include selected brands in map so user can still uncheck them if needed
+    selectedBrands.forEach(b => {
+      if (!(b in counts)) {
+        counts[b] = 0;
+      }
+    });
+
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .filter(item => item.count > 0 || selectedBrands.includes(item.name))
+      .sort((a, b) => b.count - a.count);
+  }, [products, selectedCategories, selectedBrands]);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategories(prev => 
@@ -175,10 +204,10 @@ export default function ProductsClient({
       if (p.attributes && attrSelectedValues.includes(p.attributes[attrKey])) {
         productHasValue = true;
       } else if (p.productType === 'pre-packaged' && p.variants) {
-        productHasValue = p.variants.some(v => v.attributes && attrSelectedValues.includes(v.attributes[attrKey]));
+        productHasValue = p.variants.some((v: any) => v.attributes && attrSelectedValues.includes(v.attributes[attrKey]));
       } else if (p.productType === 'custom-build' && p.customOptions) {
-        const group = p.customOptions.find(g => g.name === attrKey);
-        if (group && group.choices.some(c => attrSelectedValues.includes(c.name))) {
+        const group = p.customOptions.find((g: any) => g.name === attrKey);
+        if (group && group.choices.some((c: any) => attrSelectedValues.includes(c.name))) {
           productHasValue = true;
         }
       }
