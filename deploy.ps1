@@ -26,7 +26,7 @@ if (Test-Path ".env.production") {
 
 # 3. Giải nén, Cài đặt và Build trực tiếp trên VPS
 Write-Host "`n[3/4 & 4/4] Đang giải nén, Build mã nguồn và Khởi động lại PM2..." -ForegroundColor Yellow
-$SSH_COMMAND = "cd $PATH_VPS && tar -xzf deploy.tar.gz && pnpm install && npx prisma generate && rm -rf .next && pnpm run build && mkdir -p public/uploads && chmod -R 777 public/uploads && sudo -u app pm2 restart mvpx --update-env"
+$SSH_COMMAND = "cd $PATH_VPS && tar -xzf deploy.tar.gz && pnpm install && npm install --legacy-peer-deps --os=linux --cpu=x64 sharp && npx prisma generate && rm -rf .next && pnpm run build && mkdir -p public/uploads && chmod -R 777 public/uploads && sudo -u app pm2 restart mvpx --update-env"
 ssh -o PubkeyAuthentication=no ${USER_DEV}@${IP_VPS} $SSH_COMMAND
 
 

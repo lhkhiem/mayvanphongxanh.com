@@ -70,13 +70,25 @@ export async function POST(request: NextRequest) {
 
       const compressedResult = await compressImage(fileBuffer, asset.fileName, asset.mimeType);
 
-      if (compressedResult.sizeBytes >= originalSize && asset.mimeType === 'image/webp') {
+      if (compressedResult.error) {
+        results.push({
+          id: asset.id,
+          fileName: asset.fileName,
+          status: 'error',
+          reason: compressedResult.error,
+          originalSize,
+          compressedSize: originalSize
+        });
+        continue;
+      }
+
+      if (compressedResult.sizeBytes >= originalSize * 0.98) {
         totalCompressedBytes += originalSize;
         results.push({
           id: asset.id,
           fileName: asset.fileName,
           status: 'skipped',
-          reason: 'Ảnh đã được tối ưu hóa ở mức tối đa',
+          reason: 'Ảnh đã ở định dạng WebP chuẩn và đã được tối ưu dung lượng tối đa',
           originalSize,
           compressedSize: originalSize
         });
