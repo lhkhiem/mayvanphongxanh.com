@@ -144,7 +144,7 @@ export function CategoryFilterDropdown({
                   <span className="flex-1 font-medium">{parent.name}</span>
                   {parent._count?.products !== undefined && (
                     <span className="text-[10px] text-gray-400 shrink-0 mr-1">
-                      {parent._count.products}
+                      {(parent._count.products ?? 0) + children.reduce((sum, c) => sum + (c._count?.products ?? 0), 0)}
                     </span>
                   )}
                   {isParentSelected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}

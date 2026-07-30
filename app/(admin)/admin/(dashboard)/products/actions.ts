@@ -68,7 +68,7 @@ export async function getProducts(params?: {
   search?: string
   categoryId?: number
   productType?: string
-  status?: 'all' | 'active' | 'inactive'
+  status?: 'all' | 'active' | 'inactive' | 'deleted'
   page?: number
   pageSize?: number
 }) {
@@ -77,8 +77,17 @@ export async function getProducts(params?: {
     const pageSize = Math.min(100, Math.max(1, params?.pageSize || 20))
     const skip = (page - 1) * pageSize
 
-    const where: Prisma.ProductWhereInput = {
-      deletedAt: null,
+    const where: Prisma.ProductWhereInput = {}
+
+    if (params?.status === 'deleted') {
+      where.deletedAt = { not: null }
+    } else {
+      where.deletedAt = null
+      if (params?.status === 'active') {
+        where.isActive = true
+      } else if (params?.status === 'inactive') {
+        where.isActive = false
+      }
     }
 
     if (params?.search) {
@@ -90,7 +99,15 @@ export async function getProducts(params?: {
     }
 
     if (params?.categoryId) {
-      where.categoryId = params.categoryId
+      const childCategories = await prisma.category.findMany({
+        where: { parentId: params.categoryId },
+        select: { id: true },
+      })
+      if (childCategories.length > 0) {
+        where.categoryId = { in: [params.categoryId, ...childCategories.map((c) => c.id)] }
+      } else {
+        where.categoryId = params.categoryId
+      }
     }
 
     if (params?.productType && params.productType !== 'all') {
@@ -366,11 +383,45 @@ export async function deleteProduct(id: number) {
       data: { deletedAt: new Date() },
     })
     revalidatePath("/admin/products")
+    revalidatePath("/admin/categories")
     revalidatePath("/")
     revalidatePath("/san-pham")
     return { success: true }
   } catch (error) {
     console.error("deleteProduct error:", error)
     return { error: "Lỗi hệ thống. Không thể xóa sản phẩm." }
+  }
+}
+
+export async function restoreProduct(id: number) {
+  try {
+    await prisma.product.update({
+      where: { id },
+      data: { deletedAt: null },
+    })
+    revalidatePath("/admin/products")
+    revalidatePath("/admin/categories")
+    revalidatePath("/")
+    revalidatePath("/san-pham")
+    return { success: true }
+  } catch (error) {
+    console.error("restoreProduct error:", error)
+    return { error: "Lỗi hệ thống. Không thể khôi phục sản phẩm." }
+  }
+}
+
+export async function hardDeleteProduct(id: number) {
+  try {
+    await prisma.product.delete({
+      where: { id },
+    })
+    revalidatePath("/admin/products")
+    revalidatePath("/admin/categories")
+    revalidatePath("/")
+    revalidatePath("/san-pham")
+    return { success: true }
+  } catch (error) {
+    console.error("hardDeleteProduct error:", error)
+    return { error: "Không thể xóa vĩnh viễn sản phẩm do đang có dữ liệu liên quan." }
   }
 }

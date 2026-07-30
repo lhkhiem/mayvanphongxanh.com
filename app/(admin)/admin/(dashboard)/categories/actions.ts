@@ -24,7 +24,13 @@ export async function getCategories() {
     const categories = await prisma.category.findMany({
       orderBy: [{ parentId: 'asc' }, { order: 'asc' }, { id: 'asc' }],
       include: {
-        _count: { select: { products: true } },
+        _count: {
+          select: {
+            products: {
+              where: { deletedAt: null }
+            }
+          }
+        },
       },
     })
     return { data: categories }
@@ -177,8 +183,8 @@ export async function deleteCategory(id: number) {
     if (childCount > 0) {
       return { error: `Danh mục này có ${childCount} danh mục con. Vui lòng xóa hoặc chuyển danh mục con trước.` }
     }
-    // Check for products
-    const productCount = await prisma.product.count({ where: { categoryId: id } })
+    // Check for products (only active, non-deleted ones)
+    const productCount = await prisma.product.count({ where: { categoryId: id, deletedAt: null } })
     if (productCount > 0) {
       return { error: `Danh mục này đang chứa ${productCount} sản phẩm. Vui lòng chuyển sản phẩm sang danh mục khác trước.` }
     }

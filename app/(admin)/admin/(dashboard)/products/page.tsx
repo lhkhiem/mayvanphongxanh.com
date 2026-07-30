@@ -5,11 +5,11 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/admin/empty-state";
 import {
-  Package, Plus, Edit, Trash2, Eye, EyeOff,
+  Package, Plus, Edit, Trash2, Eye, EyeOff, RotateCcw,
   Search, ChevronLeft, ChevronRight,
   ChevronsLeft, ChevronsRight, ArrowUp, ArrowDown, GripVertical
 } from "lucide-react";
-import { getProducts, deleteProduct, toggleProductActive, updateProductOrders } from "./actions";
+import { getProducts, deleteProduct, toggleProductActive, updateProductOrders, restoreProduct, hardDeleteProduct } from "./actions";
 import { getCategories } from "../categories/actions";
 import { CategoryFilterDropdown } from "@/components/admin/category-filter-dropdown";
 import { ProductTypeFilterDropdown } from "@/components/admin/product-type-filter-dropdown";
@@ -165,7 +165,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState<number | undefined>();
   const [productType, setProductType] = useState<string>('all');
-  const [status, setStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [status, setStatus] = useState<'all' | 'active' | 'inactive' | 'deleted'>('all');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [total, setTotal] = useState(0);
@@ -257,10 +257,23 @@ export default function ProductsPage() {
   }, [fetchProducts]);
 
   const handleDelete = async (p: any) => {
-    if (!confirm(`Xóa sản phẩm "${p.name}"?`)) return;
+    if (!confirm(`Chuyển sản phẩm "${p.name}" vào thùng rác?`)) return;
     const res = await deleteProduct(p.id);
     if (res.error) toast.error(res.error);
-    else { toast.success("Đã xóa sản phẩm."); fetchProducts(); }
+    else { toast.success("Đã chuyển sản phẩm vào thùng rác."); fetchProducts(); }
+  };
+
+  const handleRestore = async (p: any) => {
+    const res = await restoreProduct(p.id);
+    if (res.error) toast.error(res.error);
+    else { toast.success(`Đã khôi phục sản phẩm "${p.name}".`); fetchProducts(); }
+  };
+
+  const handleHardDelete = async (p: any) => {
+    if (!confirm(`XÓA VĨNH VIỄN sản phẩm "${p.name}"? Thao tác này không thể hoàn tác!`)) return;
+    const res = await hardDeleteProduct(p.id);
+    if (res.error) toast.error(res.error);
+    else { toast.success("Đã xóa vĩnh viễn sản phẩm."); fetchProducts(); }
   };
 
   const handleToggle = async (p: any) => {
@@ -450,18 +463,20 @@ export default function ProductsPage() {
         />
 
         <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 shrink-0">
-          {(['all', 'active', 'inactive'] as const).map((s) => (
+          {(['all', 'active', 'inactive', 'deleted'] as const).map((s) => (
             <button
               key={s}
               onClick={() => setStatus(s)}
               className={cn(
                 "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
                 status === s
-                  ? "bg-white dark:bg-[#2a303d] text-gray-900 dark:text-gray-100 shadow-sm"
+                  ? s === 'deleted'
+                    ? "bg-red-500 text-white shadow-sm"
+                    : "bg-white dark:bg-[#2a303d] text-gray-900 dark:text-gray-100 shadow-sm"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
               )}
             >
-              {s === 'all' ? 'Tất cả' : s === 'active' ? 'Đang bán' : 'Ẩn'}
+              {s === 'all' ? 'Tất cả' : s === 'active' ? 'Đang bán' : s === 'inactive' ? 'Ẩn' : 'Thùng rác'}
             </button>
           ))}
         </div>
@@ -660,53 +675,75 @@ export default function ProductsPage() {
 
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
-                        {/* Order Move Buttons Group */}
-                        <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 border border-gray-200/70 dark:border-gray-700/70 mr-1">
-                          <button
-                            onClick={() => handleMoveProduct(p, "up")}
-                            disabled={pIdx === 0}
-                            className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-20 disabled:hover:bg-transparent transition-all"
-                            title="Di chuyển lên"
-                          >
-                            <ArrowUp className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleMoveProduct(p, "down")}
-                            disabled={pIdx === products.length - 1}
-                            className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-20 disabled:hover:bg-transparent transition-all"
-                            title="Di chuyển xuống"
-                          >
-                            <ArrowDown className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
+                        {status === 'deleted' ? (
+                          <>
+                            <button
+                              onClick={() => handleRestore(p)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-600 dark:text-green-400 text-xs font-medium transition-colors"
+                              title="Khôi phục sản phẩm"
+                            >
+                              <RotateCcw className="h-3.5 w-3.5" />
+                              Khôi phục
+                            </button>
+                            <button
+                              onClick={() => handleHardDelete(p)}
+                              className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 transition-colors"
+                              title="Xóa vĩnh viễn"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            {/* Order Move Buttons Group */}
+                            <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 border border-gray-200/70 dark:border-gray-700/70 mr-1">
+                              <button
+                                onClick={() => handleMoveProduct(p, "up")}
+                                disabled={pIdx === 0}
+                                className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-20 disabled:hover:bg-transparent transition-all"
+                                title="Di chuyển lên"
+                              >
+                                <ArrowUp className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleMoveProduct(p, "down")}
+                                disabled={pIdx === products.length - 1}
+                                className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-20 disabled:hover:bg-transparent transition-all"
+                                title="Di chuyển xuống"
+                              >
+                                <ArrowDown className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
 
-                        <button
-                          onClick={() => handleToggle(p)}
-                          className={cn(
-                            "p-1.5 rounded-lg transition-colors",
-                            p.isActive
-                              ? "hover:bg-amber-50 dark:hover:bg-amber-900/30 text-amber-500"
-                              : "hover:bg-green-50 dark:hover:bg-green-900/30 text-green-500"
-                          )}
-                          title={p.isActive ? "Ẩn sản phẩm" : "Hiện sản phẩm"}
-                        >
-                          {p.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                        <Link
-                          href={`/admin/products/${p.id}`}
-                          onClick={saveState}
-                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
-                          title="Chỉnh sửa"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(p)}
-                          className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 transition-colors"
-                          title="Xóa"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                            <button
+                              onClick={() => handleToggle(p)}
+                              className={cn(
+                                "p-1.5 rounded-lg transition-colors",
+                                p.isActive
+                                  ? "hover:bg-amber-50 dark:hover:bg-amber-900/30 text-amber-500"
+                                  : "hover:bg-green-50 dark:hover:bg-green-900/30 text-green-500"
+                              )}
+                              title={p.isActive ? "Ẩn sản phẩm" : "Hiện sản phẩm"}
+                            >
+                              {p.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                            <Link
+                              href={`/admin/products/${p.id}`}
+                              onClick={saveState}
+                              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
+                              title="Chỉnh sửa"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Link>
+                            <button
+                              onClick={() => handleDelete(p)}
+                              className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 transition-colors"
+                              title="Chuyển vào thùng rác"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

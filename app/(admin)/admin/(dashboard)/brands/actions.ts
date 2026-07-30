@@ -10,7 +10,11 @@ export async function getBrands() {
       orderBy: { name: 'asc' },
       include: {
         _count: {
-          select: { products: true }
+          select: {
+            products: {
+              where: { deletedAt: null }
+            }
+          }
         }
       }
     });
@@ -81,7 +85,15 @@ export async function deleteBrand(id: number) {
   try {
     const brand = await prisma.brand.findUnique({
       where: { id },
-      include: { _count: { select: { products: true } } }
+      include: {
+        _count: {
+          select: {
+            products: {
+              where: { deletedAt: null }
+            }
+          }
+        }
+      }
     });
 
     if (!brand) return { error: "Không tìm thấy thương hiệu" };

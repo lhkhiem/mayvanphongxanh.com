@@ -100,7 +100,7 @@ export function ProductCard({
     <div className="group bg-white border border-gray-200 hover:border-primary overflow-hidden transition-all duration-300 h-full flex flex-col relative p-3 md:p-4 rounded-lg hover:shadow-[0_0_15px_rgba(46,125,50,0.15)]">
       {/* Image Container */}
       <div 
-        className="relative overflow-hidden bg-white h-52 md:h-56 mb-4 flex items-center justify-center cursor-pointer"
+        className="relative overflow-hidden bg-white h-48 sm:h-52 md:h-56 mb-3 sm:mb-4 flex items-center justify-center cursor-pointer"
         onClick={() => router.push(`/san-pham/${hrefSlug}`)}
       >
         {productType === 'rental' && (
@@ -126,7 +126,7 @@ export function ProductCard({
       {/* Content */}
       <div className="flex-1 flex flex-col">
         <Link href={`/san-pham/${hrefSlug}`}>
-          <h3 className="font-bold text-gray-800 mb-2 line-clamp-2 text-sm sm:text-[15px] leading-snug hover:text-primary transition-colors min-h-[44px]">
+          <h3 className="font-bold text-gray-800 mb-1.5 sm:mb-2 line-clamp-2 text-xs sm:text-sm md:text-[15px] leading-snug hover:text-primary transition-colors min-h-[36px] sm:min-h-[44px]">
             {name}
           </h3>
         </Link>
@@ -145,7 +145,7 @@ export function ProductCard({
           </div>
           <span className="text-xs text-gray-500">({reviews})</span>
         </div>
-        <div className="text-xs text-primary/80 font-medium uppercase tracking-wider mb-3 line-clamp-1">
+        <div className="text-xs text-primary/80 font-medium uppercase tracking-wider mb-2 sm:mb-3 line-clamp-1">
           {category}
         </div>
 
@@ -159,7 +159,7 @@ export function ProductCard({
                     {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(originalPrice)}
                   </div>
                 )}
-                <div className="font-bold text-lg sm:text-[19px] text-primary">
+                <div className="font-bold text-base sm:text-lg md:text-[19px] text-primary">
                   {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)}
                   {productType === 'rental' && <span className="text-xs font-normal text-muted-foreground ml-0.5">/ tháng</span>}
                 </div>
@@ -172,39 +172,42 @@ export function ProductCard({
               )}
             </div>
           ) : (
-            <div className="font-bold text-lg sm:text-[19px] text-amber-600 mt-4">Liên hệ</div>
+            <div className="font-bold text-base sm:text-lg md:text-[19px] text-amber-600 mt-2 sm:mt-4">Liên hệ</div>
           )}
         </div>
       </div>
 
       {/* Footer Actions */}
-      <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-        <div className="flex gap-4">
+      <div className="mt-3 pt-3 sm:mt-4 sm:pt-4 border-t border-gray-100 flex items-center justify-between gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs min-w-0">
           <button 
             onClick={handleToggleCompare}
-            className={`flex items-center gap-1.5 text-xs transition-colors font-medium ${
-              isCompared ? 'text-primary' : 'text-gray-500 hover:text-primary'
+            className={`flex items-center gap-1.5 transition-colors font-medium whitespace-nowrap shrink-0 ${
+              isCompared ? 'text-primary font-semibold' : 'text-gray-500 hover:text-primary'
             }`}
+            title={isCompared ? "Bỏ so sánh" : "Thêm vào so sánh"}
           >
-            <ArrowRightLeft className="w-3.5 h-3.5" /> So sánh
+            <ArrowRightLeft className="w-3.5 h-3.5 shrink-0" />
+            <span>So sánh</span>
           </button>
           
           {stock > 0 ? (
-            <div className="flex items-center gap-1 text-xs text-green-600 font-medium">
-              <span className="text-[15px] leading-none mt-[-2px]">✓</span> Còn hàng
+            <div className="flex items-center gap-1 text-green-600 font-medium whitespace-nowrap shrink-0">
+              <span className="text-[13px] sm:text-[14px] leading-none shrink-0">✓</span>
+              <span>Còn hàng</span>
             </div>
           ) : (
-            <div className="text-xs text-red-500 font-medium">Hết hàng</div>
+            <div className="text-red-500 font-medium whitespace-nowrap shrink-0">Hết hàng</div>
           )}
         </div>
 
         <button 
           onClick={handleAddToCart}
           disabled={!showContactPrice && stock === 0}
-          className={`h-9 flex items-center justify-center text-white rounded-md shadow transition-colors ${
+          className={`shrink-0 flex items-center justify-center text-white rounded-md shadow transition-colors ${
             showContactPrice
-              ? 'px-3 bg-amber-600 hover:bg-amber-700 text-xs font-semibold'
-              : 'w-9 bg-primary hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed'
+              ? 'px-3 py-2 bg-amber-600 hover:bg-amber-700 text-xs font-semibold whitespace-nowrap'
+              : 'w-9 h-9 bg-primary hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed'
           }`}
           title={showContactPrice ? "Liên hệ báo giá" : productType === 'rental' ? "Đăng ký thuê" : "Thêm vào giỏ"}
         >
