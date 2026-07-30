@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -5,19 +6,68 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
-import { Calendar, User, ArrowLeft, Share2, Tag } from 'lucide-react';
+import { ShareButtons } from '@/components/blog/share-buttons';
+import { Calendar, User, ArrowLeft, Folder } from 'lucide-react';
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const post = await prisma.post.findUnique({ where: { slug } });
+  const post = await prisma.post.findUnique({
+    where: { slug },
+    include: { category: true }
+  });
+
   if (!post) {
     return {
-      title: 'Không tìm thấy bài viết',
+      title: 'Không tìm thấy bài viết | Máy Văn Phòng Xanh',
     };
   }
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mayvanphongxanh.com';
+  
+  // Tối ưu SEO Title & SEO Description từ Admin
+  const title = post.metaTitle?.trim() || `${post.title} | Máy Văn Phòng Xanh`;
+  const description = post.metaDescription?.trim() || post.excerpt?.trim() || `Đọc bài viết "${post.title}" tại Máy Văn Phòng Xanh`;
+  const pageUrl = `${baseUrl}/tin-tuc/${post.slug}`;
+
+  // Đảm bảo URL ảnh luôn là tuyệt đối (https://...) cho Facebook/Zalo crawler
+  let absoluteImageUrl = `${baseUrl}/placeholder.jpg`;
+  if (post.image) {
+    if (post.image.startsWith('http://') || post.image.startsWith('https://')) {
+      absoluteImageUrl = post.image;
+    } else {
+      absoluteImageUrl = `${baseUrl}${post.image.startsWith('/') ? '' : '/'}${post.image}`;
+    }
+  }
+
   return {
-    title: `${post.title} | Máy Văn Phòng Xanh`,
-    description: post.excerpt,
+    metadataBase: new URL(baseUrl),
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName: 'Máy Văn Phòng Xanh',
+      type: 'article',
+      publishedTime: (post.publishedAt || post.createdAt).toISOString(),
+      authors: ['Ban biên tập Máy Văn Phòng Xanh'],
+      section: post.category?.name || 'Tin tức',
+      images: [
+        {
+          url: absoluteImageUrl,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+      locale: 'vi_VN',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [absoluteImageUrl],
+    },
   };
 }
 
@@ -36,108 +86,225 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
     ...dbPost,
     date: new Date(dbPost.publishedAt || dbPost.createdAt).toLocaleDateString('vi-VN'),
     category: dbPost.category?.name || 'Tin tức',
+    categorySlug: dbPost.category?.slug,
     image: dbPost.image || '/placeholder.jpg'
   };
 
-  const dbRelated = await prisma.post.findMany({
+  // Lấy các bài viết khác cho Sidebar & Bài viết liên quan
+  const allOtherPosts = await prisma.post.findMany({
     where: { isActive: true, id: { not: dbPost.id } },
     include: { category: true },
     orderBy: { createdAt: 'desc' },
-    take: 3
+    take: 10
   });
 
-  const relatedPosts = dbRelated.map(p => ({
+  const formattedOthers = allOtherPosts.map(p => ({
     id: p.id,
     slug: p.slug,
     title: p.title,
     image: p.image || '/placeholder.jpg',
     date: new Date(p.publishedAt || p.createdAt).toLocaleDateString('vi-VN'),
     category: p.category?.name || 'Tin tức',
+    isTrending: p.isTrending,
   }));
 
+  // Bài viết liên quan (ưu tiên bài cùng danh mục)
+  const sameCategoryPosts = formattedOthers.filter(p => p.category === post.category);
+  const relatedPosts = (sameCategoryPosts.length >= 3 ? sameCategoryPosts : formattedOthers).slice(0, 3);
 
+  // Sidebar posts
+  const latestSidebarPosts = formattedOthers.slice(0, 5);
+  const markedTrending = formattedOthers.filter(p => p.isTrending);
+  const trendingSidebarPosts = markedTrending.length > 0
+    ? Array.from(new Set([...markedTrending, ...formattedOthers])).slice(0, 5)
+    : formattedOthers.slice(0, 5);
 
   return (
     <>
       <Header />
       <main className="bg-[#f8f9fa] min-h-screen font-sans pb-20">
-        <article>
-          {/* Breadcrumb & Meta */}
-          <div className="mx-auto max-w-7xl px-4 pt-8 pb-6">
-            <Link href="/tin-tuc" className="inline-flex items-center text-sm font-semibold text-gray-500 hover:text-primary mb-6 transition-colors">
+        <div className="mx-auto max-w-7xl px-4 pt-6">
+          
+          {/* Breadcrumb Navigation */}
+          <div className="mb-6">
+            <Link href="/tin-tuc" className="inline-flex items-center text-sm font-semibold text-gray-500 hover:text-primary transition-colors">
               <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại Tin tức
             </Link>
+          </div>
+
+          <div className="flex flex-col lg:flex-row gap-8">
             
-            <div className="max-w-4xl mx-auto">
-              <div className="mb-4 flex items-center gap-2">
-                <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                  {post.category}
-                </span>
+            {/* LEFT COLUMN - MAIN ARTICLE */}
+            <article className="w-full lg:w-[70%]">
+              
+              {/* Post Header Info */}
+              <div className="mb-3">
+                {post.categorySlug ? (
+                  <Link 
+                    href={`/tin-tuc?category=${post.categorySlug}`}
+                    className="inline-block bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider hover:bg-primary hover:text-white transition-colors"
+                  >
+                    {post.category}
+                  </Link>
+                ) : (
+                  <span className="inline-block bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                    {post.category}
+                  </span>
+                )}
               </div>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#0d2a45] leading-tight mb-6">
+
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#0d2a45] leading-tight mb-4">
                 {post.title}
               </h1>
-              <div className="flex flex-wrap items-center text-sm text-gray-500 gap-6 border-b border-gray-200 pb-6 mb-8">
-                <span className="flex items-center"><User className="w-4 h-4 mr-2" /> Ban biên tập MVPX</span>
-                <span className="flex items-center"><Calendar className="w-4 h-4 mr-2" /> {post.date}</span>
-                <span className="flex items-center ml-auto text-primary cursor-pointer hover:text-[#0d2a45] transition-colors"><Share2 className="w-4 h-4 mr-2" /> Chia sẻ</span>
-              </div>
-            </div>
-          </div>
 
-          {/* Featured Image */}
-          <div className="mx-auto max-w-7xl px-4 mb-12">
-            <div className="max-w-5xl mx-auto relative h-[400px] md:h-[500px] lg:h-[600px] w-full rounded-2xl overflow-hidden shadow-lg">
-              <Image 
-                src={post.image} 
-                alt={post.title} 
-                fill 
-                className="object-cover" 
-                priority
-              />
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="mx-auto max-w-7xl px-4">
-            <div className="max-w-4xl mx-auto bg-white rounded-2xl p-8 md:p-12 shadow-sm border border-gray-100">
-              <div className="prose prose-lg max-w-none text-gray-700">
-                <p className="lead text-xl font-medium text-gray-900 mb-8">
-                  {post.excerpt}
-                </p>
-                <div dangerouslySetInnerHTML={{ __html: post.content || '' }} />
+              <div className="flex flex-wrap items-center text-xs md:text-sm text-gray-500 gap-4 md:gap-6 border-b border-gray-200 pb-4 mb-6 justify-between">
+                <div className="flex items-center gap-4 md:gap-6 flex-wrap">
+                  <span className="flex items-center"><User className="w-4 h-4 mr-2 text-primary" /> Ban biên tập MVPX</span>
+                  <span className="flex items-center"><Calendar className="w-4 h-4 mr-2 text-primary" /> {post.date}</span>
+                </div>
+                <ShareButtons title={post.title} excerpt={post.excerpt || ''} slug={post.slug} />
               </div>
-              
-              <div className="mt-12 pt-8 border-t border-gray-100 flex items-center gap-3">
-                <Tag className="w-5 h-5 text-gray-400" />
-                <span className="text-sm font-semibold text-gray-600">Tags:</span>
-                <span className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full hover:bg-primary hover:text-white transition-colors cursor-pointer">{post.category}</span>
-                <span className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full hover:bg-primary hover:text-white transition-colors cursor-pointer">Giải pháp doanh nghiệp</span>
-              </div>
-            </div>
-          </div>
-        </article>
 
-        {/* Related Posts */}
-        <div className="mx-auto max-w-7xl px-4 mt-20">
-          <div className="max-w-5xl mx-auto">
-            <h3 className="text-2xl font-bold text-[#0d2a45] mb-8 border-b border-gray-200 pb-4">Bài viết liên quan</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {relatedPosts.map(relatedPost => (
-                <div key={relatedPost.id} className="group bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all">
-                  <Link href={`/tin-tuc/${relatedPost.slug}`} className="block relative h-48 w-full overflow-hidden">
-                    <Image src={relatedPost.image} alt={relatedPost.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                  </Link>
-                  <div className="p-5">
-                    <span className="text-primary text-[10px] font-bold uppercase tracking-wider mb-2 block">{relatedPost.category}</span>
-                    <h4 className="font-bold text-[#0d2a45] text-lg leading-snug group-hover:text-primary transition-colors mb-3 line-clamp-2">
-                      <Link href={`/tin-tuc/${relatedPost.slug}`}>{relatedPost.title}</Link>
-                    </h4>
-                    <span className="flex items-center text-xs text-gray-500"><Calendar className="w-3.5 h-3.5 mr-1" /> {relatedPost.date}</span>
+              {/* Featured Banner Image */}
+              <div className="relative w-full h-[320px] md:h-[440px] rounded-xl overflow-hidden mb-6 shadow-sm border border-gray-100">
+                <Image 
+                  src={post.image} 
+                  alt={post.title} 
+                  fill 
+                  className="object-cover" 
+                  priority
+                />
+              </div>
+
+              {/* Main Content Box */}
+              <div className="bg-white rounded-xl p-6 md:p-8 border border-gray-200 shadow-sm mb-10">
+                <div className="prose prose-lg max-w-none text-gray-700">
+                  {post.excerpt && (
+                    <p className="lead text-base md:text-lg font-medium text-gray-800 mb-6 pb-6 border-b border-gray-100 leading-relaxed italic">
+                      {post.excerpt}
+                    </p>
+                  )}
+                  <div dangerouslySetInnerHTML={{ __html: post.content || '' }} />
+                </div>
+                
+                {/* Article Footer: Category Badge & Share */}
+                <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-500">Chuyên mục:</span>
+                    {post.categorySlug ? (
+                      <Link
+                        href={`/tin-tuc?category=${post.categorySlug}`}
+                        className="inline-flex items-center gap-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-white text-xs font-bold px-3 py-1 rounded-full transition-colors"
+                      >
+                        <Folder className="w-3.5 h-3.5" />
+                        <span>{post.category}</span>
+                      </Link>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full">
+                        <Folder className="w-3.5 h-3.5" />
+                        <span>{post.category}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <ShareButtons title={post.title} excerpt={post.excerpt || ''} slug={post.slug} />
+                </div>
+              </div>
+
+              {/* Related Posts */}
+              {relatedPosts.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="uppercase text-base md:text-lg font-bold text-[#0d2a45] border-b-2 border-primary pb-2 mb-6">
+                    Bài viết liên quan
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {relatedPosts.map(relPost => (
+                      <div key={relPost.id} className="group bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col">
+                        <Link href={`/tin-tuc/${relPost.slug}`} className="block relative h-36 w-full overflow-hidden">
+                          <Image src={relPost.image} alt={relPost.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                        </Link>
+                        <div className="p-4 flex-1 flex flex-col">
+                          <span className="text-primary text-[10px] font-bold uppercase tracking-wider mb-1 block">{relPost.category}</span>
+                          <h4 className="font-bold text-[#0d2a45] text-sm leading-snug group-hover:text-primary transition-colors mb-2 line-clamp-2">
+                            <Link href={`/tin-tuc/${relPost.slug}`}>{relPost.title}</Link>
+                          </h4>
+                          <div className="mt-auto flex items-center text-xs text-gray-400">
+                            <Calendar className="w-3 h-3 mr-1" /> {relPost.date}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
+              )}
+
+            </article>
+
+            {/* RIGHT COLUMN - SIDEBAR */}
+            <div className="w-full lg:w-[30%] flex flex-col gap-8">
+              
+              {/* Widget: Bài viết mới nhất */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+                <h3 className="uppercase text-base font-bold text-[#0d2a45] border-b-2 border-primary pb-2 mb-4">
+                  Bài viết mới nhất
+                </h3>
+                <div className="flex flex-col gap-4">
+                  {latestSidebarPosts.map(p => (
+                    <div key={`side-latest-${p.id}`} className="group flex gap-3">
+                      <Link href={`/tin-tuc/${p.slug}`} className="block relative w-[80px] h-[60px] shrink-0 overflow-hidden rounded">
+                        <Image src={p.image} alt={p.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                      </Link>
+                      <div className="flex flex-col justify-center">
+                        <h4 className="font-bold text-[#0d2a45] text-xs leading-snug group-hover:text-primary transition-colors mb-1 line-clamp-2">
+                          <Link href={`/tin-tuc/${p.slug}`}>{p.title}</Link>
+                        </h4>
+                        <div className="flex items-center text-[11px] text-gray-400">
+                          <Calendar className="w-3 h-3 mr-1" /> {p.date}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Widget: Bài viết nổi bật */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+                <h3 className="uppercase text-base font-bold text-[#0d2a45] border-b-2 border-primary pb-2 mb-4">
+                  Bài viết nổi bật
+                </h3>
+                
+                {trendingSidebarPosts[0] && (
+                  <div className="mb-4 group">
+                    <Link href={`/tin-tuc/${trendingSidebarPosts[0].slug}`} className="block relative w-full h-[150px] overflow-hidden rounded-lg mb-2">
+                      <Image src={trendingSidebarPosts[0].image} alt={trendingSidebarPosts[0].title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                    </Link>
+                    <h4 className="font-bold text-[#0d2a45] text-sm leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                      <Link href={`/tin-tuc/${trendingSidebarPosts[0].slug}`}>{trendingSidebarPosts[0].title}</Link>
+                    </h4>
+                  </div>
+                )}
+                
+                <div className="flex flex-col">
+                  {trendingSidebarPosts.map((p, idx) => (
+                    <div key={`side-trend-${p.id}`} className="group flex items-start gap-3 py-2.5 border-t border-gray-100 first:border-t-0">
+                      <span className="text-2xl font-extrabold text-gray-300 italic leading-none shrink-0 w-6">
+                        {String(idx + 1).padStart(2, '0')}
+                      </span>
+                      <div className="flex flex-col">
+                        <h4 className="font-semibold text-[#0d2a45] text-xs leading-snug group-hover:text-primary transition-colors mb-1 line-clamp-2">
+                          <Link href={`/tin-tuc/${p.slug}`}>{p.title}</Link>
+                        </h4>
+                        <div className="flex items-center text-[10px] text-gray-400">
+                          <Calendar className="w-2.5 h-2.5 mr-1" /> {p.date}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
             </div>
+
           </div>
         </div>
       </main>

@@ -4,13 +4,17 @@ import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { Prisma } from "@prisma/client"
 
-export async function getPosts(filter?: 'all' | 'published' | 'drafts') {
+export async function getPosts(filter?: 'all' | 'published' | 'drafts', categoryId?: string | number) {
   try {
-    let whereClause = {}
+    const whereClause: any = {}
     if (filter === 'published') {
-      whereClause = { isActive: true }
+      whereClause.isActive = true
     } else if (filter === 'drafts') {
-      whereClause = { isActive: false }
+      whereClause.isActive = false
+    }
+
+    if (categoryId && categoryId !== 'all') {
+      whereClause.categoryId = parseInt(String(categoryId))
     }
 
     const posts = await prisma.post.findMany({
@@ -51,11 +55,14 @@ export async function createPost(data: any) {
         categoryId: data.categoryId ? parseInt(data.categoryId) : null,
         metaTitle: data.metaTitle,
         metaDescription: data.metaDescription,
-        isActive: data.isActive,
+        isActive: data.isActive ?? true,
+        isFeatured: data.isFeatured ?? false,
+        isTrending: data.isTrending ?? false,
         publishedAt: data.isActive ? new Date() : null,
       }
     })
     revalidatePath("/admin/posts")
+    revalidatePath("/tin-tuc")
     return { success: true, data: post }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -80,6 +87,8 @@ export async function updatePost(id: string, data: any) {
       metaTitle: data.metaTitle,
       metaDescription: data.metaDescription,
       isActive: data.isActive,
+      isFeatured: data.isFeatured,
+      isTrending: data.isTrending,
     }
 
     // Only update publishedAt if it's changing from draft to published
@@ -92,6 +101,7 @@ export async function updatePost(id: string, data: any) {
       data: updateData
     })
     revalidatePath("/admin/posts")
+    revalidatePath("/tin-tuc")
     return { success: true, data: post }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -114,10 +124,45 @@ export async function togglePostActive(id: string, currentActiveStatus: boolean)
       }
     })
     revalidatePath("/admin/posts")
+    revalidatePath("/tin-tuc")
     return { success: true, data: post }
   } catch (error) {
     console.error("Error toggling post status:", error)
     return { error: "Lỗi hệ thống. Không thể thay đổi trạng thái." }
+  }
+}
+
+export async function togglePostFeatured(id: string, currentFeaturedStatus: boolean) {
+  try {
+    const post = await prisma.post.update({
+      where: { id },
+      data: {
+        isFeatured: !currentFeaturedStatus,
+      }
+    })
+    revalidatePath("/admin/posts")
+    revalidatePath("/tin-tuc")
+    return { success: true, data: post }
+  } catch (error) {
+    console.error("Error toggling post featured status:", error)
+    return { error: "Lỗi hệ thống. Không thể thay đổi trạng thái Nổi bật." }
+  }
+}
+
+export async function togglePostTrending(id: string, currentTrendingStatus: boolean) {
+  try {
+    const post = await prisma.post.update({
+      where: { id },
+      data: {
+        isTrending: !currentTrendingStatus,
+      }
+    })
+    revalidatePath("/admin/posts")
+    revalidatePath("/tin-tuc")
+    return { success: true, data: post }
+  } catch (error) {
+    console.error("Error toggling post trending status:", error)
+    return { error: "Lỗi hệ thống. Không thể thay đổi trạng thái Xu hướng." }
   }
 }
 

@@ -11,7 +11,10 @@ if (fs.existsSync(standaloneDir)) {
   const publicDir = path.join(rootDir, 'public');
   const standalonePublic = path.join(standaloneDir, 'public');
   if (fs.existsSync(publicDir)) {
-    fs.cpSync(publicDir, standalonePublic, { recursive: true });
+    fs.cpSync(publicDir, standalonePublic, {
+      recursive: true,
+      filter: (src) => !src.includes(path.join('public', 'uploads'))
+    });
   }
 
   // Copy .next/static directory

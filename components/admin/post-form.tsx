@@ -41,6 +41,8 @@ export function PostForm({
     metaTitle: initialData?.metaTitle || "",
     metaDescription: initialData?.metaDescription || "",
     isActive: initialData?.isActive ?? true,
+    isFeatured: initialData?.isFeatured ?? false,
+    isTrending: initialData?.isTrending ?? false,
     wasActive: initialData?.isActive ?? false, // Track previous state
   });
 
@@ -196,6 +198,40 @@ export function PostForm({
               <label htmlFor="is-active" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Xuất bản bài viết
               </label>
+            </div>
+
+            <div className="pt-2 border-t border-gray-100 dark:border-gray-700 space-y-3">
+              <div className="flex items-center gap-3">
+                <input
+                  id="is-featured"
+                  type="checkbox"
+                  checked={formData.isFeatured}
+                  onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
+                  className="rounded border-gray-300 h-5 w-5 text-amber-600 focus:ring-amber-500"
+                />
+                <div>
+                  <label htmlFor="is-featured" className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                    Bài viết Nổi bật (Đầu trang)
+                  </label>
+                  <span className="text-xs text-gray-500">Hiển thị ở khu vực Banner/Lưới ưu tiên</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  id="is-trending"
+                  type="checkbox"
+                  checked={formData.isTrending}
+                  onChange={(e) => setFormData({ ...formData, isTrending: e.target.checked })}
+                  className="rounded border-gray-300 h-5 w-5 text-purple-600 focus:ring-purple-500"
+                />
+                <div>
+                  <label htmlFor="is-trending" className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                    Bài viết Xu hướng (Sidebar)
+                  </label>
+                  <span className="text-xs text-gray-500">Hiển thị ở danh sách "Đọc nhiều" cột bên phải</span>
+                </div>
+              </div>
             </div>
 
             <div>
