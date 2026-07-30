@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Save, ArrowLeft, Plus, Trash2, ImageIcon, X,
-  GripVertical, Package, Tag, Globe, Settings2, Minus, Upload
+  GripVertical, Package, Tag, Globe, Settings2, Minus, Upload, Copy
 } from "lucide-react";
 import Link from "next/link";
 import { MediaPickerModal } from "@/components/admin/media-picker-modal";
@@ -368,6 +368,16 @@ export function ProductForm({
                 </span>
               </div>
             </div>
+            {isEditing && (
+              <button
+                type="button"
+                onClick={() => router.push(`/admin/products/new?duplicateFrom=${initialData.id}`)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 transition-colors shadow-sm"
+                title="Tạo bản sao sản phẩm này"
+              >
+                <Copy className="h-4 w-4 text-blue-500" /> <span className="hidden md:inline">Tạo bản sao</span>
+              </button>
+            )}
             <button type="button" onClick={() => isEditing ? router.back() : router.push("/admin/products")} className="px-3 py-2 rounded-lg border border-gray-300 dark:gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium transition-colors hidden sm:block">
               Hủy
             </button>

@@ -2,14 +2,15 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/admin/empty-state";
 import {
   Package, Plus, Edit, Trash2, Eye, EyeOff, RotateCcw,
   Search, ChevronLeft, ChevronRight,
-  ChevronsLeft, ChevronsRight, ArrowUp, ArrowDown, GripVertical
+  ChevronsLeft, ChevronsRight, ArrowUp, ArrowDown, GripVertical, Copy
 } from "lucide-react";
-import { getProducts, deleteProduct, toggleProductActive, updateProductOrders, restoreProduct, hardDeleteProduct } from "./actions";
+import { getProducts, deleteProduct, toggleProductActive, updateProductOrders, restoreProduct, hardDeleteProduct, duplicateProduct } from "./actions";
 import { getCategories } from "../categories/actions";
 import { CategoryFilterDropdown } from "@/components/admin/category-filter-dropdown";
 import { ProductTypeFilterDropdown } from "@/components/admin/product-type-filter-dropdown";
@@ -159,6 +160,7 @@ function Pagination({
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function ProductsPage() {
+  const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -282,6 +284,23 @@ export default function ProductsPage() {
     else {
       toast.success(p.isActive ? "Đã ẩn sản phẩm." : "Đã kích hoạt sản phẩm.");
       fetchProducts();
+    }
+  };
+
+  const handleDuplicate = async (p: any) => {
+    if (!confirm(`Bạn có chắc chắn muốn sao chép sản phẩm "${p.name}"?`)) return;
+    toast.loading("Đang sao chép sản phẩm...", { id: "dup-toast" });
+    const res = await duplicateProduct(p.id);
+    if (res.error) {
+      toast.error(res.error, { id: "dup-toast" });
+    } else {
+      toast.success("Sao chép sản phẩm thành công!", { id: "dup-toast" });
+      if (res.data?.id) {
+        saveState();
+        router.push(`/admin/products/${res.data.id}`);
+      } else {
+        fetchProducts();
+      }
     }
   };
 
@@ -531,11 +550,11 @@ export default function ProductsPage() {
                 return (
                   <tr
                     key={p.id}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, p.id)}
-                    onDragOver={(e) => handleDragOver(e, p.id)}
-                    onDragLeave={(e) => handleDragLeave(e, p.id)}
-                    onDrop={(e) => handleDrop(e, p)}
+                    draggable={!!categoryId}
+                    onDragStart={(e) => categoryId && handleDragStart(e, p.id)}
+                    onDragOver={(e) => categoryId && handleDragOver(e, p.id)}
+                    onDragLeave={(e) => categoryId && handleDragLeave(e, p.id)}
+                    onDrop={(e) => categoryId && handleDrop(e, p)}
                     onDragEnd={handleDragEnd}
                     className={cn(
                       "transition-all",
@@ -549,7 +568,15 @@ export default function ProductsPage() {
                     {/* Drag Grip Handle & Checkbox */}
                     <td className="pl-3 pr-2 py-3 shrink-0">
                       <div className="flex items-center gap-1.5">
-                        <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors shrink-0 p-0.5" title="Nắm kéo thả để sắp xếp">
+                        <div
+                          className={cn(
+                            "shrink-0 p-0.5 transition-colors",
+                            categoryId
+                              ? "cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                              : "cursor-not-allowed opacity-30 text-gray-400"
+                          )}
+                          title={categoryId ? "Nắm kéo thả để sắp xếp" : "Vui lòng chọn 1 danh mục cụ thể để kéo thả sắp xếp thứ tự"}
+                        >
                           <GripVertical className="h-4 w-4" />
                         </div>
                         <input
@@ -696,24 +723,26 @@ export default function ProductsPage() {
                         ) : (
                           <>
                             {/* Order Move Buttons Group */}
-                            <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 border border-gray-200/70 dark:border-gray-700/70 mr-1">
-                              <button
-                                onClick={() => handleMoveProduct(p, "up")}
-                                disabled={pIdx === 0}
-                                className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-20 disabled:hover:bg-transparent transition-all"
-                                title="Di chuyển lên"
-                              >
-                                <ArrowUp className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                onClick={() => handleMoveProduct(p, "down")}
-                                disabled={pIdx === products.length - 1}
-                                className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-20 disabled:hover:bg-transparent transition-all"
-                                title="Di chuyển xuống"
-                              >
-                                <ArrowDown className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
+                            {categoryId ? (
+                              <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 border border-gray-200/70 dark:border-gray-700/70 mr-1">
+                                <button
+                                  onClick={() => handleMoveProduct(p, "up")}
+                                  disabled={pIdx === 0}
+                                  className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-20 disabled:hover:bg-transparent transition-all"
+                                  title="Di chuyển lên"
+                                >
+                                  <ArrowUp className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleMoveProduct(p, "down")}
+                                  disabled={pIdx === products.length - 1}
+                                  className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-20 disabled:hover:bg-transparent transition-all"
+                                  title="Di chuyển xuống"
+                                >
+                                  <ArrowDown className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            ) : null}
 
                             <button
                               onClick={() => handleToggle(p)}
@@ -726,6 +755,13 @@ export default function ProductsPage() {
                               title={p.isActive ? "Ẩn sản phẩm" : "Hiện sản phẩm"}
                             >
                               {p.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                            <button
+                              onClick={() => handleDuplicate(p)}
+                              className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors"
+                              title="Sao chép sản phẩm"
+                            >
+                              <Copy className="h-4 w-4" />
                             </button>
                             <Link
                               href={`/admin/products/${p.id}`}

@@ -36,8 +36,45 @@ export async function getService(id: number) {
   }
 }
 
+export async function normalizeServicesOrders() {
+  try {
+    const services = await prisma.service.findMany({
+      orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+      select: { id: true, order: true },
+    })
+
+    const updates = []
+    for (let i = 0; i < services.length; i++) {
+      if (services[i].order !== i) {
+        updates.push(
+          prisma.service.update({
+            where: { id: services[i].id },
+            data: { order: i },
+          })
+        )
+      }
+    }
+    if (updates.length > 0) {
+      await prisma.$transaction(updates)
+    }
+  } catch (err) {
+    console.error("normalizeServicesOrders error:", err)
+  }
+}
+
 export async function createService(data: any) {
   try {
+    const targetOrder = data.order !== undefined && data.order !== '' ? parseInt(data.order) : 0
+
+    await prisma.service.updateMany({
+      where: {
+        order: { gte: targetOrder },
+      },
+      data: {
+        order: { increment: 1 },
+      },
+    })
+
     const service = await prisma.service.create({
       data: {
         title: data.title,
@@ -49,12 +86,15 @@ export async function createService(data: any) {
         price: data.price ? parseFloat(data.price) : null,
         originalPrice: data.originalPrice ? parseFloat(data.originalPrice) : null,
         isContactPrice: data.isContactPrice ?? true,
-        order: data.order ? parseInt(data.order) : 0,
+        order: targetOrder,
         metaTitle: data.metaTitle,
         metaDescription: data.metaDescription,
         isActive: data.isActive,
       }
     })
+
+    await normalizeServicesOrders()
+
     revalidatePath("/admin/services")
     return { success: true, data: service }
   } catch (error) {
@@ -70,6 +110,21 @@ export async function createService(data: any) {
 
 export async function updateService(id: number, data: any) {
   try {
+    const currentService = await prisma.service.findUnique({ where: { id }, select: { order: true } })
+    const targetOrder = data.order !== undefined && data.order !== '' ? parseInt(data.order) : 0
+
+    if (currentService && currentService.order !== targetOrder) {
+      await prisma.service.updateMany({
+        where: {
+          id: { not: id },
+          order: { gte: targetOrder },
+        },
+        data: {
+          order: { increment: 1 },
+        },
+      })
+    }
+
     const updateData: any = {
       title: data.title,
       slug: data.slug,
@@ -80,7 +135,7 @@ export async function updateService(id: number, data: any) {
       price: data.price !== undefined && data.price !== '' && data.price !== null ? parseFloat(data.price) : null,
       originalPrice: data.originalPrice !== undefined && data.originalPrice !== '' && data.originalPrice !== null ? parseFloat(data.originalPrice) : null,
       isContactPrice: data.isContactPrice ?? true,
-      order: data.order ? parseInt(data.order) : 0,
+      order: targetOrder,
       metaTitle: data.metaTitle,
       metaDescription: data.metaDescription,
       isActive: data.isActive,
@@ -90,6 +145,9 @@ export async function updateService(id: number, data: any) {
       where: { id },
       data: updateData
     })
+
+    await normalizeServicesOrders()
+
     revalidatePath("/admin/services")
     return { success: true, data: service }
   } catch (error) {
@@ -124,6 +182,8 @@ export async function deleteService(id: number) {
     await prisma.service.delete({
       where: { id }
     })
+    await normalizeServicesOrders()
+
     revalidatePath("/admin/services")
     return { success: true }
   } catch (error) {
@@ -131,3 +191,58 @@ export async function deleteService(id: number) {
     return { error: "Lỗi hệ thống. Không thể xóa dịch vụ." }
   }
 }
+
+export async function duplicateService(id: number) {
+  try {
+    const source = await prisma.service.findUnique({
+      where: { id },
+    })
+    if (!source) return { error: "Dịch vụ gốc không tồn tại." }
+
+    const targetOrder = source.order + 1
+
+    await prisma.service.updateMany({
+      where: {
+        order: { gte: targetOrder },
+      },
+      data: {
+        order: { increment: 1 },
+      },
+    })
+
+    const timestamp = Date.now().toString().slice(-4)
+    const newTitle = `${source.title} (Bản sao)`
+    const newSlug = `${source.slug}-copy-${timestamp}`
+
+    const newService = await prisma.service.create({
+      data: {
+        title: newTitle,
+        slug: newSlug,
+        excerpt: source.excerpt,
+        content: source.content,
+        image: source.image,
+        icon: source.icon,
+        price: source.price,
+        originalPrice: source.originalPrice,
+        isContactPrice: source.isContactPrice,
+        order: targetOrder,
+        metaTitle: source.metaTitle ? `${source.metaTitle} (Bản sao)` : null,
+        metaDescription: source.metaDescription,
+        isActive: source.isActive,
+      },
+    })
+
+    await normalizeServicesOrders()
+
+    revalidatePath("/admin/services")
+    return { success: true, data: newService }
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return { error: "Slug dịch vụ đã tồn tại. Không thể tạo bản sao." }
+    }
+    console.error("Error duplicating service:", error)
+    return { error: "Lỗi hệ thống. Không thể sao chép dịch vụ." }
+  }
+}
+
+

@@ -124,11 +124,11 @@ export async function getProducts(params?: {
       prisma.product.count({ where }),
       prisma.product.findMany({
         where,
-        orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+        orderBy: [{ category: { order: 'asc' } }, { order: 'asc' }, { createdAt: 'desc' }],
         skip,
         take: pageSize,
         include: {
-          category: { select: { id: true, name: true, color: true } },
+          category: { select: { id: true, name: true, color: true, order: true } },
           _count: { select: { variants: true } },
           variants: {
             select: { price: true, originalPrice: true, stockQuantity: true },
@@ -168,18 +168,56 @@ export async function getProduct(id: number) {
   }
 }
 
+export async function normalizeCategoryOrders(categoryId: number) {
+  try {
+    const prods = await prisma.product.findMany({
+      where: { categoryId, deletedAt: null },
+      orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+      select: { id: true, order: true },
+    })
+
+    const updates = []
+    for (let i = 0; i < prods.length; i++) {
+      if (prods[i].order !== i) {
+        updates.push(
+          prisma.product.update({
+            where: { id: prods[i].id },
+            data: { order: i },
+          })
+        )
+      }
+    }
+    if (updates.length > 0) {
+      await prisma.$transaction(updates)
+    }
+  } catch (err) {
+    console.error("normalizeCategoryOrders error:", err)
+  }
+}
+
 // ── Mutations ─────────────────────────────────────────────────────────────────
 
 export async function createProduct(input: ProductInput) {
   try {
-    let newOrder = input.order ?? 0
+    let targetOrder = input.order ?? 0
     if (input.order === undefined) {
       const maxOrderProd = await prisma.product.findFirst({
         where: { categoryId: input.categoryId, deletedAt: null },
         orderBy: { order: 'desc' },
         select: { order: true }
       })
-      newOrder = (maxOrderProd?.order ?? -1) + 1
+      targetOrder = (maxOrderProd?.order ?? -1) + 1
+    } else {
+      await prisma.product.updateMany({
+        where: {
+          categoryId: input.categoryId,
+          deletedAt: null,
+          order: { gte: targetOrder },
+        },
+        data: {
+          order: { increment: 1 },
+        },
+      })
     }
 
     const product = await prisma.product.create({
@@ -189,7 +227,7 @@ export async function createProduct(input: ProductInput) {
         category: { connect: { id: input.categoryId } },
         brandRef: input.brandId ? { connect: { id: input.brandId } } : undefined,
         brand: input.brand || null,
-        order: newOrder,
+        order: targetOrder,
         images: input.images.length > 0 ? input.images : Prisma.JsonNull,
         description: input.description || null,
         productType: input.productType || 'standard',
@@ -224,6 +262,9 @@ export async function createProduct(input: ProductInput) {
         },
       },
     })
+
+    await normalizeCategoryOrders(input.categoryId)
+
     revalidatePath("/admin/products")
     revalidatePath("/")
     revalidatePath("/san-pham")
@@ -251,6 +292,25 @@ export async function updateProduct(id: number, input: ProductInput) {
     const toCreate = input.variants.filter((v) => !v.id)
     const toKeepIds = new Set(toUpdate.map((v) => v.id!))
     const toDeleteIds = [...existingIds].filter((id) => !toKeepIds.has(id))
+
+    const existingProd = await prisma.product.findUnique({
+      where: { id },
+      select: { order: true, categoryId: true },
+    })
+
+    if (existingProd && (input.order !== existingProd.order || input.categoryId !== existingProd.categoryId)) {
+      await prisma.product.updateMany({
+        where: {
+          categoryId: input.categoryId,
+          deletedAt: null,
+          id: { not: id },
+          order: { gte: input.order },
+        },
+        data: {
+          order: { increment: 1 },
+        },
+      })
+    }
 
     // Transaction để đảm bảo tính toàn vẹn
     await prisma.$transaction(async (tx) => {
@@ -326,6 +386,11 @@ export async function updateProduct(id: number, input: ProductInput) {
       }
     })
 
+    await normalizeCategoryOrders(input.categoryId)
+    if (existingProd && existingProd.categoryId !== input.categoryId) {
+      await normalizeCategoryOrders(existingProd.categoryId)
+    }
+
     revalidatePath("/admin/products")
     revalidatePath(`/admin/products/${id}`)
     revalidatePath("/")
@@ -377,11 +442,14 @@ export async function toggleProductActive(id: number, current: boolean) {
 
 export async function deleteProduct(id: number) {
   try {
+    const prod = await prisma.product.findUnique({ where: { id }, select: { categoryId: true } })
     // Soft delete
     await prisma.product.update({
       where: { id },
       data: { deletedAt: new Date() },
     })
+    if (prod) await normalizeCategoryOrders(prod.categoryId)
+
     revalidatePath("/admin/products")
     revalidatePath("/admin/categories")
     revalidatePath("/")
@@ -395,10 +463,13 @@ export async function deleteProduct(id: number) {
 
 export async function restoreProduct(id: number) {
   try {
+    const prod = await prisma.product.findUnique({ where: { id }, select: { categoryId: true } })
     await prisma.product.update({
       where: { id },
       data: { deletedAt: null },
     })
+    if (prod) await normalizeCategoryOrders(prod.categoryId)
+
     revalidatePath("/admin/products")
     revalidatePath("/admin/categories")
     revalidatePath("/")
@@ -412,9 +483,12 @@ export async function restoreProduct(id: number) {
 
 export async function hardDeleteProduct(id: number) {
   try {
+    const prod = await prisma.product.findUnique({ where: { id }, select: { categoryId: true } })
     await prisma.product.delete({
       where: { id },
     })
+    if (prod) await normalizeCategoryOrders(prod.categoryId)
+
     revalidatePath("/admin/products")
     revalidatePath("/admin/categories")
     revalidatePath("/")
@@ -425,3 +499,93 @@ export async function hardDeleteProduct(id: number) {
     return { error: "Không thể xóa vĩnh viễn sản phẩm do đang có dữ liệu liên quan." }
   }
 }
+
+export async function duplicateProduct(id: number) {
+  try {
+    const source = await prisma.product.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        policies: true,
+        consumables: true,
+        variants: true,
+      },
+    })
+
+    if (!source) return { error: "Sản phẩm gốc không tồn tại." }
+
+    const targetOrder = source.order + 1
+
+    await prisma.product.updateMany({
+      where: {
+        categoryId: source.categoryId,
+        deletedAt: null,
+        order: { gte: targetOrder },
+      },
+      data: {
+        order: { increment: 1 },
+      },
+    })
+
+    const timestamp = Date.now().toString().slice(-4)
+    const newName = `${source.name} (Bản sao)`
+    const newSlug = `${source.slug}-copy-${timestamp}`
+
+    const newProduct = await prisma.product.create({
+      data: {
+        name: newName,
+        slug: newSlug,
+        categoryId: source.categoryId,
+        brandId: source.brandId,
+        brand: source.brand,
+        order: targetOrder,
+        images: source.images ?? Prisma.JsonNull,
+        description: source.description,
+        productType: source.productType,
+        isActive: source.isActive,
+        isFeatured: source.isFeatured,
+        isContactPrice: source.isContactPrice,
+        metaTitle: source.metaTitle ? `${source.metaTitle} (Bản sao)` : null,
+        metaDescription: source.metaDescription,
+        metaKeywords: source.metaKeywords,
+        quickSpecs: source.quickSpecs ?? Prisma.JsonNull,
+        specifications: source.specifications ?? Prisma.JsonNull,
+        manuals: source.manuals ?? Prisma.JsonNull,
+        drivers: source.drivers ?? Prisma.JsonNull,
+        rentalTerms: source.rentalTerms ?? Prisma.JsonNull,
+        customOptions: source.customOptions ?? Prisma.JsonNull,
+        policies: {
+          connect: source.policies.map((p) => ({ id: p.id })),
+        },
+        consumables: {
+          connect: source.consumables.map((c) => ({ id: c.id })),
+        },
+        variants: {
+          create: source.variants.map((v, index) => ({
+            sku: `${v.sku}-COPY-${timestamp}${index > 0 ? `-${index}` : ''}`,
+            name: v.name,
+            price: v.price,
+            originalPrice: v.originalPrice,
+            stockQuantity: v.stockQuantity,
+            images: v.images ?? Prisma.JsonNull,
+            attributes: v.attributes ?? Prisma.JsonNull,
+          })),
+        },
+      },
+    })
+
+    await normalizeCategoryOrders(source.categoryId)
+
+    revalidatePath("/admin/products")
+    revalidatePath("/")
+    revalidatePath("/san-pham")
+    return { success: true, data: newProduct }
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return { error: "Lỗi trùng lặp Slug hoặc SKU khi sao chép sản phẩm." }
+    }
+    console.error("duplicateProduct error:", error)
+    return { error: "Lỗi hệ thống. Không thể sao chép sản phẩm." }
+  }
+}
+

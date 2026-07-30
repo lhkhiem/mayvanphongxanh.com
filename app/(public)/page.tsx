@@ -67,7 +67,7 @@ export default async function Home() {
     }),
     prisma.product.findMany({
       where: { isActive: true, deletedAt: null },
-      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+      orderBy: [{ category: { order: 'asc' } }, { order: 'asc' }, { createdAt: 'desc' }],
       include: { category: true, variants: true }
     }),
     prisma.testimonial.findMany({ where: { isActive: true } }),

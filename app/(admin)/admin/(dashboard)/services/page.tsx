@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/admin/empty-state";
-import { Settings, Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react";
-import { getServices, deleteService, toggleServiceActive } from "./actions";
+import { Settings, Plus, Edit, Trash2, Eye, EyeOff, Copy } from "lucide-react";
+import { getServices, deleteService, toggleServiceActive, duplicateService } from "./actions";
 
 export default function ServicesPage() {
   const [services, setServices] = useState<any[]>([]);
@@ -46,6 +46,18 @@ export default function ServicesPage() {
       toast.error(res.error);
     } else {
       toast.success(service.isActive ? "Đã ẩn dịch vụ" : "Đã hiển thị dịch vụ");
+      fetchServices();
+    }
+  };
+
+  const handleDuplicate = async (service: any) => {
+    if (!confirm(`Bạn có chắc chắn muốn sao chép dịch vụ "${service.title}"?`)) return;
+    toast.loading("Đang sao chép dịch vụ...", { id: "dup-service" });
+    const res = await duplicateService(service.id);
+    if (res.error) {
+      toast.error(res.error, { id: "dup-service" });
+    } else {
+      toast.success("Sao chép dịch vụ thành công!", { id: "dup-service" });
       fetchServices();
     }
   };
@@ -193,6 +205,13 @@ export default function ServicesPage() {
                         ) : (
                           <Eye className="h-4 w-4" />
                         )}
+                      </button>
+                      <button
+                        onClick={() => handleDuplicate(item)}
+                        className="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors"
+                        title="Sao chép dịch vụ"
+                      >
+                        <Copy className="h-4 w-4" />
                       </button>
                       <Link
                         href={`/admin/services/${item.id}`}
