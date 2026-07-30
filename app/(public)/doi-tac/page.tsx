@@ -79,7 +79,13 @@ export default async function PartnerPage() {
 
   const dbCategories = await prisma.category.findMany({
     where: { isActive: true, parentId: null },
-    include: { children: true }
+    orderBy: [{ order: 'asc' }, { id: 'asc' }],
+    include: {
+      children: {
+        where: { isActive: true },
+        orderBy: [{ order: 'asc' }, { id: 'asc' }]
+      }
+    }
   });
 
   return (

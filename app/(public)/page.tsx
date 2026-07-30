@@ -57,7 +57,13 @@ export default async function Home() {
   const [dbCategories, dbProducts, dbTestimonials, dbPosts, dbProjects, dbSettings, dbSliders, dbBanners, dbFaqs] = await Promise.all([
     prisma.category.findMany({ 
       where: { isActive: true, parentId: null },
-      include: { children: true }
+      orderBy: [{ order: 'asc' }, { id: 'asc' }],
+      include: {
+        children: {
+          where: { isActive: true },
+          orderBy: [{ order: 'asc' }, { id: 'asc' }]
+        }
+      }
     }),
     prisma.product.findMany({
       where: { isActive: true, deletedAt: null },

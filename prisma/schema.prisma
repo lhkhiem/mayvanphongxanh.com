@@ -18,6 +18,7 @@ model Category {
   parentId   Int?
   icon       String?
   color      String?
+  order      Int     @default(0)
   isActive   Boolean @default(true)
   isFeatured Boolean @default(false)
   showInFooter Boolean @default(false)

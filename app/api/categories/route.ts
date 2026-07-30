@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const categories = await prisma.category.findMany({
       where: { isActive: true },
-      orderBy: { id: 'asc' }
+      orderBy: [{ order: 'asc' }, { id: 'asc' }]
     })
     return NextResponse.json(categories)
   } catch (error) {

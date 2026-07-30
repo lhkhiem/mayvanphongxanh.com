@@ -12,9 +12,10 @@ export async function GET() {
         name: true,
         slug: true,
       },
-      orderBy: {
-        id: 'asc', // Or order if you add an order field
-      },
+      orderBy: [
+        { order: 'asc' },
+        { id: 'asc' },
+      ],
     });
 
     return NextResponse.json(categories);

@@ -11,6 +11,7 @@ export type CategoryWithChildren = {
   parentId: number | null
   icon: string | null
   color: string | null
+  order: number
   isActive: boolean
   isFeatured: boolean
   _count: { products: number }
@@ -21,7 +22,7 @@ export type CategoryWithChildren = {
 export async function getCategories() {
   try {
     const categories = await prisma.category.findMany({
-      orderBy: [{ parentId: 'asc' }, { name: 'asc' }],
+      orderBy: [{ parentId: 'asc' }, { order: 'asc' }, { id: 'asc' }],
       include: {
         _count: { select: { products: true } },
       },
@@ -39,6 +40,7 @@ export type CategoryFormData = {
   parentId: number | null
   icon: string
   color: string
+  order?: number
   isActive: boolean
   isFeatured?: boolean
   hasPromo?: boolean
@@ -53,6 +55,17 @@ export type CategoryFormData = {
 
 export async function createCategory(data: CategoryFormData) {
   try {
+    // If order is not explicitly provided, calculate max order + 1 among siblings
+    let newOrder = data.order ?? 0
+    if (data.order === undefined) {
+      const maxOrderCat = await prisma.category.findFirst({
+        where: { parentId: data.parentId || null },
+        orderBy: { order: 'desc' },
+        select: { order: true }
+      })
+      newOrder = (maxOrderCat?.order ?? -1) + 1
+    }
+
     const category = await prisma.category.create({
       data: {
         name: data.name,
@@ -60,6 +73,7 @@ export async function createCategory(data: CategoryFormData) {
         parentId: data.parentId || null,
         icon: data.icon || null,
         color: data.color || null,
+        order: newOrder,
         isActive: data.isActive,
         isFeatured: data.isFeatured || false,
         hasPromo: data.hasPromo || false,
@@ -73,6 +87,7 @@ export async function createCategory(data: CategoryFormData) {
       },
     })
     revalidatePath("/admin/categories")
+    revalidatePath("/")
     return { success: true, data: category }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -97,6 +112,7 @@ export async function updateCategory(id: number, data: CategoryFormData) {
         parentId: data.parentId || null,
         icon: data.icon || null,
         color: data.color || null,
+        order: data.order ?? 0,
         isActive: data.isActive,
         isFeatured: data.isFeatured ?? false,
         hasPromo: data.hasPromo ?? false,
@@ -110,6 +126,7 @@ export async function updateCategory(id: number, data: CategoryFormData) {
       },
     })
     revalidatePath("/admin/categories")
+    revalidatePath("/")
     return { success: true, data: category }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -120,6 +137,24 @@ export async function updateCategory(id: number, data: CategoryFormData) {
   }
 }
 
+export async function updateCategoryOrders(items: { id: number; order: number }[]) {
+  try {
+    const transactions = items.map((item) =>
+      prisma.category.update({
+        where: { id: item.id },
+        data: { order: item.order },
+      })
+    )
+    await prisma.$transaction(transactions)
+    revalidatePath("/admin/categories")
+    revalidatePath("/")
+    return { success: true }
+  } catch (error) {
+    console.error("updateCategoryOrders error:", error)
+    return { error: "Không thể cập nhật thứ tự danh mục." }
+  }
+}
+
 export async function toggleCategoryActive(id: number, current: boolean) {
   try {
     const category = await prisma.category.update({
@@ -127,6 +162,7 @@ export async function toggleCategoryActive(id: number, current: boolean) {
       data: { isActive: !current },
     })
     revalidatePath("/admin/categories")
+    revalidatePath("/")
     return { success: true, data: category }
   } catch (error) {
     console.error("toggleCategoryActive error:", error)
@@ -149,6 +185,7 @@ export async function deleteCategory(id: number) {
 
     await prisma.category.delete({ where: { id } })
     revalidatePath("/admin/categories")
+    revalidatePath("/")
     return { success: true }
   } catch (error) {
     console.error("deleteCategory error:", error)

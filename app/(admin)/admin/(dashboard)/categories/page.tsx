@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/admin/empty-state";
 import {
   Folder, Plus, Edit, Trash2, X, Save, ChevronRight,
-  Eye, EyeOff, Tag, AlertCircle, Package
+  Eye, EyeOff, Tag, AlertCircle, Package, ArrowUp, ArrowDown, GripVertical
 } from "lucide-react";
 import {
   getCategories,
@@ -13,6 +13,7 @@ import {
   updateCategory,
   deleteCategory,
   toggleCategoryActive,
+  updateCategoryOrders,
   type CategoryFormData,
 } from "./actions";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,7 @@ type Category = {
   parentId: number | null;
   icon: string | null;
   color: string | null;
+  order: number;
   isActive: boolean;
   isFeatured: boolean;
   showInFooter: boolean;
@@ -68,6 +70,7 @@ const DEFAULT_FORM: CategoryFormData = {
   parentId: null,
   icon: "",
   color: "#3b82f6",
+  order: 0,
   isActive: true,
   isFeatured: true,
   showInFooter: true,
@@ -87,6 +90,10 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  // Drag and drop state
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
@@ -129,9 +136,130 @@ export default function CategoriesPage() {
     else { toast.success(cat.isActive ? "Đã ẩn danh mục." : "Đã kích hoạt danh mục."); fetchCategories(); }
   };
 
-  // Separate parents and children
-  const parentCategories = categories.filter((c) => c.parentId === null);
-  const getChildren = (parentId: number) => categories.filter((c) => c.parentId === parentId);
+  const handleMove = async (category: Category, direction: "up" | "down") => {
+    const siblings = categories.filter((c) => c.parentId === category.parentId);
+    const index = siblings.findIndex((c) => c.id === category.id);
+    if (index === -1) return;
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= siblings.length) return;
+
+    const newSiblings = [...siblings];
+    const temp = newSiblings[index];
+    newSiblings[index] = newSiblings[targetIndex];
+    newSiblings[targetIndex] = temp;
+
+    const updates = newSiblings.map((item, idx) => ({
+      id: item.id,
+      order: idx,
+    }));
+
+    const res = await updateCategoryOrders(updates);
+    if (res.error) {
+      toast.error(res.error);
+    } else {
+      toast.success("Đã cập nhật thứ tự danh mục.");
+      fetchCategories();
+    }
+  };
+
+  // Drag and Drop Handlers
+  const handleDragStart = (e: React.DragEvent, id: number) => {
+    setDraggedId(id);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(id));
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetCategory: Category) => {
+    if (!draggedId || draggedId === targetCategory.id) return;
+    const draggedCategory = categories.find((c) => c.id === draggedId);
+    if (!draggedCategory) return;
+
+    if (draggedCategory.parentId === targetCategory.parentId) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      if (dragOverId !== targetCategory.id) {
+        setDragOverId(targetCategory.id);
+      }
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent, id: number) => {
+    if (dragOverId === id) {
+      setDragOverId(null);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetCategory: Category) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetCategory.id) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    const draggedCategory = categories.find((c) => c.id === draggedId);
+    if (!draggedCategory || draggedCategory.parentId !== targetCategory.parentId) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    const siblings = categories
+      .filter((c) => c.parentId === targetCategory.parentId)
+      .sort((a, b) => a.order - b.order || a.id - b.id);
+
+    const draggedIndex = siblings.findIndex((c) => c.id === draggedId);
+    const targetIndex = siblings.findIndex((c) => c.id === targetCategory.id);
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    const newSiblings = [...siblings];
+    const [removed] = newSiblings.splice(draggedIndex, 1);
+    newSiblings.splice(targetIndex, 0, removed);
+
+    const updates = newSiblings.map((item, idx) => ({
+      id: item.id,
+      order: idx,
+    }));
+
+    setCategories((prev) =>
+      prev.map((c) => {
+        const match = updates.find((u) => u.id === c.id);
+        return match ? { ...c, order: match.order } : c;
+      })
+    );
+
+    setDraggedId(null);
+    setDragOverId(null);
+
+    const res = await updateCategoryOrders(updates);
+    if (res.error) {
+      toast.error(res.error);
+      fetchCategories();
+    } else {
+      toast.success(`Đã di chuyển "${draggedCategory.name}" sang vị trí mới.`);
+      fetchCategories();
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+
+  // Separate parents and children sorted by order
+  const parentCategories = categories
+    .filter((c) => c.parentId === null)
+    .sort((a, b) => a.order - b.order || a.id - b.id);
+
+  const getChildren = (parentId: number) =>
+    categories
+      .filter((c) => c.parentId === parentId)
+      .sort((a, b) => a.order - b.order || a.id - b.id);
 
   if (loading) {
     return (
@@ -153,7 +281,7 @@ export default function CategoriesPage() {
             Quản lý Danh mục Sản phẩm
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-            {categories.length} danh mục • Hỗ trợ cấu trúc danh mục cha – con
+            {categories.length} danh mục • Kéo thả <GripVertical className="inline-block h-4 w-4 align-text-bottom text-gray-400" /> hoặc dùng mũi tên để sắp xếp vị trí
           </p>
         </div>
         {!showAddForm && (
@@ -187,7 +315,7 @@ export default function CategoriesPage() {
         />
       ) : (
         <div className="space-y-3">
-          {parentCategories.map((parent) => {
+          {parentCategories.map((parent, pIdx) => {
             const children = getChildren(parent.id);
             return (
               <div key={parent.id} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] shadow-sm overflow-hidden">
@@ -202,6 +330,7 @@ export default function CategoriesPage() {
                         parentId: parent.parentId,
                         icon: parent.icon || "",
                         color: parent.color || "#3b82f6",
+                        order: parent.order,
                         isActive: parent.isActive,
                         isFeatured: parent.isFeatured,
                         showInFooter: parent.showInFooter,
@@ -225,7 +354,18 @@ export default function CategoriesPage() {
                     onEdit={() => setEditingId(parent.id)}
                     onDelete={() => handleDelete(parent)}
                     onToggle={() => handleToggle(parent)}
+                    onMoveUp={() => handleMove(parent, "up")}
+                    onMoveDown={() => handleMove(parent, "down")}
+                    isFirst={pIdx === 0}
+                    isLast={pIdx === parentCategories.length - 1}
                     isParent
+                    onDragStart={(e) => handleDragStart(e, parent.id)}
+                    onDragOver={(e) => handleDragOver(e, parent)}
+                    onDragLeave={(e) => handleDragLeave(e, parent.id)}
+                    onDrop={(e) => handleDrop(e, parent)}
+                    onDragEnd={handleDragEnd}
+                    isDragging={draggedId === parent.id}
+                    isDragOver={dragOverId === parent.id}
                   />
                 )}
 
@@ -244,6 +384,7 @@ export default function CategoriesPage() {
                                 parentId: child.parentId,
                                 icon: child.icon || "",
                                 color: child.color || "#3b82f6",
+                                order: child.order,
                                 isActive: child.isActive,
                                 isFeatured: child.isFeatured,
                                 showInFooter: child.showInFooter,
@@ -267,7 +408,18 @@ export default function CategoriesPage() {
                             onEdit={() => setEditingId(child.id)}
                             onDelete={() => handleDelete(child)}
                             onToggle={() => handleToggle(child)}
+                            onMoveUp={() => handleMove(child, "up")}
+                            onMoveDown={() => handleMove(child, "down")}
+                            isFirst={idx === 0}
+                            isLast={idx === children.length - 1}
                             isChild
+                            onDragStart={(e) => handleDragStart(e, child.id)}
+                            onDragOver={(e) => handleDragOver(e, child)}
+                            onDragLeave={(e) => handleDragLeave(e, child.id)}
+                            onDrop={(e) => handleDrop(e, child)}
+                            onDragEnd={handleDragEnd}
+                            isDragging={draggedId === child.id}
+                            isDragOver={dragOverId === child.id}
                           />
                         )}
                       </div>
@@ -290,26 +442,61 @@ function CategoryRow({
   onEdit,
   onDelete,
   onToggle,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
   isParent,
   isChild,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onDragEnd,
+  isDragging,
+  isDragOver,
 }: {
   category: Category;
   onEdit: () => void;
   onDelete: () => void;
   onToggle: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
   isParent?: boolean;
   isChild?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDragLeave?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
+  onDragEnd?: () => void;
+  isDragging?: boolean;
+  isDragOver?: boolean;
 }) {
   return (
     <div
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
       className={cn(
-        "flex items-center gap-4 px-5 py-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/30",
+        "flex items-center gap-3 px-5 py-4 transition-all hover:bg-gray-50 dark:hover:bg-gray-800/30",
         isChild && "pl-10 bg-gray-50/30 dark:bg-gray-800/10",
-        !category.isActive && "opacity-60"
+        !category.isActive && "opacity-60",
+        isDragging && "opacity-40 border-2 border-dashed border-primary bg-primary/5",
+        isDragOver && "ring-2 ring-primary ring-inset bg-blue-50/80 dark:bg-blue-950/40"
       )}
     >
+      {/* Drag Grip Handle */}
+      <div className="cursor-grab active:cursor-grabbing p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors shrink-0" title="Nắm kéo thả để di chuyển">
+        <GripVertical className="h-4 w-4" />
+      </div>
+
       {isChild && (
-        <ChevronRight className="h-4 w-4 text-gray-400 shrink-0 -ml-4" />
+        <ChevronRight className="h-4 w-4 text-gray-400 shrink-0 -ml-1" />
       )}
 
       {/* Color dot / icon */}
@@ -324,6 +511,9 @@ function CategoryRow({
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-semibold text-gray-900 dark:text-gray-100">
             {category.name}
+          </span>
+          <span className="px-1.5 py-0.5 text-[10px] font-mono font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700">
+            #{category.order}
           </span>
           {!category.isActive && (
             <span className="px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 rounded">
@@ -350,8 +540,29 @@ function CategoryRow({
         </div>
       </div>
 
-      {/* Actions */}
+      {/* ── Single Action Column ── */}
       <div className="flex items-center gap-1 shrink-0">
+        {/* Order Move Buttons Group */}
+        <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 border border-gray-200/70 dark:border-gray-700/70 mr-1">
+          <button
+            onClick={onMoveUp}
+            disabled={isFirst}
+            className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-20 disabled:hover:bg-transparent transition-all"
+            title="Di chuyển lên"
+          >
+            <ArrowUp className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={onMoveDown}
+            disabled={isLast}
+            className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-20 disabled:hover:bg-transparent transition-all"
+            title="Di chuyển xuống"
+          >
+            <ArrowDown className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        {/* Toggle Active */}
         <button
           onClick={onToggle}
           className={cn(
@@ -364,6 +575,8 @@ function CategoryRow({
         >
           {category.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
+
+        {/* Edit */}
         <button
           onClick={onEdit}
           className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
@@ -371,6 +584,8 @@ function CategoryRow({
         >
           <Edit className="h-4 w-4" />
         </button>
+
+        {/* Delete */}
         <button
           onClick={onDelete}
           className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 transition-colors"
@@ -491,6 +706,20 @@ function CategoryForm({
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
+          </div>
+
+          {/* Order */}
+          <div>
+            <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">
+              Thứ tự hiển thị (Order)
+            </label>
+            <input
+              type="number"
+              value={form.order ?? 0}
+              onChange={(e) => setForm({ ...form, order: parseInt(e.target.value) || 0 })}
+              placeholder="0, 1, 2..."
+              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-gray-100 shadow-sm font-mono"
+            />
           </div>
 
           {/* Icon */}
