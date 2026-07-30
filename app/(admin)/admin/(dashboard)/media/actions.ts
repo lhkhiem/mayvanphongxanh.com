@@ -2,8 +2,9 @@
 
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
-import { unlink } from "fs/promises"
+import { unlink, copyFile, mkdir } from "fs/promises"
 import path from "path"
+import fs from "fs"
 
 export async function getAssets(search?: string, folderId?: string | null) {
   try {
@@ -70,8 +71,6 @@ export async function createFolder(name: string, parentId?: string | null) {
 
 export async function deleteFolder(id: string) {
   try {
-    // This relies on Cascade delete from Prisma, or we might need to manually handle it if we want to delete assets.
-    // However, in schema we set onDelete: SetNull for Assets, so deleting folder will move assets to root.
     await prisma.mediaFolder.delete({ where: { id } })
     revalidatePath("/admin/media")
     return { success: true }
@@ -106,8 +105,12 @@ export async function deleteAsset(id: string, url: string) {
       if (rootDir.includes('.next/standalone') || rootDir.includes('.next\\standalone')) {
         rootDir = path.join(rootDir, '../../')
       }
-      const filePath = path.join(rootDir, 'public', url)
-      await unlink(filePath)
+      const cleanUrl = url.split('?')[0]
+      const relativePath = cleanUrl.startsWith('/') ? cleanUrl.slice(1) : cleanUrl
+      const filePath = path.join(rootDir, 'public', relativePath)
+      if (fs.existsSync(filePath)) {
+        await unlink(filePath)
+      }
     } catch (fileErr) {
       console.warn("Could not delete file from disk (may already be gone):", fileErr)
     }
@@ -132,8 +135,12 @@ export async function deleteMultipleAssets(ids: string[], urls: string[]) {
     // Delete files from disk
     await Promise.allSettled(
       urls.map(async (url) => {
-        const filePath = path.join(rootDir, 'public', url)
-        await unlink(filePath)
+        const cleanUrl = url.split('?')[0]
+        const relativePath = cleanUrl.startsWith('/') ? cleanUrl.slice(1) : cleanUrl
+        const filePath = path.join(rootDir, 'public', relativePath)
+        if (fs.existsSync(filePath)) {
+          await unlink(filePath)
+        }
       })
     )
 
@@ -142,5 +149,38 @@ export async function deleteMultipleAssets(ids: string[], urls: string[]) {
   } catch (error) {
     console.error("Error deleting assets:", error)
     return { error: "Lỗi hệ thống. Không thể xóa ảnh." }
+  }
+}
+
+export async function renameAsset(id: string, newFileName: string) {
+  try {
+    if (!newFileName.trim()) return { error: "Tên file không được để trống" }
+    const updated = await prisma.asset.update({
+      where: { id },
+      data: { fileName: newFileName.trim() }
+    })
+    revalidatePath("/admin/media")
+    return { data: updated }
+  } catch (error) {
+    console.error("Error renaming asset:", error)
+    return { error: "Không thể đổi tên file." }
+  }
+}
+
+export async function moveAssets(ids: string[], targetFolderId: string | null) {
+  try {
+    if (!ids || ids.length === 0) return { error: "Không có file nào được chọn" }
+    
+    const folderId = (targetFolderId === 'root' || targetFolderId === 'null' || !targetFolderId) ? null : targetFolderId
+
+    await prisma.asset.updateMany({
+      where: { id: { in: ids } },
+      data: { folderId }
+    })
+    revalidatePath("/admin/media")
+    return { success: true }
+  } catch (error) {
+    console.error("Error moving assets:", error)
+    return { error: "Không thể di chuyển file." }
   }
 }

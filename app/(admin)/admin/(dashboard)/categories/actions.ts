@@ -18,22 +18,50 @@ export type CategoryWithChildren = {
   children: CategoryWithChildren[]
 }
 
-/** Lấy toàn bộ danh mục, trả về flat list kèm _count products */
+/** Lấy toàn bộ danh mục, trả về flat list kèm phân loại số lượng products */
 export async function getCategories() {
   try {
-    const categories = await prisma.category.findMany({
-      orderBy: [{ parentId: 'asc' }, { order: 'asc' }, { id: 'asc' }],
-      include: {
+    const [categories, activeGroup, inactiveGroup, trashGroup] = await Promise.all([
+      prisma.category.findMany({
+        orderBy: [{ parentId: 'asc' }, { order: 'asc' }, { id: 'asc' }],
+      }),
+      prisma.product.groupBy({
+        by: ['categoryId'],
+        where: { isActive: true, deletedAt: null },
+        _count: { id: true },
+      }),
+      prisma.product.groupBy({
+        by: ['categoryId'],
+        where: { isActive: false, deletedAt: null },
+        _count: { id: true },
+      }),
+      prisma.product.groupBy({
+        by: ['categoryId'],
+        where: { deletedAt: { not: null } },
+        _count: { id: true },
+      }),
+    ])
+
+    const activeMap = new Map(activeGroup.map((g) => [g.categoryId, g._count.id]))
+    const inactiveMap = new Map(inactiveGroup.map((g) => [g.categoryId, g._count.id]))
+    const trashMap = new Map(trashGroup.map((g) => [g.categoryId, g._count.id]))
+
+    const data = categories.map((cat) => {
+      const activeProducts = activeMap.get(cat.id) || 0
+      const inactiveProducts = inactiveMap.get(cat.id) || 0
+      const trashProducts = trashMap.get(cat.id) || 0
+      return {
+        ...cat,
         _count: {
-          select: {
-            products: {
-              where: { deletedAt: null }
-            }
-          }
+          products: activeProducts,
+          activeProducts,
+          inactiveProducts,
+          trashProducts,
         },
-      },
+      }
     })
-    return { data: categories }
+
+    return { data }
   } catch (error) {
     console.error("getCategories error:", error)
     return { error: "Không thể tải danh sách danh mục." }
@@ -183,10 +211,26 @@ export async function deleteCategory(id: number) {
     if (childCount > 0) {
       return { error: `Danh mục này có ${childCount} danh mục con. Vui lòng xóa hoặc chuyển danh mục con trước.` }
     }
-    // Check for products (only active, non-deleted ones)
-    const productCount = await prisma.product.count({ where: { categoryId: id, deletedAt: null } })
-    if (productCount > 0) {
-      return { error: `Danh mục này đang chứa ${productCount} sản phẩm. Vui lòng chuyển sản phẩm sang danh mục khác trước.` }
+    // Check for products (distinguishing active vs trash products)
+    const [activeCount, deletedCount] = await Promise.all([
+      prisma.product.count({ where: { categoryId: id, deletedAt: null } }),
+      prisma.product.count({ where: { categoryId: id, deletedAt: { not: null } } }),
+    ])
+
+    if (activeCount > 0 && deletedCount > 0) {
+      return {
+        error: `Danh mục này đang chứa ${activeCount} sản phẩm và ${deletedCount} sản phẩm trong Thùng rác. Vui lòng chuyển hoặc xóa vĩnh viễn các sản phẩm này trước khi xóa danh mục.`
+      }
+    }
+    if (activeCount > 0) {
+      return {
+        error: `Danh mục này đang chứa ${activeCount} sản phẩm. Vui lòng chuyển sản phẩm sang danh mục khác hoặc xóa sản phẩm trước khi xóa danh mục.`
+      }
+    }
+    if (deletedCount > 0) {
+      return {
+        error: `Danh mục này đang có ${deletedCount} sản phẩm nằm trong Thùng rác. Vui lòng vào Thùng rác xóa vĩnh viễn hoặc chuyển sản phẩm trước khi xóa danh mục.`
+      }
     }
 
     await prisma.category.delete({ where: { id } })

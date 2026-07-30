@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/admin/empty-state";
+import { MediaPickerInput } from "@/components/admin/media-picker-input";
 import {
   Folder, Plus, Edit, Trash2, X, Save, ChevronRight,
   Eye, EyeOff, Tag, AlertCircle, Package, ArrowUp, ArrowDown, GripVertical
@@ -52,7 +53,12 @@ type Category = {
   promoBadgeColor: string | null;
   promoTargetUrl: string | null;
   promoImageUrl: string | null;
-  _count: { products: number };
+  _count: {
+    products: number;
+    activeProducts?: number;
+    inactiveProducts?: number;
+    trashProducts?: number;
+  };
 };
 
 // Preset colors for categories
@@ -531,12 +537,25 @@ function CategoryRow({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-          <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">/{category.slug}</span>
-          <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+        <div className="flex items-center gap-2 mt-1 flex-wrap text-xs">
+          <span className="text-gray-400 dark:text-gray-500 font-mono">/{category.slug}</span>
+          <span className="text-gray-300 dark:text-gray-700 font-bold">•</span>
+          <span className="flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200/50 dark:border-emerald-800/40" title="Sản phẩm đang bán">
             <Package className="h-3 w-3" />
-            {category._count.products} sản phẩm
+            {category._count?.activeProducts ?? category._count?.products ?? 0} đang bán
           </span>
+          {(category._count?.inactiveProducts ?? 0) > 0 && (
+            <span className="flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded border border-amber-200/50 dark:border-amber-800/40" title="Sản phẩm đang ẩn">
+              <EyeOff className="h-3 w-3" />
+              {category._count?.inactiveProducts} đang ẩn
+            </span>
+          )}
+          {(category._count?.trashProducts ?? 0) > 0 && (
+            <span className="flex items-center gap-1 font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded border border-red-200/50 dark:border-red-800/40" title="Sản phẩm trong Thùng rác">
+              <Trash2 className="h-3 w-3" />
+              {category._count?.trashProducts} thùng rác
+            </span>
+          )}
         </div>
       </div>
 
@@ -840,13 +859,11 @@ function CategoryForm({
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs font-medium mb-1.5 text-gray-700 dark:text-gray-300">Link hình ảnh Promo</label>
-                <input
-                  type="text"
+                <MediaPickerInput
+                  label="Hình ảnh Promo"
                   value={form.promoImageUrl || ""}
-                  onChange={(e) => setForm({ ...form, promoImageUrl: e.target.value })}
-                  placeholder="VD: /images/promo.jpg hoặc https://..."
-                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                  onChange={(url) => setForm({ ...form, promoImageUrl: url })}
+                  placeholder="Chọn hoặc tải lên hình ảnh Promo..."
                 />
               </div>
             </div>

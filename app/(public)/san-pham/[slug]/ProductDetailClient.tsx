@@ -16,12 +16,14 @@ import { cleanUrl } from '@/lib/utils';
 
 export default function ProductDetailClient({ 
   product, 
+  settings = {},
   similarProducts = [], 
   sameBrandProducts = [], 
   relatedProducts = [], 
   consumables = [] 
 }: { 
   product: any, 
+  settings?: Record<string, string>,
   similarProducts?: any[], 
   sameBrandProducts?: any[], 
   relatedProducts?: any[], 
@@ -173,8 +175,11 @@ export default function ProductDetailClient({
           {product.category && (
             <>
               <ChevronRight className="w-4 h-4 flex-shrink-0" />
-              <Link href={`/danh-muc/${product.category.slug || '#'}`} className="hover:text-primary transition-colors">
-                {product.category.name || product.category}
+              <Link 
+                href={product.categorySlug ? `/danh-muc/${product.categorySlug}` : `/san-pham?category=${encodeURIComponent(typeof product.category === 'string' ? product.category : (product.category.name || ''))}`} 
+                className="hover:text-primary transition-colors"
+              >
+                {typeof product.category === 'string' ? product.category : product.category.name}
               </Link>
             </>
           )}
@@ -475,68 +480,68 @@ export default function ProductDetailClient({
             {/* Actions */}
             <div className="mb-4">
               {!showContactPrice ? (
-                <div className="flex flex-col lg:flex-row gap-3">
-                  <div className="flex items-center border-2 border-primary/20 bg-background rounded-xl h-12 w-full lg:w-32 flex-shrink-0">
+                <div className="flex flex-row items-center gap-1.5 sm:gap-3">
+                  <div className="flex items-center border-2 border-primary/20 bg-background rounded-xl h-12 w-24 sm:w-28 lg:w-32 flex-shrink-0">
                     <button 
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-10 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-l-xl"
+                      className="w-7 sm:w-9 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-l-xl"
                     >
-                      <Minus className="w-4 h-4" />
+                      <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
-                    <span className="flex-1 text-center font-bold text-lg">{quantity}</span>
+                    <span className="flex-1 text-center font-bold text-base sm:text-lg">{quantity}</span>
                     <button 
                       onClick={() => setQuantity(Math.min(stock, quantity + 1))}
-                      className="w-10 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-r-xl"
+                      className="w-7 sm:w-9 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-r-xl"
                       disabled={quantity >= stock}
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                   </div>
     
-                  <div className="flex flex-1 gap-2 sm:gap-3">
+                  <div className="flex flex-1 items-center gap-1.5 sm:gap-3 min-w-0">
                     <button 
                       onClick={handleAddToCart}
                       disabled={stock === 0}
-                      className="w-12 h-12 bg-primary/10 text-primary border-2 border-primary/20 rounded-xl hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
+                      className="w-10 h-12 sm:w-12 sm:h-12 bg-primary/10 text-primary border-2 border-primary/20 rounded-xl hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
                       title={isRental ? "Thêm vào giỏ (Thuê)" : "Thêm vào giỏ"}
                     >
-                      <ShoppingCart className="w-5 h-5" />
+                      <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
 
                     <button 
                       onClick={handleAddToCart}
                       disabled={stock === 0}
-                      className="flex-1 h-12 bg-primary text-primary-foreground rounded-xl font-bold text-sm sm:text-base hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 px-2"
+                      className="flex-1 h-12 bg-primary text-primary-foreground rounded-xl font-bold text-xs sm:text-sm md:text-base hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 sm:gap-2 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 px-1.5 sm:px-3 whitespace-nowrap min-w-0"
                     >
                       {isRental ? 'ĐĂNG KÝ THUÊ' : 'MUA NGAY'}
                     </button>
 
                     <button 
                       onClick={() => window.print()}
-                      className="px-3 sm:px-4 h-12 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-bold text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 flex-shrink-0"
+                      className="w-10 sm:w-12 xl:w-auto h-12 px-0 xl:px-4 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-bold text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 flex-shrink-0"
                       title="Yêu cầu báo giá"
                     >
-                      <Printer className="w-5 h-5" />
+                      <Printer className="w-4 h-4 sm:w-5 sm:h-5" />
                       <span className="hidden xl:inline">BÁO GIÁ</span>
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-row items-center gap-2 sm:gap-3">
                   <a
                     href="/lien-he"
-                    className="flex-1 h-12 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-base transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-600/25 hover:shadow-amber-600/40 hover:-translate-y-0.5 px-4"
+                    className="flex-1 h-12 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs sm:text-base transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-600/25 hover:shadow-amber-600/40 hover:-translate-y-0.5 px-3 whitespace-nowrap min-w-0"
                   >
-                    <PhoneCall className="w-5 h-5" />
+                    <PhoneCall className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                     LIÊN HỆ BÁO GIÁ NGAY
                   </a>
                   <button 
                     onClick={() => window.print()}
-                    className="px-4 h-12 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-bold text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 flex-shrink-0"
+                    className="w-10 sm:w-auto px-0 sm:px-4 h-12 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-bold text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 flex-shrink-0"
                     title="In báo giá"
                   >
-                    <Printer className="w-5 h-5" />
-                    <span>IN BÁO GIÁ</span>
+                    <Printer className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="hidden sm:inline">IN BÁO GIÁ</span>
                   </button>
                 </div>
               )}
@@ -571,10 +576,10 @@ export default function ProductDetailClient({
         {/* Detailed Description with Tabs */}
         <div className="mt-16 pt-8 border-t border-border">
           {/* Tabs Navigation */}
-          <div className="flex flex-wrap border-b border-border mb-6 gap-2 sm:gap-4">
+          <div className="flex items-center overflow-x-auto scrollbar-hide border-b border-border mb-6 gap-1 sm:gap-4 -mx-4 px-4 sm:mx-0 sm:px-0">
             <button
               onClick={() => setActiveTab('specs')}
-              className={`px-4 py-3 font-semibold text-sm transition-colors border-b-2 ${
+              className={`px-3.5 sm:px-6 py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${
                 activeTab === 'specs' 
                   ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
@@ -584,7 +589,7 @@ export default function ProductDetailClient({
             </button>
             <button
               onClick={() => setActiveTab('desc')}
-              className={`px-4 py-3 font-semibold text-sm transition-colors border-b-2 ${
+              className={`px-3.5 sm:px-6 py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${
                 activeTab === 'desc' 
                   ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
@@ -594,7 +599,7 @@ export default function ProductDetailClient({
             </button>
             <button
               onClick={() => setActiveTab('docs')}
-              className={`px-4 py-3 font-semibold text-sm transition-colors border-b-2 ${
+              className={`px-3.5 sm:px-6 py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${
                 activeTab === 'docs' 
                   ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
@@ -720,11 +725,11 @@ export default function ProductDetailClient({
 
         {/* Related Products Section */}
         <div className="mt-16 bg-white rounded-xl border border-border overflow-hidden shadow-sm">
-          <div className="flex flex-wrap border-b border-border bg-gray-50/50">
+          <div className="flex items-center overflow-x-auto scrollbar-hide border-b border-border bg-gray-50/50">
             {product.category === 'Máy in' && (
               <button
                 onClick={() => setActiveRelatedTab('consumables')}
-                className={`px-6 py-4 font-bold text-sm transition-colors border-b-2 ${
+                className={`px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${
                   activeRelatedTab === 'consumables' 
                     ? 'border-primary text-primary bg-white' 
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-gray-100/50'
@@ -735,7 +740,7 @@ export default function ProductDetailClient({
             )}
             <button
               onClick={() => setActiveRelatedTab('similar')}
-              className={`px-6 py-4 font-bold text-sm transition-colors border-b-2 ${
+              className={`px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${
                 activeRelatedTab === 'similar' 
                   ? 'border-primary text-primary bg-white' 
                   : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-gray-100/50'
@@ -745,7 +750,7 @@ export default function ProductDetailClient({
             </button>
             <button
               onClick={() => setActiveRelatedTab('same-brand')}
-              className={`px-6 py-4 font-bold text-sm transition-colors border-b-2 ${
+              className={`px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${
                 activeRelatedTab === 'same-brand' 
                   ? 'border-primary text-primary bg-white' 
                   : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-gray-100/50'
@@ -755,7 +760,7 @@ export default function ProductDetailClient({
             </button>
             <button
               onClick={() => setActiveRelatedTab('related')}
-              className={`px-6 py-4 font-bold text-sm transition-colors border-b-2 ${
+              className={`px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${
                 activeRelatedTab === 'related' 
                   ? 'border-primary text-primary bg-white' 
                   : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-gray-100/50'
@@ -763,12 +768,6 @@ export default function ProductDetailClient({
             >
               SẢN PHẨM LIÊN QUAN
             </button>
-            
-            <div className="ml-auto px-6 py-4 flex items-center">
-              <Link href="/san-pham" className="text-sm font-medium hover:text-primary hover:underline">
-                Xem toàn bộ sản phẩm
-              </Link>
-            </div>
           </div>
           
           <div className="p-6">
@@ -815,7 +814,7 @@ export default function ProductDetailClient({
       
       <Footer />
     </main>
-    <QuoteTemplate product={product} quantity={quantity} />
+    <QuoteTemplate product={product} quantity={quantity} settings={settings} />
     </>
   );
 }

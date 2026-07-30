@@ -3,13 +3,7 @@ import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { prisma } from '@/lib/db'
 import crypto from 'crypto'
-
-let sharp: any = null
-try {
-  sharp = require('sharp')
-} catch (e) {
-  console.warn('Sharp native module is not available:', e)
-}
+import { compressImage } from '@/lib/image-compressor'
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,46 +37,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Không thể tải ảnh từ URL' }, { status: 400 })
     }
 
-    const contentType = response.headers.get('content-type')
-    if (!contentType || !contentType.startsWith('image/')) {
+    const contentType = response.headers.get('content-type') || 'image/jpeg'
+    if (!contentType.startsWith('image/')) {
       return NextResponse.json({ error: 'URL không trỏ đến một ảnh hợp lệ' }, { status: 400 })
     }
 
     const arrayBuffer = await response.arrayBuffer()
-    let buffer = Buffer.from(arrayBuffer)
+    const rawBuffer = Buffer.from(arrayBuffer)
     
-    const isSvg = contentType.includes('svg');
     let originalName = path.basename(parsedUrl.pathname) || 'downloaded-image'
-    
-    // Remove query params or hashes from original name
     originalName = originalName.split('?')[0].split('#')[0];
-    const ext = path.extname(originalName)
-    const baseName = path.basename(originalName, ext)
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '') || crypto.randomBytes(8).toString('hex')
 
-    let finalExt = ext || '.jpg'
-    let finalMimeType = contentType
-    let finalFileName = originalName
+    // Nén ảnh bằng Sharp sang WebP chất lượng 80
+    const compressedResult = await compressImage(rawBuffer, originalName, contentType)
 
-    if (isSvg) {
-      finalExt = '.svg'
-      finalMimeType = contentType
-    } else if (sharp) {
-      try {
-        const compressed = await sharp(buffer).webp({ quality: 80 }).toBuffer()
-        buffer = compressed
-        finalExt = '.webp'
-        finalMimeType = 'image/webp'
-        finalFileName = `${baseName}.webp`
-      } catch (error) {
-        console.warn(`Failed to compress image from URL ${url}, using original`, error)
-      }
-    }
-
-    const uniqueName = `${baseName}-${Date.now()}${finalExt}`
+    const baseNameWithoutExt = path.basename(compressedResult.fileName, compressedResult.extension)
+    const uniqueName = `${baseNameWithoutExt}-${Date.now()}${compressedResult.extension}`
 
     const now = new Date()
     const yearMonth = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -95,16 +65,16 @@ export async function POST(request: NextRequest) {
     await mkdir(uploadDir, { recursive: true })
 
     const filePath = path.join(uploadDir, uniqueName)
-    await writeFile(filePath, buffer)
+    await writeFile(filePath, compressedResult.buffer)
 
     const publicUrl = `/uploads/${yearMonth}/${uniqueName}`
 
     const asset = await prisma.asset.create({
       data: {
         url: publicUrl,
-        fileName: finalFileName,
-        mimeType: finalMimeType,
-        sizeBytes: buffer.length,
+        fileName: compressedResult.fileName,
+        mimeType: compressedResult.mimeType,
+        sizeBytes: compressedResult.sizeBytes,
         folderId: folderId
       }
     })
@@ -118,4 +88,3 @@ export async function POST(request: NextRequest) {
     }, { status: 500 })
   }
 }
-

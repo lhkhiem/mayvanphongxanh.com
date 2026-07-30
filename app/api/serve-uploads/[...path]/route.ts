@@ -17,11 +17,16 @@ export async function GET(
     }
 
     // Đường dẫn trỏ tới thư mục uploads thật sự
-    const filePath = path.join(rootDir, 'public', 'uploads', ...pathSegments)
+    let filePath = path.join(rootDir, 'public', 'uploads', ...pathSegments)
 
-    // Kiểm tra file có tồn tại không
+    // Kiểm tra file có tồn tại không. Nếu không, thử tìm phiên bản .webp tương ứng (sau khi nén)
     if (!fs.existsSync(filePath)) {
-      return new NextResponse('File not found', { status: 404 })
+      const webpPath = filePath.replace(/\.[^.]+$/, '.webp')
+      if (fs.existsSync(webpPath)) {
+        filePath = webpPath
+      } else {
+        return new NextResponse('File not found', { status: 404 })
+      }
     }
 
     // Đọc file

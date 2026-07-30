@@ -61,6 +61,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     slug: dbProduct.slug,
     sku: defaultVariant?.sku || '',
     category: dbProduct.category?.name || 'Chưa phân loại',
+    categorySlug: dbProduct.category?.slug || '',
     brand: dbProduct.brand || 'HP',
     price: defaultVariant?.price || 0,
     originalPrice: defaultVariant?.originalPrice,
@@ -83,10 +84,10 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     rentalTerms: dbProduct.rentalTerms,
   };
 
-  // Fetch related products
+  // Fetch related products and settings
   const categoryId = dbProduct.categoryId;
   
-  const [similarDb, sameBrandDb, relatedDb] = await Promise.all([
+  const [similarDb, sameBrandDb, relatedDb, settingsData] = await Promise.all([
     // Similar products (same category)
     prisma.product.findMany({
       where: { categoryId: categoryId, id: { not: dbProduct.id }, isActive: true, deletedAt: null },
@@ -106,8 +107,15 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       include: { category: true, variants: true },
       take: 4,
       orderBy: { createdAt: 'desc' }
-    })
+    }),
+    // Settings
+    prisma.setting.findMany()
   ]);
+
+  const settingsMap: Record<string, string> = {};
+  settingsData.forEach(s => {
+    settingsMap[s.key] = s.value;
+  });
 
   const mapProducts = (list: any[]) => list.map(p => {
     const v = p.variants[0];
@@ -131,6 +139,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   return (
     <ProductDetailClient 
       product={product} 
+      settings={settingsMap}
       similarProducts={mapProducts(similarDb)} 
       sameBrandProducts={mapProducts(sameBrandDb)} 
       relatedProducts={mapProducts(relatedDb)} 

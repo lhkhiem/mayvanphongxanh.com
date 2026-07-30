@@ -500,6 +500,63 @@ export async function hardDeleteProduct(id: number) {
   }
 }
 
+export async function bulkDeleteProducts(ids: number[]) {
+  try {
+    if (ids.length === 0) return { success: true }
+    await prisma.product.updateMany({
+      where: { id: { in: ids } },
+      data: { deletedAt: new Date() },
+    })
+
+    revalidatePath("/admin/products")
+    revalidatePath("/admin/categories")
+    revalidatePath("/")
+    revalidatePath("/san-pham")
+    return { success: true }
+  } catch (error) {
+    console.error("bulkDeleteProducts error:", error)
+    return { error: "Lỗi hệ thống. Không thể chuyển các sản phẩm vào thùng rác." }
+  }
+}
+
+export async function bulkRestoreProducts(ids: number[]) {
+  try {
+    if (ids.length === 0) return { success: true }
+    await prisma.product.updateMany({
+      where: { id: { in: ids } },
+      data: { deletedAt: null },
+    })
+
+    revalidatePath("/admin/products")
+    revalidatePath("/admin/categories")
+    revalidatePath("/")
+    revalidatePath("/san-pham")
+    return { success: true }
+  } catch (error) {
+    console.error("bulkRestoreProducts error:", error)
+    return { error: "Lỗi hệ thống. Không thể khôi phục các sản phẩm." }
+  }
+}
+
+export async function bulkHardDeleteProducts(ids: number[]) {
+  try {
+    if (ids.length === 0) return { success: true }
+    await prisma.product.deleteMany({
+      where: { id: { in: ids } },
+    })
+
+    revalidatePath("/admin/products")
+    revalidatePath("/admin/categories")
+    revalidatePath("/")
+    revalidatePath("/san-pham")
+    return { success: true }
+  } catch (error) {
+    console.error("bulkHardDeleteProducts error:", error)
+    return { error: "Không thể xóa vĩnh viễn một số sản phẩm do đang có dữ liệu liên quan." }
+  }
+}
+
+
 export async function duplicateProduct(id: number) {
   try {
     const source = await prisma.product.findUnique({

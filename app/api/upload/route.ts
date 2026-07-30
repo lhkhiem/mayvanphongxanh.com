@@ -2,15 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { prisma } from '@/lib/db'
+import { compressImage } from '@/lib/image-compressor'
 
-let sharp: any = null
-try {
-  sharp = require('sharp')
-} catch (e) {
-  console.warn('Sharp native module is not available:', e)
-}
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25MB Max Upload
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
 
 export async function POST(request: NextRequest) {
@@ -47,42 +41,19 @@ export async function POST(request: NextRequest) {
 
       if (file.size > MAX_FILE_SIZE) {
         return NextResponse.json(
-          { error: `File "${file.name}" quá lớn. Giới hạn 10MB.` },
+          { error: `File "${file.name}" quá lớn. Giới hạn 25MB.` },
           { status: 400 }
         )
       }
 
       const bytes = await file.arrayBuffer()
-      let buffer = Buffer.from(bytes)
-      const isSvg = file.type.includes('svg')
+      const rawBuffer = Buffer.from(bytes)
 
-      const ext = path.extname(file.name)
-      const baseName = path.basename(file.name, ext)
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '') || 'image'
+      // Nén ảnh bằng Sharp sang WebP chất lượng 80
+      const compressedResult = await compressImage(rawBuffer, file.name, file.type)
 
-      let finalExt = ext || '.jpg'
-      let finalMimeType = file.type || 'image/jpeg'
-      let finalFileName = file.name
-
-      if (isSvg) {
-        finalExt = ext || '.svg'
-        finalMimeType = file.type || 'image/svg+xml'
-      } else if (sharp) {
-        try {
-          const compressed = await sharp(buffer).webp({ quality: 80 }).toBuffer()
-          buffer = compressed
-          finalExt = '.webp'
-          finalMimeType = 'image/webp'
-          finalFileName = `${baseName}.webp`
-        } catch (sharpError) {
-          console.warn(`Failed to compress image ${file.name} with sharp, using original file`, sharpError)
-        }
-      }
-
-      const uniqueName = `${baseName}-${Date.now()}${finalExt}`
+      const baseNameWithoutExt = path.basename(compressedResult.fileName, compressedResult.extension)
+      const uniqueName = `${baseNameWithoutExt}-${Date.now()}${compressedResult.extension}`
 
       // Tạo thư mục theo năm/tháng
       const now = new Date()
@@ -98,7 +69,7 @@ export async function POST(request: NextRequest) {
       await mkdir(uploadDir, { recursive: true })
 
       const filePath = path.join(uploadDir, uniqueName)
-      await writeFile(filePath, buffer)
+      await writeFile(filePath, compressedResult.buffer)
 
       const publicUrl = `/uploads/${yearMonth}/${uniqueName}`
 
@@ -106,9 +77,9 @@ export async function POST(request: NextRequest) {
       const asset = await prisma.asset.create({
         data: {
           url: publicUrl,
-          fileName: finalFileName,
-          mimeType: finalMimeType,
-          sizeBytes: buffer.length,
+          fileName: compressedResult.fileName,
+          mimeType: compressedResult.mimeType,
+          sizeBytes: compressedResult.sizeBytes,
           folderId: folderId
         }
       })
@@ -125,4 +96,3 @@ export async function POST(request: NextRequest) {
     }, { status: 500 })
   }
 }
-

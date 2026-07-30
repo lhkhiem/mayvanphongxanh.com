@@ -5,10 +5,14 @@ import { toast } from "sonner";
 import {
   Upload, Search, Grid3x3, List, Trash2, Eye, Copy,
   X, Image as ImageIcon, Check, CheckSquare,
-  Folder, FolderPlus, Link as LinkIcon, ChevronRight, ChevronDown, Edit2, FolderOpen, Clipboard, Camera
+  Folder, FolderPlus, Link as LinkIcon, ChevronRight, ChevronDown, Edit2, FolderOpen, Clipboard, Camera, Zap,
+  FolderInput
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getAssets, deleteAsset, deleteMultipleAssets, getFolders, getAllFolders, createFolder, deleteFolder, renameFolder } from "./actions";
+import {
+  getAssets, deleteAsset, deleteMultipleAssets, getFolders, getAllFolders, createFolder, deleteFolder, renameFolder,
+  renameAsset, moveAssets
+} from "./actions";
 
 interface Asset {
   id: string;
@@ -61,6 +65,12 @@ export default function MediaPage() {
   const [isUploadUrlOpen, setIsUploadUrlOpen] = useState(false);
   const [uploadUrl, setUploadUrl] = useState('');
   const [editingFolder, setEditingFolder] = useState<MediaFolder | null>(null);
+  const [compressing, setCompressing] = useState(false);
+
+  // Asset actions states (Rename, Move)
+  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+  const [renameFileName, setRenameFileName] = useState('');
+  const [isMoveFolderOpen, setIsMoveFolderOpen] = useState(false);
 
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
@@ -260,6 +270,107 @@ export default function MediaPage() {
     }
   };
 
+  const handleCompressSingle = async (assetId: string) => {
+    setCompressing(true);
+    try {
+      const res = await fetch('/api/media/compress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assetId }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        toast.error(data.error || 'Nén ảnh thất bại');
+      } else {
+        const item = data.data?.results?.[0];
+        if (item && item.status === 'success') {
+          const oldMb = (item.originalSize / (1024 * 1024)).toFixed(2);
+          const newMb = (item.compressedSize / (1024 * 1024)).toFixed(2);
+          toast.success(`Đã nén ảnh thành công! Giảm từ ${oldMb} MB xuống ${newMb} MB (-${item.percentSaved}%)`);
+          
+          if (previewAsset && previewAsset.id === assetId) {
+            setPreviewAsset({
+              ...previewAsset,
+              url: item.newUrl,
+              fileName: item.fileName,
+              mimeType: 'image/webp',
+              sizeBytes: item.compressedSize,
+            });
+          }
+          fetchData();
+        } else if (item && item.status === 'skipped') {
+          toast.info(item.reason || 'Ảnh đã được tối ưu hóa ở mức tối đa');
+        } else {
+          toast.error(item?.reason || 'Không thể nén ảnh này');
+        }
+      }
+    } catch (err: any) {
+      toast.error('Lỗi khi nén ảnh: ' + (err?.message || String(err)));
+    } finally {
+      setCompressing(false);
+    }
+  };
+
+  const handleCompressAll = async () => {
+    if (!confirm('Bạn có chắc chắn muốn nén và tối ưu tất cả ảnh trong hệ thống sang chuẩn WebP?')) return;
+    setCompressing(true);
+    toast.info('Đang tối ưu & nén tất cả ảnh...');
+    try {
+      const res = await fetch('/api/media/compress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        toast.error(data.error || 'Nén ảnh thất bại');
+      } else {
+        const summary = data.data?.summary;
+        if (summary) {
+          const savedMb = (summary.totalSavedBytes / (1024 * 1024)).toFixed(2);
+          toast.success(`Đã nén ${summary.processedCount} ảnh! Tiết kiệm ${savedMb} MB (-${summary.totalPercentSaved}%) dung lượng lưu trữ.`);
+          fetchData();
+        }
+      }
+    } catch (err: any) {
+      toast.error('Lỗi khi nén tất cả ảnh: ' + (err?.message || String(err)));
+    } finally {
+      setCompressing(false);
+    }
+  };
+
+  const handleRenameAsset = async () => {
+    if (!editingAsset || !renameFileName.trim()) return;
+    const res = await renameAsset(editingAsset.id, renameFileName.trim());
+    if (res.error) toast.error(res.error);
+    else {
+      toast.success('Đã đổi tên file thành công');
+      if (previewAsset && previewAsset.id === editingAsset.id) {
+        setPreviewAsset({ ...previewAsset, fileName: renameFileName.trim() });
+      }
+      setEditingAsset(null);
+      setRenameFileName('');
+      fetchData();
+    }
+  };
+
+  const handleMoveAssets = async (targetFolderId: string | null) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0 && previewAsset) {
+      ids.push(previewAsset.id);
+    }
+    if (ids.length === 0) return;
+
+    const res = await moveAssets(ids, targetFolderId);
+    if (res.error) toast.error(res.error);
+    else {
+      toast.success(`Đã di chuyển ${ids.length} file thành công`);
+      setIsMoveFolderOpen(false);
+      setSelectedIds(new Set());
+      fetchData();
+    }
+  };
+
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
     const res = await createFolder(newFolderName, currentFolderId);
@@ -437,13 +548,23 @@ export default function MediaPage() {
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
           {selectedIds.size > 0 && (
-            <button
-              onClick={handleDeleteSelected}
-              className="inline-flex items-center gap-2 rounded-lg border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-3 py-2 text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
-            >
-              <Trash2 className="h-4 w-4" />
-              Xóa {selectedIds.size} ảnh
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsMoveFolderOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-3 py-2 text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                title="Di chuyển các file đã chọn vào thư mục khác"
+              >
+                <FolderInput className="h-4 w-4" />
+                Di chuyển ({selectedIds.size})
+              </button>
+              <button
+                onClick={handleDeleteSelected}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-3 py-2 text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+                Xóa {selectedIds.size} ảnh
+              </button>
+            </div>
           )}
           
           <button
@@ -480,6 +601,16 @@ export default function MediaPage() {
           >
             <FolderPlus className="h-4 w-4" />
             Tạo thư mục
+          </button>
+
+          <button
+            onClick={handleCompressAll}
+            disabled={compressing}
+            className="inline-flex items-center gap-2 rounded-lg border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 px-3.5 py-2 text-sm font-medium transition-colors shadow-sm disabled:opacity-50"
+            title="Nén tất cả ảnh chưa được tối ưu trong thư viện"
+          >
+            <Zap className="h-4 w-4 text-amber-500 fill-amber-500" />
+            <span>{compressing ? "Đang nén..." : "Nén tất cả ảnh"}</span>
           </button>
 
           <button
@@ -664,20 +795,25 @@ export default function MediaPage() {
                     )}
 
                     {/* Hover actions */}
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 z-10">
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 z-10 p-2 flex-wrap">
                       <button
                         onClick={(e) => { e.stopPropagation(); setPreviewAsset(asset); }}
-                        className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white transition-colors"
-                        title="Xem"
+                        className="p-1.5 rounded-lg bg-white/20 hover:bg-white/40 text-white transition-colors"
+                        title="Xem chi tiết"
                       ><Eye className="h-4 w-4" /></button>
                       <button
+                        onClick={(e) => { e.stopPropagation(); setEditingAsset(asset); setRenameFileName(asset.fileName); }}
+                        className="p-1.5 rounded-lg bg-white/20 hover:bg-white/40 text-white transition-colors"
+                        title="Đổi tên"
+                      ><Edit2 className="h-4 w-4" /></button>
+                      <button
                         onClick={(e) => { e.stopPropagation(); handleCopyUrl(asset.url); }}
-                        className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white transition-colors"
+                        className="p-1.5 rounded-lg bg-white/20 hover:bg-white/40 text-white transition-colors"
                         title="Copy URL"
                       ><Copy className="h-4 w-4" /></button>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteOne(asset); }}
-                        className="p-1.5 rounded-lg bg-red-500/70 hover:bg-red-500 text-white transition-colors"
+                        className="p-1.5 rounded-lg bg-red-500/80 hover:bg-red-600 text-white transition-colors"
                         title="Xóa"
                       ><Trash2 className="h-4 w-4" /></button>
                     </div>
@@ -782,6 +918,11 @@ export default function MediaPage() {
                               title="Xem"
                             ><Eye className="h-4 w-4" /></button>
                             <button
+                              onClick={(e) => { e.stopPropagation(); setEditingAsset(asset); setRenameFileName(asset.fileName); }}
+                              className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
+                              title="Đổi tên"
+                            ><Edit2 className="h-4 w-4" /></button>
+                            <button
                               onClick={(e) => { e.stopPropagation(); handleCopyUrl(asset.url); }}
                               className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
                               title="Copy URL"
@@ -814,7 +955,16 @@ export default function MediaPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">{previewAsset.fileName}</h3>
+              <div className="flex items-center gap-2 truncate">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">{previewAsset.fileName}</h3>
+                <button
+                  onClick={() => { setEditingAsset(previewAsset); setRenameFileName(previewAsset.fileName); }}
+                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary transition-colors"
+                  title="Đổi tên file"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </button>
+              </div>
               <button
                 onClick={() => setPreviewAsset(null)}
                 className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors"
@@ -832,13 +982,34 @@ export default function MediaPage() {
                 <p>Kích thước: <span className="font-medium text-gray-700 dark:text-gray-200">{formatBytes(previewAsset.sizeBytes)}</span></p>
                 <p className="font-mono text-xs break-all text-gray-600 dark:text-gray-300">{previewAsset.url}</p>
               </div>
-              <button
-                onClick={() => { handleCopyUrl(previewAsset.url); }}
-                className="inline-flex items-center gap-2 flex-shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors shadow-sm"
-              >
-                <Copy className="h-4 w-4" />
-                Copy URL
-              </button>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {!previewAsset.mimeType?.includes('svg') && (
+                  <button
+                    onClick={() => handleCompressSingle(previewAsset.id)}
+                    disabled={compressing}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700 px-3 py-2 text-sm font-medium text-white transition-colors shadow-sm disabled:opacity-50"
+                    title="Nén và tối ưu dung lượng ảnh (chuyển sang WebP)"
+                  >
+                    <Zap className="h-4 w-4 fill-white" />
+                    {compressing ? "Đang nén..." : "Nén WebP"}
+                  </button>
+                )}
+                <button
+                  onClick={() => { setSelectedIds(new Set([previewAsset.id])); setIsMoveFolderOpen(true); }}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm font-medium bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm"
+                  title="Di chuyển sang thư mục khác"
+                >
+                  <FolderInput className="h-4 w-4" />
+                  Di chuyển
+                </button>
+                <button
+                  onClick={() => { handleCopyUrl(previewAsset.url); }}
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors shadow-sm"
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy URL
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -846,8 +1017,8 @@ export default function MediaPage() {
 
       {/* Create/Edit Folder Dialog */}
       {(isCreateFolderOpen || editingFolder) && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6">
+        <div className="fixed inset-0 z-[120] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6 border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               {editingFolder ? 'Đổi tên thư mục' : 'Tạo thư mục mới'}
             </h3>
@@ -880,8 +1051,8 @@ export default function MediaPage() {
 
       {/* Upload URL Dialog */}
       {isUploadUrlOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg p-6">
+        <div className="fixed inset-0 z-[120] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg p-6 border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Upload ảnh từ đường dẫn (URL)
             </h3>
@@ -908,6 +1079,82 @@ export default function MediaPage() {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50"
               >
                 {uploading ? 'Đang tải...' : 'Upload'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rename Asset Dialog */}
+      {editingAsset && (
+        <div className="fixed inset-0 z-[120] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Đổi tên file
+            </h3>
+            <input
+              type="text"
+              value={renameFileName}
+              onChange={e => setRenameFileName(e.target.value)}
+              placeholder="Tên file mới..."
+              autoFocus
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white mb-6 focus:ring-2 focus:ring-primary outline-none"
+              onKeyDown={e => e.key === 'Enter' && handleRenameAsset()}
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setEditingAsset(null)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleRenameAsset}
+                disabled={!renameFileName.trim()}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50"
+              >
+                Lưu tên mới
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Move Assets Dialog */}
+      {isMoveFolderOpen && (
+        <div className="fixed inset-0 z-[120] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6 border border-gray-200 dark:border-gray-700 flex flex-col max-h-[80vh]">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              Di chuyển file vào thư mục
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              Chọn thư mục đích để chuyển {selectedIds.size || 1} file đã chọn:
+            </p>
+            <div className="flex-1 overflow-y-auto space-y-1 mb-6 border border-gray-200 dark:border-gray-700 rounded-lg p-2 max-h-60">
+              <div
+                onClick={() => handleMoveAssets(null)}
+                className="flex items-center gap-2 p-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-800 dark:text-gray-200 transition-colors"
+              >
+                <FolderOpen className="h-4 w-4 text-primary" />
+                <span className="font-medium">— Thư mục gốc (Tất cả ảnh) —</span>
+              </div>
+              {allFolders.map(f => (
+                <div
+                  key={f.id}
+                  onClick={() => handleMoveAssets(f.id)}
+                  className="flex items-center gap-2 p-2.5 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-800 dark:text-gray-200 transition-colors border-t border-gray-100 dark:border-gray-700/50"
+                >
+                  <Folder className="h-4 w-4 text-primary/80" />
+                  <span className="truncate">{f.name}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-3 shrink-0">
+              <button
+                onClick={() => setIsMoveFolderOpen(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                Hủy
               </button>
             </div>
           </div>

@@ -6,7 +6,28 @@ export const metadata = {
   description: 'Danh sách các sản phẩm và giải pháp công nghệ tại Máy Văn Phòng Xanh.',
 };
 
-export default async function ProductsPage() {
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ category?: string }>;
+}) {
+  const params = searchParams ? await searchParams : {};
+  let categoryFilter = params.category;
+
+  if (categoryFilter) {
+    const matchedCategory = await prisma.category.findFirst({
+      where: {
+        OR: [
+          { slug: categoryFilter },
+          { name: categoryFilter }
+        ]
+      }
+    });
+    if (matchedCategory) {
+      categoryFilter = matchedCategory.name;
+    }
+  }
+
   const dbProducts = await prisma.product.findMany({
     where: { isActive: true, productType: { not: 'rental' }, deletedAt: null },
     orderBy: [{ category: { order: 'asc' } }, { order: 'asc' }, { createdAt: 'desc' }],
@@ -36,5 +57,5 @@ export default async function ProductsPage() {
     };
   });
 
-  return <ProductsClient products={products} />;
+  return <ProductsClient products={products} initialCategory={categoryFilter} />;
 }

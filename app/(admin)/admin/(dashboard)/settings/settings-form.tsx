@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { updateSettings, sendTestEmailAction } from "./actions"
 import { toast } from "sonner"
-import { Save, Building2, Phone, LineChart, CreditCard, Mail, Send, Loader2, CheckCircle2 } from "lucide-react"
+import { Save, Building2, Phone, LineChart, CreditCard, Mail, Send, Loader2, CheckCircle2, Printer } from "lucide-react"
 import { MediaPickerInput } from "@/components/admin/media-picker-input"
 
 export function SettingsForm({ initialData }: { initialData: Record<string, string> }) {
@@ -46,10 +46,10 @@ export function SettingsForm({ initialData }: { initialData: Record<string, stri
     const res = await sendTestEmailAction(testEmail)
     setIsTestingEmail(false)
 
-    if (res?.success) {
+    if (res && 'success' in res && res.success) {
       toast.success("Gửi email thử nghiệm thành công! Vui lòng kiểm tra hộp thư của bạn.")
     } else {
-      toast.error(`Gửi email thử nghiệm thất bại: ${res?.error || "Không xác định"}`)
+      toast.error(`Gửi email thử nghiệm thất bại: ${(res && 'error' in res && res.error) || "Không xác định"}`)
     }
   }
 
@@ -93,6 +93,13 @@ export function SettingsForm({ initialData }: { initialData: Record<string, stri
             >
               <CreditCard className="w-4 h-4 mr-3 text-current" /> 
               Thanh toán & Hỗ trợ
+            </TabsTrigger>
+            <TabsTrigger 
+              value="quote" 
+              className="w-full justify-start px-4 py-2.5 text-sm font-medium transition-all rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-l-4 data-[state=active]:border-primary data-[state=active]:rounded-l-none"
+            >
+              <Printer className="w-4 h-4 mr-3 text-current" /> 
+              Cấu hình Báo Giá
             </TabsTrigger>
           </TabsList>
 
@@ -313,6 +320,39 @@ export function SettingsForm({ initialData }: { initialData: Record<string, stri
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Mã số thuế</label>
                 <Input name="tax_code" defaultValue={initialData['tax_code']} placeholder="0101234567" className="shadow-sm" />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="quote" className="space-y-4 max-w-2xl mt-0">
+              <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100 border-b pb-2">1. Địa chỉ trên phiếu báo giá</h3>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Địa chỉ Trụ sở chính (Dòng A)</label>
+                <Input name="contact_address" defaultValue={initialData['contact_address'] || '118 Cộng Hòa, Phường 4, Quận Tân Bình, Thành phố Hồ Chí Minh'} className="shadow-sm" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Địa chỉ Chi nhánh (Dòng C - Nếu có)</label>
+                <Input name="quote_address_c" defaultValue={initialData['quote_address_c'] || ''} placeholder="Để trống nếu không có chi nhánh" className="shadow-sm" />
+              </div>
+
+              <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100 border-b pb-2 pt-2">2. Điều khoản thương mại</h3>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Nội dung Điều khoản thương mại (Mỗi dòng là 1 điều khoản)</label>
+                <Textarea 
+                  name="quote_terms" 
+                  defaultValue={initialData['quote_terms'] || `• Đơn giá trên đã bao gồm VAT.
+• Hình thức thanh toán: Tiền mặt hoặc chuyển khoản sau khi xác nhận đơn hàng.
+• Thời gian bảo hành: Theo quy định của nhà sản xuất.
+• Quy cách: Hàng mới 100%, nguyên đai, nguyên kiện, Chính hãng.
+• Báo giá trên có giá trị 10 ngày, kể từ ngày phát hành báo giá.`} 
+                  rows={6} 
+                  className="shadow-sm resize-none text-sm font-sans" 
+                />
+              </div>
+
+              <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100 border-b pb-2 pt-2">3. Ghi chú ngân hàng</h3>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Dòng ghi chú tài khoản ngân hàng</label>
+                <Input name="quote_bank_note" defaultValue={initialData['quote_bank_note'] || '*LƯU Ý: Công ty MPX không chịu bất cứ chi phí phát sinh nào trong quá trình chuyển khoản.'} className="shadow-sm" />
               </div>
             </TabsContent>
           </div>

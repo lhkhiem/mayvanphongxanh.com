@@ -10,7 +10,7 @@ import {
   Search, ChevronLeft, ChevronRight,
   ChevronsLeft, ChevronsRight, ArrowUp, ArrowDown, GripVertical, Copy
 } from "lucide-react";
-import { getProducts, deleteProduct, toggleProductActive, updateProductOrders, restoreProduct, hardDeleteProduct, duplicateProduct } from "./actions";
+import { getProducts, deleteProduct, toggleProductActive, updateProductOrders, restoreProduct, hardDeleteProduct, duplicateProduct, bulkDeleteProducts, bulkRestoreProducts, bulkHardDeleteProducts } from "./actions";
 import { getCategories } from "../categories/actions";
 import { CategoryFilterDropdown } from "@/components/admin/category-filter-dropdown";
 import { ProductTypeFilterDropdown } from "@/components/admin/product-type-filter-dropdown";
@@ -408,15 +408,44 @@ export default function ProductsPage() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(`Xóa ${selectedIds.size} sản phẩm đã chọn?`)) return;
-    let successCount = 0;
-    for (const id of selectedIds) {
-      const res = await deleteProduct(id);
-      if (!res.error) successCount++;
+    if (!confirm(`Chuyển ${selectedIds.size} sản phẩm đã chọn vào thùng rác?`)) return;
+    toast.loading(`Đang chuyển ${selectedIds.size} sản phẩm vào thùng rác...`, { id: "bulk" });
+    const res = await bulkDeleteProducts(Array.from(selectedIds));
+    if (res.error) {
+      toast.error(res.error, { id: "bulk" });
+    } else {
+      toast.success(`Đã chuyển ${selectedIds.size} sản phẩm vào thùng rác.`, { id: "bulk" });
+      setSelectedIds(new Set());
+      fetchProducts();
     }
-    toast.success(`Đã xóa ${successCount} sản phẩm.`);
-    setSelectedIds(new Set());
-    fetchProducts();
+  };
+
+  const handleBulkRestore = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Khôi phục ${selectedIds.size} sản phẩm đã chọn?`)) return;
+    toast.loading(`Đang khôi phục ${selectedIds.size} sản phẩm...`, { id: "bulk" });
+    const res = await bulkRestoreProducts(Array.from(selectedIds));
+    if (res.error) {
+      toast.error(res.error, { id: "bulk" });
+    } else {
+      toast.success(`Đã khôi phục ${selectedIds.size} sản phẩm.`, { id: "bulk" });
+      setSelectedIds(new Set());
+      fetchProducts();
+    }
+  };
+
+  const handleBulkHardDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`XÓA VĨNH VIỄN ${selectedIds.size} sản phẩm đã chọn? Thao tác này không thể hoàn tác!`)) return;
+    toast.loading(`Đang xóa vĩnh viễn ${selectedIds.size} sản phẩm...`, { id: "bulk" });
+    const res = await bulkHardDeleteProducts(Array.from(selectedIds));
+    if (res.error) {
+      toast.error(res.error, { id: "bulk" });
+    } else {
+      toast.success(`Đã xóa vĩnh viễn ${selectedIds.size} sản phẩm.`, { id: "bulk" });
+      setSelectedIds(new Set());
+      fetchProducts();
+    }
   };
 
   return (
@@ -433,15 +462,34 @@ export default function ProductsPage() {
             {` hoặc dùng mũi tên để sắp xếp vị trí`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {selectedIds.size > 0 && (
-            <button
-              onClick={handleBulkDelete}
-              className="inline-flex items-center gap-2 rounded-lg border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-3 py-2 text-sm font-medium hover:bg-red-100 transition-colors"
-            >
-              <Trash2 className="h-4 w-4" />
-              Xóa {selectedIds.size} mục
-            </button>
+            status === 'deleted' ? (
+              <>
+                <button
+                  onClick={handleBulkRestore}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-3 py-2 text-sm font-medium hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors shadow-sm"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Khôi phục {selectedIds.size} mục
+                </button>
+                <button
+                  onClick={handleBulkHardDelete}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-3 py-2 text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors shadow-sm"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Xóa vĩnh viễn {selectedIds.size} mục
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleBulkDelete}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-3 py-2 text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors shadow-sm"
+              >
+                <Trash2 className="h-4 w-4" />
+                Xóa {selectedIds.size} mục
+              </button>
+            )
           )}
           <Link
             href={`/admin/products/new?${new URLSearchParams({
