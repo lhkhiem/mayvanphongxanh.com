@@ -21,7 +21,7 @@ export async function GET(request: Request) {
         variants: true, // Lấy luôn variant để có giá và hình ảnh
       },
       take: limit ? parseInt(limit) : undefined,
-      orderBy: { id: 'desc' }
+      orderBy: [{ order: 'asc' }, { id: 'desc' }]
     })
 
     // Map lại data cho giống với UI hiện tại đang dùng (Product interface)

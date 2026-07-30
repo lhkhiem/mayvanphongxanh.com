@@ -27,6 +27,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   // Fetch all active products so the user can still use the category filter sidebar to switch
   const dbProducts = await prisma.product.findMany({
     where: { isActive: true, deletedAt: null },
+    orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
     include: { category: true, variants: true }
   });
 

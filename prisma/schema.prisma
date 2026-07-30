@@ -63,6 +63,7 @@ model Product {
   categoryId     Int
   brandId        Int?
   brand          String?
+  order          Int     @default(0)
   images         Json? // Mảng URL ảnh: ["url1", "url2", ...]
   description    String? @db.Text
   productType    String  @default("standard") // standard, pre-packaged, custom-build

@@ -34,6 +34,7 @@ export type ProductInput = {
   categoryId: number
   brandId?: number | null
   brand: string
+  order?: number
   images: string[]
   description: string
   productType: string
@@ -106,7 +107,7 @@ export async function getProducts(params?: {
       prisma.product.count({ where }),
       prisma.product.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
         skip,
         take: pageSize,
         include: {
@@ -154,6 +155,16 @@ export async function getProduct(id: number) {
 
 export async function createProduct(input: ProductInput) {
   try {
+    let newOrder = input.order ?? 0
+    if (input.order === undefined) {
+      const maxOrderProd = await prisma.product.findFirst({
+        where: { categoryId: input.categoryId, deletedAt: null },
+        orderBy: { order: 'desc' },
+        select: { order: true }
+      })
+      newOrder = (maxOrderProd?.order ?? -1) + 1
+    }
+
     const product = await prisma.product.create({
       data: {
         name: input.name,
@@ -161,6 +172,7 @@ export async function createProduct(input: ProductInput) {
         category: { connect: { id: input.categoryId } },
         brandRef: input.brandId ? { connect: { id: input.brandId } } : undefined,
         brand: input.brand || null,
+        order: newOrder,
         images: input.images.length > 0 ? input.images : Prisma.JsonNull,
         description: input.description || null,
         productType: input.productType || 'standard',
@@ -196,6 +208,8 @@ export async function createProduct(input: ProductInput) {
       },
     })
     revalidatePath("/admin/products")
+    revalidatePath("/")
+    revalidatePath("/san-pham")
     return { success: true, data: product }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -232,6 +246,7 @@ export async function updateProduct(id: number, input: ProductInput) {
           category: { connect: { id: input.categoryId } },
           brandRef: input.brandId ? { connect: { id: input.brandId } } : { disconnect: true },
           brand: input.brand || null,
+          ...(input.order !== undefined ? { order: input.order } : {}),
           images: input.images.length > 0 ? input.images : Prisma.JsonNull,
           description: input.description || null,
           productType: input.productType || 'standard',
@@ -311,10 +326,31 @@ export async function updateProduct(id: number, input: ProductInput) {
   }
 }
 
+export async function updateProductOrders(items: { id: number; order: number }[]) {
+  try {
+    const transactions = items.map((item) =>
+      prisma.product.update({
+        where: { id: item.id },
+        data: { order: item.order },
+      })
+    )
+    await prisma.$transaction(transactions)
+    revalidatePath("/admin/products")
+    revalidatePath("/")
+    revalidatePath("/san-pham")
+    return { success: true }
+  } catch (error) {
+    console.error("updateProductOrders error:", error)
+    return { error: "Không thể cập nhật thứ tự sản phẩm." }
+  }
+}
+
 export async function toggleProductActive(id: number, current: boolean) {
   try {
     await prisma.product.update({ where: { id }, data: { isActive: !current } })
     revalidatePath("/admin/products")
+    revalidatePath("/")
+    revalidatePath("/san-pham")
     return { success: true }
   } catch (error) {
     console.error("toggleProductActive error:", error)
@@ -330,6 +366,8 @@ export async function deleteProduct(id: number) {
       data: { deletedAt: new Date() },
     })
     revalidatePath("/admin/products")
+    revalidatePath("/")
+    revalidatePath("/san-pham")
     return { success: true }
   } catch (error) {
     console.error("deleteProduct error:", error)

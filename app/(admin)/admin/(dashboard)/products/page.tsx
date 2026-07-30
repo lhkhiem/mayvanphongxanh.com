@@ -7,9 +7,9 @@ import { EmptyState } from "@/components/admin/empty-state";
 import {
   Package, Plus, Edit, Trash2, Eye, EyeOff,
   Search, ChevronLeft, ChevronRight,
-  ChevronsLeft, ChevronsRight,
+  ChevronsLeft, ChevronsRight, ArrowUp, ArrowDown, GripVertical
 } from "lucide-react";
-import { getProducts, deleteProduct, toggleProductActive } from "./actions";
+import { getProducts, deleteProduct, toggleProductActive, updateProductOrders } from "./actions";
 import { getCategories } from "../categories/actions";
 import { CategoryFilterDropdown } from "@/components/admin/category-filter-dropdown";
 import { ProductTypeFilterDropdown } from "@/components/admin/product-type-filter-dropdown";
@@ -173,6 +173,10 @@ export default function ProductsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [restoredScroll, setRestoredScroll] = useState<number | null>(null);
 
+  // Drag and drop state
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
+
   // Restore state on mount
   useEffect(() => {
     const saved = sessionStorage.getItem('products_list_state');
@@ -268,6 +272,100 @@ export default function ProductsPage() {
     }
   };
 
+  const handleMoveProduct = async (p: any, direction: "up" | "down") => {
+    const index = products.findIndex((prod) => prod.id === p.id);
+    if (index === -1) return;
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= products.length) return;
+
+    const newProducts = [...products];
+    const temp = newProducts[index];
+    newProducts[index] = newProducts[targetIndex];
+    newProducts[targetIndex] = temp;
+
+    const updates = newProducts.map((item, idx) => ({
+      id: item.id,
+      order: idx,
+    }));
+
+    setProducts(newProducts);
+
+    const res = await updateProductOrders(updates);
+    if (res.error) {
+      toast.error(res.error);
+      fetchProducts();
+    } else {
+      toast.success(`Đã cập nhật thứ tự sản phẩm.`);
+      fetchProducts();
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, id: number) => {
+    setDraggedId(id);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(id));
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetId: number) => {
+    if (!draggedId || draggedId === targetId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverId !== targetId) {
+      setDragOverId(targetId);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent, id: number) => {
+    if (dragOverId === id) {
+      setDragOverId(null);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetProduct: any) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetProduct.id) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    const draggedIndex = products.findIndex((p) => p.id === draggedId);
+    const targetIndex = products.findIndex((p) => p.id === targetProduct.id);
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    const newProducts = [...products];
+    const [removed] = newProducts.splice(draggedIndex, 1);
+    newProducts.splice(targetIndex, 0, removed);
+
+    const updates = newProducts.map((item, idx) => ({
+      id: item.id,
+      order: idx,
+    }));
+
+    setProducts(newProducts);
+    setDraggedId(null);
+    setDragOverId(null);
+
+    const res = await updateProductOrders(updates);
+    if (res.error) {
+      toast.error(res.error);
+      fetchProducts();
+    } else {
+      toast.success(`Đã di chuyển "${removed.name}" sang vị trí mới.`);
+      fetchProducts();
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+
   const handleSelectAll = () => {
     if (selectedIds.size === products.length) {
       setSelectedIds(new Set());
@@ -298,7 +396,9 @@ export default function ProductsPage() {
             Quản lý Sản phẩm
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-            {loading ? "Đang tải..." : `${total} sản phẩm • trang ${page}/${totalPages}`}
+            {loading ? "Đang tải..." : `${total} sản phẩm • Kéo thả `}
+            <GripVertical className="inline-block h-4 w-4 align-text-bottom text-gray-400" />
+            {` hoặc dùng mũi tên để sắp xếp vị trí`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -386,13 +486,16 @@ export default function ProductsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-left">
-                <th className="w-10 px-4 py-3">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.size === products.length && products.length > 0}
-                    onChange={handleSelectAll}
-                    className="rounded border-gray-300 text-primary focus:ring-primary"
-                  />
+                <th className="w-14 pl-3 pr-2 py-3">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-4 shrink-0" />
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.size === products.length && products.length > 0}
+                      onChange={handleSelectAll}
+                      className="rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                  </div>
                 </th>
                 <th className="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300">Sản phẩm</th>
                 <th className="px-4 py-3 font-semibold text-gray-700 dark:text-gray-300 hidden lg:table-cell">Danh mục</th>
@@ -404,7 +507,7 @@ export default function ProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700/60">
-              {products.map((p) => {
+              {products.map((p, pIdx) => {
                 const firstVariant = p.variants?.[0];
                 const images = Array.isArray(p.images) ? p.images : [];
                 const totalStock = p.variants?.reduce((sum: number, v: any) => sum + v.stockQuantity, 0) ?? 0;
@@ -413,27 +516,41 @@ export default function ProductsPage() {
                 return (
                   <tr
                     key={p.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, p.id)}
+                    onDragOver={(e) => handleDragOver(e, p.id)}
+                    onDragLeave={(e) => handleDragLeave(e, p.id)}
+                    onDrop={(e) => handleDrop(e, p)}
+                    onDragEnd={handleDragEnd}
                     className={cn(
-                      "transition-colors",
+                      "transition-all",
                       isSelected
                         ? "bg-blue-50 dark:bg-blue-900/10"
-                        : "hover:bg-gray-50 dark:hover:bg-gray-800/30"
+                        : "hover:bg-gray-50 dark:hover:bg-gray-800/30",
+                      draggedId === p.id && "opacity-40 border-2 border-dashed border-primary bg-primary/5",
+                      dragOverId === p.id && "ring-2 ring-primary ring-inset bg-blue-50/80 dark:bg-blue-950/40"
                     )}
                   >
-                    <td className="px-4 py-3">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => {
-                          setSelectedIds((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(p.id)) next.delete(p.id);
-                            else next.add(p.id);
-                            return next;
-                          });
-                        }}
-                        className="rounded border-gray-300 text-primary focus:ring-primary"
-                      />
+                    {/* Drag Grip Handle & Checkbox */}
+                    <td className="pl-3 pr-2 py-3 shrink-0">
+                      <div className="flex items-center gap-1.5">
+                        <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors shrink-0 p-0.5" title="Nắm kéo thả để sắp xếp">
+                          <GripVertical className="h-4 w-4" />
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {
+                            setSelectedIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(p.id)) next.delete(p.id);
+                              else next.add(p.id);
+                              return next;
+                            });
+                          }}
+                          className="rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                      </div>
                     </td>
 
                     <td className="px-4 py-3">
@@ -454,6 +571,9 @@ export default function ProductsPage() {
                             >
                               {p.name}
                             </Link>
+                            <span className="px-1.5 py-0.5 text-[10px] font-mono font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded border border-gray-200 dark:border-gray-700 shrink-0">
+                              #{p.order ?? 0}
+                            </span>
                             {p.isFeatured && (
                               <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 rounded shrink-0">
                                 Nổi bật
@@ -540,6 +660,26 @@ export default function ProductsPage() {
 
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
+                        {/* Order Move Buttons Group */}
+                        <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 border border-gray-200/70 dark:border-gray-700/70 mr-1">
+                          <button
+                            onClick={() => handleMoveProduct(p, "up")}
+                            disabled={pIdx === 0}
+                            className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-20 disabled:hover:bg-transparent transition-all"
+                            title="Di chuyển lên"
+                          >
+                            <ArrowUp className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleMoveProduct(p, "down")}
+                            disabled={pIdx === products.length - 1}
+                            className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 disabled:opacity-20 disabled:hover:bg-transparent transition-all"
+                            title="Di chuyển xuống"
+                          >
+                            <ArrowDown className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+
                         <button
                           onClick={() => handleToggle(p)}
                           className={cn(

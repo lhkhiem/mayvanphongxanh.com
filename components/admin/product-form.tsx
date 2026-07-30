@@ -80,6 +80,7 @@ export function ProductForm({
     categoryId: initialData?.categoryId || 0,
     brandId: initialData?.brandId || null,
     brand: initialData?.brand || '',
+    order: initialData?.order ?? 0,
     images: Array.isArray(initialData?.images) ? initialData.images : [],
     description: initialData?.description || '',
     productType: initialData?.productType || 'standard',
@@ -542,6 +543,16 @@ export function ProductForm({
                 <div>
                   <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Danh mục <span className="text-red-500">*</span></label>
                   <CategoryFilterDropdown categories={categories} value={form.categoryId || undefined} onChange={(id) => setForm({ ...form, categoryId: id ?? 0 })} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Thứ tự hiển thị trong danh mục (Order)</label>
+                  <input
+                    type="number"
+                    value={form.order ?? 0}
+                    onChange={(e) => setForm({ ...form, order: parseInt(e.target.value) || 0 })}
+                    placeholder="0, 1, 2..."
+                    className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#2a303d] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm font-mono"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Thương hiệu</label>
