@@ -54,12 +54,13 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       brand: p.brand || p.brandRef?.name || '',
       price: defaultVariant?.price || 0,
       originalPrice: defaultVariant?.originalPrice,
-      rating: 5,
-      reviews: 120,
+      rating: 0,
+      reviews: 0,
       image: mainImg,
       stock: defaultVariant?.stockQuantity || 0,
       isContactPrice: p.isContactPrice,
       productType: p.productType,
+      vatStatus: p.vatStatus,
     };
   });
 
@@ -113,6 +114,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                       category={product.category}
                       isContactPrice={product.isContactPrice}
                       productType={product.productType}
+                      vatStatus={product.vatStatus}
                     />
                   ))}
                 </div>

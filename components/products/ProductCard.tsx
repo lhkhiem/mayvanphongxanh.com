@@ -7,6 +7,7 @@ import { ShoppingCart, Star, ArrowRightLeft, PhoneCall } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useCompare } from '@/context/CompareContext';
 import { productSlug } from '@/lib/utils';
+import { VatBadge } from './VatBadge';
 
 export interface ProductCardProps {
   id: number;
@@ -24,6 +25,7 @@ export interface ProductCardProps {
   variantId?: string;
   productType?: string;
   isContactPrice?: boolean;
+  vatStatus?: string | null;
 }
 
 export function ProductCard({
@@ -41,6 +43,7 @@ export function ProductCard({
   variantId,
   productType,
   isContactPrice = false,
+  vatStatus,
 }: ProductCardProps) {
   const [showCompareToast, setShowCompareToast] = useState(false);
   const [showCompareErrorToast, setShowCompareErrorToast] = useState('');
@@ -162,19 +165,21 @@ export function ProductCard({
         </Link>
 
         {/* Rating and SKU */}
-        <div className="flex items-center justify-between mb-1.5">
-          <div className="flex items-center gap-1">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className="w-3.5 h-3.5"
-                fill={i < Math.floor(rating) ? '#FBBF24' : '#E5E7EB'}
-                color={i < Math.floor(rating) ? '#FBBF24' : '#E5E7EB'}
-              />
-            ))}
+        {reviews > 0 && (
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-1">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className="w-3.5 h-3.5"
+                  fill={i < Math.floor(rating || 0) ? '#FBBF24' : '#E5E7EB'}
+                  color={i < Math.floor(rating || 0) ? '#FBBF24' : '#E5E7EB'}
+                />
+              ))}
+            </div>
+            <span className="text-xs text-gray-500">({reviews})</span>
           </div>
-          <span className="text-xs text-gray-500">({reviews})</span>
-        </div>
+        )}
         <div className="text-xs text-primary/80 font-medium uppercase tracking-wider mb-2 sm:mb-3 line-clamp-1">
           {category}
         </div>
@@ -191,9 +196,12 @@ export function ProductCard({
                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(originalPrice)}
                       </div>
                     )}
-                    <div className="font-bold text-base sm:text-lg text-primary truncate">
-                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)}
+                    <div className="font-bold text-base sm:text-lg text-primary truncate flex items-center gap-1.5 flex-wrap">
+                      <span>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)}</span>
                       {productType === 'rental' && <span className="text-xs font-normal text-muted-foreground ml-0.5">/ tháng</span>}
+                    </div>
+                    <div className="mt-0.5">
+                      <VatBadge vatStatus={vatStatus} />
                     </div>
                   </div>
                   {discount > 0 && (

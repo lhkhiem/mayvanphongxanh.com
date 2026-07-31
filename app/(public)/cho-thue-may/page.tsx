@@ -26,13 +26,14 @@ export default async function RentalPage() {
       brand: p.brand || 'HP',
       price: defaultVariant?.price || 0,
       originalPrice: defaultVariant?.originalPrice,
-      rating: 5,
-      reviews: 120, // Mock reviews since we don't have review model yet
+      rating: 0,
+      reviews: 0,
       image: (p.images as string[])?.[0] || (defaultVariant?.images as string[])?.[0] || '/placeholder.jpg',
       stock: defaultVariant?.stockQuantity || 0,
       description: p.description,
       productType: p.productType,
       isContactPrice: p.isContactPrice,
+      vatStatus: p.vatStatus || 'INCLUDED',
       attributes: defaultVariant?.attributes,
       variants: p.variants,
       customOptions: p.customOptions

@@ -12,6 +12,7 @@ import { useCart } from '@/context/CartContext';
 import { QuoteTemplate } from '@/components/print/QuoteTemplate';
 import { ProductCard } from '@/components/products/ProductCard';
 import { ShareButtons } from '@/components/blog/share-buttons';
+import { VatBadge } from '@/components/products/VatBadge';
 
 import { cleanUrl } from '@/lib/utils';
 
@@ -309,9 +310,7 @@ export default function ProductDetailClient({
                           {isRental && <span className="text-xl sm:text-2xl font-semibold text-muted-foreground ml-1">/ tháng</span>}
                         </span>
                         {!isRental && (
-                          <span className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">
-                            (Đã bao gồm VAT)
-                          </span>
+                          <VatBadge vatStatus={product?.vatStatus} className="text-xs sm:text-sm font-semibold px-2 py-0.5" />
                         )}
                       </div>
                       {originalPrice && discount > 0 && (
@@ -476,7 +475,7 @@ export default function ProductDetailClient({
               {/* Quick Specs */}
               {(() => {
                 const hasQuickSpecs = Array.isArray(product.quickSpecs) && product.quickSpecs.length > 0;
-                const totalSpecsCount = 1 + (hasQuickSpecs ? product.quickSpecs.length : 3);
+                const totalSpecsCount = hasQuickSpecs ? product.quickSpecs.length : 0;
                 // 1 cột làm mặc định, từ 9 mục trở lên mới chuyển sang 2 cột
                 const isMultiCol = totalSpecsCount >= 9;
 
@@ -486,10 +485,6 @@ export default function ProductDetailClient({
                       <Info className="w-4.5 h-4.5 text-primary" /> Thông số nổi bật
                     </h3>
                     <ul className={`grid ${isMultiCol ? 'grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5' : 'grid-cols-1 gap-y-2.5'} text-sm text-foreground`}>
-                      <li className="flex gap-2.5 items-start">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
-                        <span className="leading-relaxed"><span className="text-muted-foreground font-medium">Sản phẩm:</span> {product.name}</span>
-                      </li>
                       {hasQuickSpecs ? (
                         product.quickSpecs.map((spec: any, idx: number) => (
                           <li key={idx} className="flex gap-2.5 items-start">
@@ -500,11 +495,10 @@ export default function ProductDetailClient({
                           </li>
                         ))
                       ) : (
-                        <>
-                          <li className="flex gap-2.5 items-start"><span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" /><span className="leading-relaxed">Sản phẩm chính hãng mới 100%</span></li>
-                          <li className="flex gap-2.5 items-start"><span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" /><span className="leading-relaxed">Bảo hành 1 đổi 1 trong 12 tháng</span></li>
-                          <li className="flex gap-2.5 items-start"><span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" /><span className="leading-relaxed">Hỗ trợ kỹ thuật 24/7 chuyên nghiệp</span></li>
-                        </>
+                        <li className="flex gap-2.5 items-center text-muted-foreground text-xs italic py-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
+                          <span>Thông tin nổi bật đang được cập nhật...</span>
+                        </li>
                       )}
                     </ul>
                   </div>
@@ -582,30 +576,26 @@ export default function ProductDetailClient({
               </div>
 
               {/* Features / Policies */}
-              <div className="grid grid-cols-2 gap-2 mt-auto mb-0">
-                {((product.policies && product.policies.length > 0)
-                  ? product.policies
-                  : (globalPolicies && globalPolicies.length > 0 ? globalPolicies : [
-                    { id: 1, icon: 'Truck', title: 'Giao hàng Miễn phí', description: 'Cho đơn hàng trên 500k' },
-                    { id: 2, icon: 'ShieldCheck', title: 'Bảo hành Chính hãng', description: 'Tối thiểu 12 tháng' }
-                  ])
-                ).map((policy: any) => {
-                  const Icon = (LucideIcons as any)[policy.icon] || LucideIcons.CheckCircle;
-                  return (
-                    <div key={policy.id} className="flex items-center gap-3 p-3 bg-background border border-border rounded-xl">
-                      <div className="bg-primary/10 p-2 rounded-lg text-primary">
-                        <Icon className="w-5 h-5 flex-shrink-0" />
+              {product.policies && product.policies.length > 0 && (
+                <div className="grid grid-cols-2 gap-2 mt-auto mb-0">
+                  {product.policies.map((policy: any) => {
+                    const Icon = (LucideIcons as any)[policy.icon] || LucideIcons.CheckCircle;
+                    return (
+                      <div key={policy.id} className="flex items-center gap-3 p-3 bg-background border border-border rounded-xl">
+                        <div className="bg-primary/10 p-2 rounded-lg text-primary">
+                          <Icon className="w-5 h-5 flex-shrink-0" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-foreground text-[13px] leading-tight mb-0.5">{policy.title}</h4>
+                          {policy.description && (
+                            <p className="text-[11px] text-muted-foreground line-clamp-1">{policy.description}</p>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-foreground text-[13px] leading-tight mb-0.5">{policy.title}</h4>
-                        {policy.description && (
-                          <p className="text-[11px] text-muted-foreground line-clamp-1">{policy.description}</p>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
 
             </div>
           </div>
@@ -668,7 +658,6 @@ export default function ProductDetailClient({
                           (currentVariant?.sku || product.sku) ? { label: 'Mã SKU', value: currentVariant?.sku || product.sku } : null,
                           { label: 'Loại hình', value: isRental ? 'Máy cho thuê' : 'Sản phẩm kinh doanh' },
                           { label: 'Tình trạng', value: stock > 0 ? 'Còn hàng trong kho' : 'Hết hàng (Liên hệ)' },
-                          { label: 'Bảo hành', value: '12 tháng chính hãng' }
                         ].filter(Boolean).map((spec: any, idx: number) => (
                           <tr key={idx} className="border-b border-border last:border-0 hover:bg-gray-50/50 transition-colors">
                             <td className="py-3.5 px-6 bg-gray-50/80 font-medium text-gray-600 w-1/3 md:w-1/4 lg:w-1/5 border-r border-border">{spec.label}</td>
@@ -684,7 +673,11 @@ export default function ProductDetailClient({
               {activeTab === 'desc' && (
                 <div className="prose prose-lg text-muted-foreground max-w-none bg-white p-8 rounded-xl border border-border shadow-sm">
                   <h3 className="text-xl font-bold text-foreground mb-4">Chi tiết sản phẩm: {product.name}</h3>
-                  <div dangerouslySetInnerHTML={{ __html: product.description }} />
+                  {product.description && product.description.trim() !== '' ? (
+                    <div dangerouslySetInnerHTML={{ __html: product.description }} />
+                  ) : (
+                    <p className="text-muted-foreground italic text-sm">Nội dung chi tiết sản phẩm đang được cập nhật...</p>
+                  )}
                 </div>
               )}
 

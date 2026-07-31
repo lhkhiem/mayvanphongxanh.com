@@ -70,6 +70,7 @@ model Product {
   isActive       Boolean @default(true)
   isFeatured     Boolean @default(false)
   isContactPrice Boolean @default(false)
+  vatStatus      String? @default("INCLUDED") // INCLUDED (Đã gồm VAT), EXCLUDED (Chưa gồm VAT), NONE (Không VAT)
   customOptions  Json?
   quickSpecs     Json?
   specifications Json?

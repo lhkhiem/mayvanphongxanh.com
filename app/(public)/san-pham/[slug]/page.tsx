@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   
   const rawImages = (dbProduct.images as string[] || []).map(cleanUrl).filter(Boolean);
   const variantImgs = (dbProduct.variants || []).flatMap(v => (v.images as string[] || []).map(cleanUrl).filter(Boolean));
-  let imageRel = (dbProduct.image ? cleanUrl(dbProduct.image) : '') || rawImages[0] || variantImgs[0] || '/placeholder.jpg';
+  let imageRel = rawImages[0] || variantImgs[0] || '/placeholder.jpg';
   
   const absoluteImageUrl = imageRel.startsWith('http://') || imageRel.startsWith('https://')
     ? imageRel
@@ -131,14 +131,15 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     brand: brandName,
     price: defaultVariant?.price || 0,
     originalPrice: defaultVariant?.originalPrice,
-    rating: 5,
-    reviews: 120,
+    rating: 0,
+    reviews: 0,
     image: mainImage,
     images: allImages,
     stock: defaultVariant?.stockQuantity || 0,
     description: dbProduct.description,
     productType: dbProduct.productType,
     isContactPrice: dbProduct.isContactPrice,
+    vatStatus: dbProduct.vatStatus || 'INCLUDED',
     attributes: defaultVariant?.attributes,
     variants: dbProduct.variants,
     customOptions: dbProduct.customOptions,
@@ -203,12 +204,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       brand: p.brand || p.brandRef?.name || '',
       price: v?.price || 0,
       originalPrice: v?.originalPrice,
-      rating: 5,
-      reviews: 12,
+      rating: 0,
+      reviews: 0,
       image: mainImg,
       stock: v?.stockQuantity || 0,
       isContactPrice: p.isContactPrice,
       productType: p.productType,
+      vatStatus: p.vatStatus || 'INCLUDED',
     };
   });
 

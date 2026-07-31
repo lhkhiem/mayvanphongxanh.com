@@ -13,7 +13,7 @@ import { RichTextEditor, type RichTextEditorRef } from "@/components/admin/rich-
 import { CategoryFilterDropdown } from "@/components/admin/category-filter-dropdown";
 import { createProduct, updateProduct, getProducts, type ProductInput, type ProductVariantInput } from "@/app/(admin)/admin/(dashboard)/products/actions";
 import { getPolicies } from "@/app/(admin)/admin/(dashboard)/policies/actions";
-import { cn } from "@/lib/utils";
+import { cn, cleanUrl } from "@/lib/utils";
 import * as LucideIcons from "lucide-react";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -89,6 +89,7 @@ export function ProductForm({
     isActive: initialData?.isActive ?? true,
     isFeatured: initialData?.isFeatured ?? false,
     isContactPrice: initialData?.isContactPrice ?? false,
+    vatStatus: initialData?.vatStatus || 'INCLUDED',
     metaTitle: initialData?.metaTitle || '',
     metaDescription: initialData?.metaDescription || '',
     metaKeywords: initialData?.metaKeywords || '',
@@ -450,6 +451,43 @@ export function ProductForm({
                   >
                     <span className={cn("inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform", form.isContactPrice ? "translate-x-6" : "translate-x-1")} />
                   </button>
+                </div>
+              </div>
+
+              {/* VAT Status Selector */}
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] p-5 shadow-sm space-y-3">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700">
+                  Trạng thái VAT (Thuế GTGT)
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { value: 'INCLUDED', label: 'Đã bao gồm VAT', desc: 'Giá đã có VAT 10%' },
+                    { value: 'EXCLUDED', label: 'Chưa bao gồm VAT', desc: 'Cộng thêm VAT khi xuất HĐ' },
+                    { value: 'NONE', label: 'Giá không VAT', desc: 'Không xuất hóa đơn VAT' },
+                  ].map((option) => (
+                    <label
+                      key={option.value}
+                      className={cn(
+                        "flex flex-col p-3 rounded-lg border cursor-pointer transition-all",
+                        form.vatStatus === option.value
+                          ? "border-primary bg-primary/5 ring-1 ring-primary"
+                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="vatStatus"
+                          value={option.value}
+                          checked={form.vatStatus === option.value}
+                          onChange={(e) => setForm({ ...form, vatStatus: e.target.value })}
+                          className="text-primary focus:ring-primary h-4 w-4"
+                        />
+                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{option.label}</span>
+                      </div>
+                      <span className="text-xs text-gray-500 mt-1 pl-6">{option.desc}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
 

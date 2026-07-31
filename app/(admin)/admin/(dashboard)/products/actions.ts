@@ -41,6 +41,7 @@ export type ProductInput = {
   isActive: boolean
   isFeatured?: boolean
   isContactPrice?: boolean
+  vatStatus?: string
   metaTitle: string
   metaDescription: string
   metaKeywords: string
@@ -246,6 +247,7 @@ export async function createProduct(input: ProductInput) {
         isActive: input.isActive,
         isFeatured: input.isFeatured || false,
         isContactPrice: input.isContactPrice || false,
+        vatStatus: input.vatStatus || 'INCLUDED',
         metaTitle: input.metaTitle || null,
         metaDescription: input.metaDescription || null,
         metaKeywords: input.metaKeywords || null,
@@ -342,6 +344,7 @@ export async function updateProduct(id: number, input: ProductInput) {
           isActive: input.isActive,
           isFeatured: input.isFeatured ?? false,
           isContactPrice: input.isContactPrice ?? false,
+          vatStatus: input.vatStatus || 'INCLUDED',
           metaTitle: input.metaTitle || null,
           metaDescription: input.metaDescription || null,
           metaKeywords: input.metaKeywords || null,
@@ -614,6 +617,7 @@ export async function duplicateProduct(id: number) {
         isActive: source.isActive,
         isFeatured: source.isFeatured,
         isContactPrice: source.isContactPrice,
+        vatStatus: source.vatStatus || 'INCLUDED',
         metaTitle: source.metaTitle ? `${source.metaTitle} (Bản sao)` : null,
         metaDescription: source.metaDescription,
         metaKeywords: source.metaKeywords,
