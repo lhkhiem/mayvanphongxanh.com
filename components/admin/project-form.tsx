@@ -186,6 +186,11 @@ export function ProjectForm({
       <MediaPickerModal
         isOpen={isMediaPickerOpen}
         onClose={() => setIsMediaPickerOpen(false)}
+        multiple={true}
+        onSelectMultiple={(urls) => {
+          editorRef.current?.insertImages(urls);
+          setIsMediaPickerOpen(false);
+        }}
         onSelect={(url) => {
           editorRef.current?.insertImages([url]);
           setIsMediaPickerOpen(false);

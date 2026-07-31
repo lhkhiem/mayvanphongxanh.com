@@ -5,6 +5,7 @@ import { Footer } from '@/components/common/Footer';
 import { ProductCard } from '@/components/products/ProductCard';
 import { prisma } from '@/lib/db';
 import { Calendar, FileText, Package } from 'lucide-react';
+import { cleanUrl } from '@/lib/utils';
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const resolvedParams = await searchParams;
@@ -17,7 +18,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       deletedAt: null,
       name: { contains: keyword, mode: 'insensitive' }
     },
-    include: { variants: true, category: true },
+    include: { variants: true, category: true, brandRef: true },
     take: 12
   }) : [];
 
@@ -36,17 +37,20 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
 
   const searchResults = dbProducts.map(p => {
     const defaultVariant = p.variants[0];
+    const rawImgs = (p.images as string[] || []).map(cleanUrl).filter(Boolean);
+    const rawVarImgs = (defaultVariant?.images as string[] || []).map(cleanUrl).filter(Boolean);
+    const mainImg = rawImgs[0] || rawVarImgs[0] || '/placeholder.jpg';
     return {
       id: p.id,
       name: p.name,
       slug: p.slug,
       category: p.category?.name || 'Khác',
-      brand: p.brand || 'Khác',
+      brand: p.brand || p.brandRef?.name || '',
       price: defaultVariant?.price || 0,
       originalPrice: defaultVariant?.originalPrice,
       rating: 5,
       reviews: 120,
-      image: (defaultVariant?.images as string[])?.[0] || '/placeholder.jpg',
+      image: mainImg,
       stock: defaultVariant?.stockQuantity || 0,
       isContactPrice: p.isContactPrice,
       productType: p.productType,

@@ -2,10 +2,17 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { X, Upload, Search, Grid3x3, List, Check, ImageIcon, Copy, Folder, Link as LinkIcon, ChevronRight, ChevronDown, FolderOpen, FolderPlus, Camera, Clipboard } from "lucide-react";
+import {
+  X, Upload, Search, Grid3x3, List, Check, ImageIcon, Copy, Folder,
+  Link as LinkIcon, ChevronRight, ChevronDown, FolderOpen, FolderPlus,
+  Camera, Clipboard, Trash2, Eye, Edit2, FolderInput, Zap
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { createFolder } from "@/app/(admin)/admin/(dashboard)/media/actions";
+import {
+  getAssets, deleteAsset, deleteMultipleAssets, getFolders, getAllFolders,
+  createFolder, deleteFolder, renameFolder, renameAsset, moveAssets
+} from "@/app/(admin)/admin/(dashboard)/media/actions";
 
 interface Asset {
   id: string;
@@ -13,7 +20,7 @@ interface Asset {
   fileName: string;
   mimeType: string;
   sizeBytes: number;
-  createdAt: string;
+  createdAt: Date | string;
 }
 
 interface MediaFolder {
@@ -23,6 +30,7 @@ interface MediaFolder {
 }
 
 function formatBytes(bytes: number): string {
+  if (!bytes) return "0 B";
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -44,12 +52,20 @@ interface MediaPickerModalProps {
   multiple?: boolean;
 }
 
-export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, title = "Chọn ảnh từ thư viện", multiple = false }: MediaPickerModalProps) {
+export function MediaPickerModal({
+  isOpen,
+  onClose,
+  onSelect,
+  onSelectMultiple,
+  title = "Chọn ảnh từ thư viện",
+  multiple = false
+}: MediaPickerModalProps) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [allFolders, setAllFolders] = useState<MediaFolder[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [compressing, setCompressing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -58,16 +74,23 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
 
   // Folder states
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
-  const [folderPath, setFolderPath] = useState<{id: string, name: string}[]>([]);
+  const [folderPath, setFolderPath] = useState<{ id: string, name: string }[]>([]);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-  
-  // URL Upload states
+
+  // Modal / Dialog states for Media actions
+  const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
+  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+  const [renameFileName, setRenameFileName] = useState('');
+  const [isMoveFolderOpen, setIsMoveFolderOpen] = useState(false);
+
+  // Folder dialog states
+  const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
+  const [editingFolder, setEditingFolder] = useState<MediaFolder | null>(null);
+  const [newFolderName, setNewFolderName] = useState('');
+
+  // Upload URL state
   const [isUploadUrlOpen, setIsUploadUrlOpen] = useState(false);
   const [uploadUrl, setUploadUrl] = useState('');
-
-  // Create Folder states
-  const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
-  const [newFolderName, setNewFolderName] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -77,11 +100,9 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
   }, [isOpen, currentFolderId]);
 
   useEffect(() => {
-    if (isOpen && searchQuery) {
-      const timer = setTimeout(fetchAssets, 300);
+    if (isOpen) {
+      const timer = setTimeout(fetchAssets, searchQuery ? 300 : 0);
       return () => clearTimeout(timer);
-    } else if (isOpen && !searchQuery) {
-      fetchAssets();
     }
   }, [searchQuery]);
 
@@ -193,7 +214,7 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
       const searchParams = new URLSearchParams();
       if (searchQuery) searchParams.append("search", searchQuery);
       if (currentFolderId && !searchQuery) searchParams.append("folderId", currentFolderId);
-      
+
       const res = await fetch(`/api/media?${searchParams.toString()}`);
       const data = await res.json();
       if (data.error) toast.error(data.error);
@@ -265,6 +286,7 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
     } catch (err: any) { toast.error(err?.message || "Lỗi kết nối"); } finally { setUploading(false); }
   };
 
+  // Folder Actions
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
     const res = await createFolder(newFolderName, currentFolderId);
@@ -277,14 +299,170 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
     }
   };
 
+  const handleRenameFolder = async () => {
+    if (!editingFolder || !newFolderName.trim()) return;
+    const res = await renameFolder(editingFolder.id, newFolderName.trim());
+    if (res.error) toast.error(res.error);
+    else {
+      toast.success('Đã đổi tên thư mục');
+      setEditingFolder(null);
+      setNewFolderName('');
+      fetchAssets();
+    }
+  };
+
+  const handleDeleteFolder = async (folder: MediaFolder) => {
+    if (!confirm(`Xóa thư mục "${folder.name}"? Ảnh bên trong sẽ bị đưa ra ngoài.`)) return;
+    const res = await deleteFolder(folder.id);
+    if (res.error) toast.error(res.error);
+    else {
+      toast.success('Đã xóa thư mục');
+      if (currentFolderId === folder.id) navigateToFolder(null);
+      fetchAssets();
+    }
+  };
+
+  // Asset Actions
+  const handleRenameAsset = async () => {
+    if (!editingAsset || !renameFileName.trim()) return;
+    const res = await renameAsset(editingAsset.id, renameFileName.trim());
+    if (res.error) toast.error(res.error);
+    else {
+      toast.success('Đã đổi tên file thành công');
+      if (previewAsset && previewAsset.id === editingAsset.id) {
+        setPreviewAsset({ ...previewAsset, fileName: renameFileName.trim() });
+      }
+      setEditingAsset(null);
+      setRenameFileName('');
+      fetchAssets();
+    }
+  };
+
+  const handleDeleteOne = async (asset: Asset) => {
+    if (!confirm(`Xóa ảnh "${asset.fileName}"?`)) return;
+    const res = await deleteAsset(asset.id, asset.url);
+    if (res.error) toast.error(res.error);
+    else {
+      toast.success('Đã xóa ảnh');
+      if (previewAsset?.id === asset.id) setPreviewAsset(null);
+      setSelectedIds(prev => prev.filter(id => id !== asset.id));
+      fetchAssets();
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Xóa ${selectedIds.length} ảnh đã chọn?`)) return;
+    const urls = assets.filter(a => selectedIds.includes(a.id)).map(a => a.url);
+    const res = await deleteMultipleAssets(selectedIds, urls);
+    if (res.error) toast.error(res.error);
+    else {
+      toast.success(`Đã xóa ${selectedIds.length} ảnh`);
+      setSelectedIds([]);
+      fetchAssets();
+    }
+  };
+
+  const handleMoveAssets = async (targetFolderId: string | null) => {
+    const ids = [...selectedIds];
+    if (ids.length === 0 && previewAsset) {
+      ids.push(previewAsset.id);
+    }
+    if (ids.length === 0) return;
+
+    const res = await moveAssets(ids, targetFolderId);
+    if (res.error) toast.error(res.error);
+    else {
+      toast.success(`Đã di chuyển ${ids.length} file thành công`);
+      setIsMoveFolderOpen(false);
+      setSelectedIds([]);
+      fetchAssets();
+    }
+  };
+
+  const handleCompressSingle = async (assetId: string) => {
+    setCompressing(true);
+    try {
+      const res = await fetch('/api/media/compress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assetId }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        toast.error(data.error || 'Nén ảnh thất bại');
+      } else {
+        const item = data.data?.results?.[0];
+        if (item && item.status === 'success') {
+          const oldMb = (item.originalSize / (1024 * 1024)).toFixed(2);
+          const newMb = (item.compressedSize / (1024 * 1024)).toFixed(2);
+          toast.success(`Đã nén ảnh thành công! Giảm từ ${oldMb} MB xuống ${newMb} MB (-${item.percentSaved}%)`);
+
+          if (previewAsset && previewAsset.id === assetId) {
+            setPreviewAsset({
+              ...previewAsset,
+              url: item.newUrl,
+              fileName: item.fileName,
+              mimeType: 'image/webp',
+              sizeBytes: item.compressedSize,
+            });
+          }
+          fetchAssets();
+        } else if (item && item.status === 'skipped') {
+          toast.info(item.reason || 'Ảnh đã được tối ưu hóa ở mức tối đa');
+        } else {
+          toast.error(item?.reason || 'Không thể nén ảnh này');
+        }
+      }
+    } catch (err: any) {
+      toast.error('Lỗi khi nén ảnh: ' + (err?.message || String(err)));
+    } finally {
+      setCompressing(false);
+    }
+  };
+
+  const handleCompressAll = async () => {
+    if (!confirm('Bạn có chắc chắn muốn nén và tối ưu tất cả ảnh trong hệ thống sang chuẩn WebP?')) return;
+    setCompressing(true);
+    toast.info('Đang tối ưu & nén tất cả ảnh...');
+    try {
+      const res = await fetch('/api/media/compress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        toast.error(data.error || 'Nén ảnh thất bại');
+      } else {
+        const summary = data.data?.summary;
+        if (summary) {
+          const savedMb = (summary.totalSavedBytes / (1024 * 1024)).toFixed(2);
+          toast.success(`Đã nén ${summary.processedCount} ảnh! Tiết kiệm ${savedMb} MB (-${summary.totalPercentSaved}%) dung lượng lưu trữ.`);
+          fetchAssets();
+        }
+      }
+    } catch (err: any) {
+      toast.error('Lỗi khi nén tất cả ảnh: ' + (err?.message || String(err)));
+    } finally {
+      setCompressing(false);
+    }
+  };
+
+  const handleCopyUrl = (url: string) => {
+    const fullUrl = `${window.location.origin}${url}`;
+    navigator.clipboard.writeText(fullUrl);
+    toast.success('Đã copy URL!');
+  };
+
   const navigateToFolder = (folder: MediaFolder | null) => {
     if (folder === null) {
       setCurrentFolderId(null);
       setFolderPath([]);
     } else {
       setCurrentFolderId(folder.id);
-      
-      const newPath: {id: string, name: string}[] = [];
+
+      const newPath: { id: string, name: string }[] = [];
       let current: MediaFolder | undefined = folder;
       while (current) {
         newPath.unshift({ id: current.id, name: current.name });
@@ -335,10 +513,18 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
     onClose();
   };
 
+  const handleSelectToggle = (id: string) => {
+    if (multiple) {
+      setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    } else {
+      setSelectedIds(prev => prev.includes(id) ? [] : [id]);
+    }
+  };
+
   const renderTree = (nodes: any[], level: number) => {
     return nodes.map(node => (
       <div key={node.id}>
-        <div 
+        <div
           onClick={() => navigateToFolder(node)}
           className={cn(
             "flex items-center gap-1.5 py-1.5 px-2 rounded-md cursor-pointer text-sm transition-colors",
@@ -351,7 +537,7 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
               {expandedFolders.has(node.id) ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
             </button>
           ) : (
-            <div className="w-4.5" /> // spacing
+            <div className="w-4.5" />
           )}
           {currentFolderId === node.id ? <FolderOpen className="h-4 w-4" /> : <Folder className="h-4 w-4" />}
           <span className="truncate">{node.name}</span>
@@ -366,32 +552,55 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
   if (!isOpen) return null;
 
   const modalContent = (
-    <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
       <div
-        className="bg-white dark:bg-[#1e2332] rounded-xl shadow-2xl w-full max-w-6xl h-[85vh] flex flex-col overflow-hidden"
+        className="bg-white dark:bg-[#1e2332] rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden relative"
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-gray-200 dark:border-gray-700 shrink-0 gap-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{title}</h2>
+            {selectedIds.length > 0 && (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => setIsMoveFolderOpen(true)}
+                  className="inline-flex items-center gap-1 text-xs font-medium border border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-md hover:bg-blue-100 transition-colors"
+                  title="Di chuyển ảnh đã chọn"
+                >
+                  <FolderInput className="h-3.5 w-3.5" />
+                  <span>Di chuyển ({selectedIds.length})</span>
+                </button>
+                <button
+                  onClick={handleDeleteSelected}
+                  className="inline-flex items-center gap-1 text-xs font-medium border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-2.5 py-1 rounded-md hover:bg-red-100 transition-colors"
+                  title="Xóa ảnh đã chọn"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Xóa ({selectedIds.length})</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors shrink-0">
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Explorer Layout */}
         <div className="flex flex-1 min-h-0 bg-gray-50/30 dark:bg-[#1e2332]">
-          
-          {/* Sidebar */}
-          <div className="w-64 flex-shrink-0 bg-white dark:bg-[#2a303d] border-r border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden hidden md:flex">
+
+          {/* Sidebar Folder Tree */}
+          <div className="w-60 flex-shrink-0 bg-white dark:bg-[#2a303d] border-r border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden hidden md:flex">
             <div className="p-3 border-b border-gray-200 dark:border-gray-700 shrink-0 bg-gray-50/50 dark:bg-gray-800/30">
               <h3 className="font-semibold text-gray-700 dark:text-gray-200 text-sm">Thư mục</h3>
             </div>
             <div className="flex-1 overflow-y-auto p-2">
-              <div 
+              <div
                 onClick={() => navigateToFolder(null)}
                 className={cn(
                   "flex items-center gap-1.5 py-1.5 px-2 rounded-md cursor-pointer text-sm transition-colors mb-1",
@@ -408,9 +617,9 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
 
           {/* Main Content */}
           <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#2a303d]">
-            
+
             {/* Toolbar */}
-            <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row gap-3 justify-between items-center bg-gray-50/50 dark:bg-gray-800/30 shrink-0">
+            <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row gap-2.5 justify-between items-center bg-gray-50/50 dark:bg-gray-800/30 shrink-0">
               {/* Breadcrumb */}
               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 flex-1 overflow-x-auto whitespace-nowrap hide-scrollbar">
                 <button onClick={() => navigateToFolder(null)} className="hover:text-primary transition-colors font-medium">
@@ -419,7 +628,7 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
                 {folderPath.map((folder, index) => (
                   <div key={folder.id} className="flex items-center gap-2">
                     <ChevronRight className="h-4 w-4 text-gray-400 shrink-0" />
-                    <button 
+                    <button
                       onClick={() => navigateToFolder(folder as MediaFolder)}
                       className={cn("hover:text-primary transition-colors", index === folderPath.length - 1 ? "font-semibold text-gray-900 dark:text-gray-100" : "")}
                     >
@@ -429,63 +638,78 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
                 ))}
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                <div className="relative w-40 sm:w-48">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              {/* Action Toolbar */}
+              <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                <div className="relative w-36 sm:w-44">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Tìm file..."
-                    className="w-full pl-8 pr-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-gray-100"
+                    className="w-full pl-8 pr-2.5 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-gray-100"
                   />
                 </div>
 
                 <button
                   onClick={handleScreenCapture}
                   disabled={uploading}
-                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm"
+                  className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm inline-flex items-center gap-1.5"
                   title="Chụp màn hình và upload"
                 >
-                  <Camera className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <Camera className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span className="hidden lg:inline">Chụp M.Hình</span>
                 </button>
 
                 <button
                   onClick={handlePasteFromClipboard}
                   disabled={uploading}
-                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm"
+                  className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm inline-flex items-center gap-1.5"
                   title="Dán từ bộ nhớ tạm (PrintScreen/Ctrl+V)"
                 >
-                  <Clipboard className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <Clipboard className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                  <span className="hidden lg:inline">Dán Ctrl+V</span>
                 </button>
 
                 <button
-                  onClick={() => setIsCreateFolderOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm"
-                  title="Tạo thư mục"
+                  onClick={() => { setIsCreateFolderOpen(true); setNewFolderName(''); }}
+                  className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm inline-flex items-center gap-1.5"
+                  title="Tạo thư mục mới"
                 >
-                  <FolderPlus className="h-4 w-4" />
+                  <FolderPlus className="h-4 w-4 shrink-0" />
+                  <span className="hidden xl:inline">Tạo thư mục</span>
                 </button>
 
                 <button
                   onClick={() => setIsUploadUrlOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm"
-                  title="Upload từ Link"
+                  className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm inline-flex items-center gap-1.5"
+                  title="Upload từ Link URL"
                 >
-                  <LinkIcon className="h-4 w-4" />
+                  <LinkIcon className="h-4 w-4 shrink-0" />
+                  <span className="hidden xl:inline">Link URL</span>
+                </button>
+
+                <button
+                  onClick={handleCompressAll}
+                  disabled={compressing}
+                  className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 hover:bg-amber-100 text-xs font-medium transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50"
+                  title="Nén tất cả ảnh WebP"
+                >
+                  <Zap className="h-4 w-4 text-amber-500 fill-amber-500 shrink-0" />
+                  <span className="hidden xl:inline">{compressing ? "Đang nén..." : "Nén tất cả"}</span>
                 </button>
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs sm:text-sm font-medium text-white hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-60"
                 >
                   <Upload className="h-4 w-4" />
-                  <span className="hidden sm:inline">{uploading ? "Đang upload..." : "Upload ảnh"}</span>
+                  <span>{uploading ? "Đang tải..." : "Upload"}</span>
                 </button>
                 <input ref={fileInputRef} type="file" multiple accept="image/*" className="hidden"
                   onChange={(e) => e.target.files && handleFileUpload(e.target.files)} />
-                
+
                 <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden bg-white dark:bg-gray-900 ml-1">
                   <button onClick={() => setViewMode('grid')} className={cn("p-1.5 transition-colors", viewMode === 'grid' ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800")}><Grid3x3 className="h-4 w-4" /></button>
                   <button onClick={() => setViewMode('list')} className={cn("p-1.5 transition-colors", viewMode === 'list' ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800")}><List className="h-4 w-4" /></button>
@@ -504,80 +728,10 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
                 </div>
               )}
 
-              {/* Create Folder Dialog */}
-              {isCreateFolderOpen && (
-                <div className="absolute inset-0 z-20 bg-white/95 dark:bg-gray-900/95 flex items-center justify-center p-4">
-                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6 border border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      Tạo thư mục mới
-                    </h3>
-                    <input
-                      type="text"
-                      value={newFolderName}
-                      onChange={e => setNewFolderName(e.target.value)}
-                      placeholder="Tên thư mục..."
-                      autoFocus
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white mb-4 focus:ring-2 focus:ring-primary outline-none"
-                      onKeyDown={e => e.key === 'Enter' && handleCreateFolder()}
-                    />
-                    <div className="flex justify-end gap-3">
-                      <button
-                        onClick={() => setIsCreateFolderOpen(false)}
-                        className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Hủy
-                      </button>
-                      <button
-                        onClick={handleCreateFolder}
-                        disabled={!newFolderName.trim()}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50"
-                      >
-                        Tạo
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Upload URL Dialog overlay within modal */}
-              {isUploadUrlOpen && (
-                <div className="absolute inset-0 z-20 bg-white/95 dark:bg-gray-900/95 flex items-center justify-center p-4">
-                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6 border border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      Upload ảnh từ đường dẫn (URL)
-                    </h3>
-                    <input
-                      type="url"
-                      value={uploadUrl}
-                      onChange={e => setUploadUrl(e.target.value)}
-                      placeholder="https://example.com/image.jpg"
-                      autoFocus
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white mb-4 focus:ring-2 focus:ring-primary outline-none"
-                      onKeyDown={e => e.key === 'Enter' && handleUrlUpload()}
-                    />
-                    <div className="flex justify-end gap-3">
-                      <button
-                        onClick={() => setIsUploadUrlOpen(false)}
-                        className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Hủy
-                      </button>
-                      <button
-                        onClick={handleUrlUpload}
-                        disabled={uploading || !uploadUrl}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50"
-                      >
-                        {uploading ? 'Đang tải...' : 'Upload'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {loading ? (
                 <div className={cn(
                   viewMode === 'grid'
-                    ? "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3"
+                    ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"
                     : "space-y-2"
                 )}>
                   {Array.from({ length: 12 }).map((_, i) => (
@@ -590,108 +744,207 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
               ) : (folders.length === 0 && assets.length === 0) ? (
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="h-full min-h-[200px] rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary transition-colors bg-gray-50/50 dark:bg-gray-800/30"
+                  className="h-full min-h-[220px] rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary transition-colors bg-gray-50/50 dark:bg-gray-800/30"
                 >
                   <ImageIcon className="h-10 w-10 text-gray-400" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Thư mục trống. Click để upload.</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Thư mục trống. Click để upload hoặc kéo thả ảnh vào đây.</p>
                 </div>
               ) : viewMode === 'grid' ? (
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
-                  {/* Folders */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                  {/* Folders in Grid */}
                   {folders.map(folder => (
                     <div
                       key={folder.id}
                       onClick={() => navigateToFolder(folder)}
-                      className="group relative rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3 cursor-pointer hover:border-primary hover:bg-white transition-all flex flex-col items-center justify-center gap-2 aspect-square"
+                      className="group relative rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-3 cursor-pointer hover:border-primary hover:bg-white dark:hover:bg-gray-800 transition-all flex flex-col items-center justify-center gap-2 aspect-square shadow-sm"
                     >
-                      <Folder className="h-10 w-10 text-primary/70 group-hover:text-primary transition-colors" />
-                      <p className="text-xs font-medium text-gray-700 dark:text-gray-200 text-center line-clamp-2 w-full">{folder.name}</p>
+                      <Folder className="h-10 w-10 text-primary/80 group-hover:text-primary transition-colors" />
+                      <p className="text-xs font-medium text-gray-700 dark:text-gray-200 text-center line-clamp-2 w-full px-1">{folder.name}</p>
+
+                      {/* Hover Folder Actions */}
+                      <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEditingFolder(folder); setNewFolderName(folder.name); }}
+                          className="p-1 bg-white dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 shadow border border-gray-200 dark:border-gray-600"
+                          title="Đổi tên thư mục"
+                        ><Edit2 className="h-3 w-3" /></button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder); }}
+                          className="p-1 bg-white dark:bg-red-900/30 rounded hover:bg-red-50 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 shadow border border-gray-200 dark:border-gray-600"
+                          title="Xóa thư mục"
+                        ><Trash2 className="h-3 w-3" /></button>
+                      </div>
                     </div>
                   ))}
-                  
-                  {/* Assets */}
+
+                  {/* Assets in Grid */}
                   {assets.map((asset) => (
                     <div
                       key={asset.id}
-                      onClick={() => {
-                        if (multiple) {
-                          setSelectedIds(prev => prev.includes(asset.id) ? prev.filter(id => id !== asset.id) : [...prev, asset.id])
-                        } else {
-                          setSelectedIds(prev => prev[0] === asset.id ? [] : [asset.id])
-                        }
-                      }}
+                      onClick={() => handleSelectToggle(asset.id)}
                       className={cn(
-                        "group relative rounded-lg overflow-hidden border-2 bg-gray-100 dark:bg-gray-800 cursor-pointer transition-all",
+                        "group relative rounded-lg overflow-hidden border-2 bg-gray-100 dark:bg-gray-800 cursor-pointer transition-all aspect-square",
                         selectedIds.includes(asset.id)
                           ? "border-primary ring-2 ring-primary/30 shadow-md"
                           : "border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500"
                       )}
                     >
-                      <div className="aspect-square bg-white dark:bg-gray-900 flex items-center justify-center p-1">
+                      <div className="w-full h-full bg-white dark:bg-gray-900 flex items-center justify-center p-1.5">
                         <img src={asset.url} alt={asset.fileName} className="max-w-full max-h-full object-contain" loading="lazy" />
                       </div>
+
+                      {/* Check badge when selected */}
                       {selectedIds.includes(asset.id) && (
-                        <div className="absolute top-1.5 left-1.5 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shadow">
+                        <div className="absolute top-1.5 left-1.5 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shadow z-10">
                           <Check className="h-3 w-3" />
                         </div>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <p className="text-[10px] text-white truncate drop-shadow">{asset.fileName}</p>
+
+                      {/* Hover action overlay */}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 z-10 p-1.5">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setPreviewAsset(asset); }}
+                          className="p-1.5 rounded-md bg-white/20 hover:bg-white/40 text-white transition-colors"
+                          title="Xem chi tiết"
+                        ><Eye className="h-3.5 w-3.5" /></button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEditingAsset(asset); setRenameFileName(asset.fileName); }}
+                          className="p-1.5 rounded-md bg-white/20 hover:bg-white/40 text-white transition-colors"
+                          title="Đổi tên file"
+                        ><Edit2 className="h-3.5 w-3.5" /></button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleCopyUrl(asset.url); }}
+                          className="p-1.5 rounded-md bg-white/20 hover:bg-white/40 text-white transition-colors"
+                          title="Copy URL"
+                        ><Copy className="h-3.5 w-3.5" /></button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteOne(asset); }}
+                          className="p-1.5 rounded-md bg-red-500/80 hover:bg-red-600 text-white transition-colors"
+                          title="Xóa ảnh"
+                        ><Trash2 className="h-3.5 w-3.5" /></button>
+                      </div>
+
+                      {/* File name footer */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-0">
+                        <p className="text-[10px] font-medium text-white truncate drop-shadow">{asset.fileName}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
+                /* List View */
                 <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                  {/* Folders List */}
-                  {folders.map(folder => (
-                    <div
-                      key={folder.id}
-                      onClick={() => navigateToFolder(folder)}
-                      className="flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                    >
-                      <div className="w-5 h-5 rounded border-2 border-transparent" />
-                      <div className="w-10 h-10 flex items-center justify-center shrink-0">
-                        <Folder className="h-5 w-5 text-primary/70" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{folder.name}</p>
-                      </div>
-                    </div>
-                  ))}
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/80">
+                        <th className="w-10 px-3 py-2 text-left">
+                          {multiple && (
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.length === assets.length && assets.length > 0}
+                              onChange={() => {
+                                if (selectedIds.length === assets.length) setSelectedIds([]);
+                                else setSelectedIds(assets.map(a => a.id));
+                              }}
+                              className="rounded border-gray-300 text-primary focus:ring-primary"
+                            />
+                          )}
+                        </th>
+                        <th className="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Tên</th>
+                        <th className="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300 hidden md:table-cell">Kích thước</th>
+                        <th className="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-300">Hành động</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                      {/* Folders List */}
+                      {folders.map(folder => (
+                        <tr key={folder.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer" onClick={() => navigateToFolder(folder)}>
+                          <td className="px-3 py-2"></td>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2.5">
+                              <Folder className="h-5 w-5 text-primary/70 shrink-0" />
+                              <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{folder.name}</span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 text-gray-500 hidden md:table-cell">-</td>
+                          <td className="px-3 py-2 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setEditingFolder(folder); setNewFolderName(folder.name); }}
+                                className="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
+                                title="Đổi tên thư mục"
+                              ><Edit2 className="h-3.5 w-3.5" /></button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder); }}
+                                className="p-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 transition-colors"
+                                title="Xóa thư mục"
+                              ><Trash2 className="h-3.5 w-3.5" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
 
-                  {/* Assets List */}
-                  {assets.map((asset) => (
-                    <div
-                      key={asset.id}
-                      onClick={() => {
-                        if (multiple) {
-                          setSelectedIds(prev => prev.includes(asset.id) ? prev.filter(id => id !== asset.id) : [...prev, asset.id])
-                        } else {
-                          setSelectedIds(prev => prev[0] === asset.id ? [] : [asset.id])
-                        }
-                      }}
-                      className={cn(
-                        "flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-100 dark:border-gray-700/50 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors",
-                        selectedIds.includes(asset.id) && "bg-blue-50 dark:bg-blue-900/10"
-                      )}
-                    >
-                      <div className={cn(
-                        "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
-                        selectedIds.includes(asset.id) ? "bg-primary border-primary" : "border-gray-300 dark:border-gray-600"
-                      )}>
-                        {selectedIds.includes(asset.id) && <Check className="h-3 w-3 text-white" />}
-                      </div>
-                      <div className="w-10 h-10 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 shrink-0 bg-white dark:bg-gray-900 flex items-center justify-center p-1">
-                        <img src={asset.url} alt={asset.fileName} className="max-w-full max-h-full object-contain" loading="lazy" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{asset.fileName}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{asset.url}</p>
-                      </div>
-                      <span className="text-xs text-gray-400 shrink-0 hidden sm:inline-block">{formatBytes(asset.sizeBytes)}</span>
-                    </div>
-                  ))}
+                      {/* Assets List */}
+                      {assets.map((asset) => (
+                        <tr
+                          key={asset.id}
+                          className={cn(
+                            "hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer",
+                            selectedIds.includes(asset.id) && "bg-blue-50 dark:bg-blue-900/10"
+                          )}
+                          onClick={() => handleSelectToggle(asset.id)}
+                        >
+                          <td className="px-3 py-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.includes(asset.id)}
+                              onChange={() => handleSelectToggle(asset.id)}
+                              onClick={e => e.stopPropagation()}
+                              className="rounded border-gray-300 text-primary focus:ring-primary"
+                            />
+                          </td>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-9 h-9 rounded overflow-hidden border border-gray-200 dark:border-gray-700 shrink-0 bg-white dark:bg-gray-900 flex items-center justify-center p-0.5">
+                                <img src={asset.url} alt={asset.fileName} className="max-w-full max-h-full object-contain" loading="lazy" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-medium text-gray-900 dark:text-gray-100 truncate max-w-[200px] sm:max-w-[300px]">{asset.fileName}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px] sm:max-w-[300px]">{asset.url}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 text-gray-500 dark:text-gray-400 hidden md:table-cell text-xs">
+                            {formatBytes(asset.sizeBytes)}
+                          </td>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setPreviewAsset(asset); }}
+                                className="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
+                                title="Xem chi tiết"
+                              ><Eye className="h-3.5 w-3.5" /></button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setEditingAsset(asset); setRenameFileName(asset.fileName); }}
+                                className="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
+                                title="Đổi tên file"
+                              ><Edit2 className="h-3.5 w-3.5" /></button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleCopyUrl(asset.url); }}
+                                className="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
+                                title="Copy URL"
+                              ><Copy className="h-3.5 w-3.5" /></button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleDeleteOne(asset); }}
+                                className="p-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 transition-colors"
+                                title="Xóa"
+                              ><Trash2 className="h-3.5 w-3.5" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
@@ -699,29 +952,251 @@ export function MediaPickerModal({ isOpen, onClose, onSelect, onSelectMultiple, 
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-4 border-t border-gray-200 dark:border-gray-700 shrink-0 bg-gray-50 dark:bg-gray-800/30">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t border-gray-200 dark:border-gray-700 shrink-0 bg-gray-50 dark:bg-gray-800/30">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
             {selectedIds.length > 0
               ? <span className="text-primary font-medium">Đã chọn {selectedIds.length} ảnh</span>
               : `${assets.length} ảnh trong thư mục`}
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium transition-colors dark:text-gray-200"
+              className="px-3.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs sm:text-sm font-medium transition-colors dark:text-gray-200"
             >
               Hủy
             </button>
             <button
               onClick={handleConfirm}
               disabled={selectedIds.length === 0}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-white text-xs sm:text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Check className="h-4 w-4" />
               {multiple && selectedIds.length > 1 ? `Chọn ${selectedIds.length} ảnh này` : 'Chọn ảnh này'}
             </button>
           </div>
         </div>
+
+        {/* ── Sub-Modals & Dialogs ── */}
+
+        {/* Preview Asset Modal */}
+        {previewAsset && (
+          <div
+            className="fixed inset-0 z-[130] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm"
+            onClick={() => setPreviewAsset(null)}
+          >
+            <div
+              className="bg-white dark:bg-[#2a303d] rounded-xl shadow-2xl overflow-hidden max-w-3xl w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 truncate">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate text-sm sm:text-base">{previewAsset.fileName}</h3>
+                  <button
+                    onClick={() => { setEditingAsset(previewAsset); setRenameFileName(previewAsset.fileName); }}
+                    className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-primary transition-colors"
+                    title="Đổi tên file"
+                  >
+                    <Edit2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <button
+                  onClick={() => setPreviewAsset(null)}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+                ><X className="h-5 w-5" /></button>
+              </div>
+
+              <div className="bg-gray-100/50 dark:bg-gray-900 flex items-center justify-center p-6 relative group">
+                <img
+                  src={previewAsset.url}
+                  alt={previewAsset.fileName}
+                  className="max-w-full max-h-[55vh] object-contain drop-shadow-xl"
+                />
+              </div>
+
+              <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gray-50 dark:bg-gray-800/50">
+                <div className="text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
+                  <p>Kích thước: <span className="font-medium text-gray-700 dark:text-gray-200">{formatBytes(previewAsset.sizeBytes)}</span></p>
+                  <p className="font-mono text-[11px] break-all text-gray-600 dark:text-gray-300">{previewAsset.url}</p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap shrink-0">
+                  {!previewAsset.mimeType?.includes('svg') && (
+                    <button
+                      onClick={() => handleCompressSingle(previewAsset.id)}
+                      disabled={compressing}
+                      className="inline-flex items-center gap-1 rounded-lg bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700 px-3 py-1.5 text-xs font-medium text-white transition-colors shadow-sm disabled:opacity-50"
+                      title="Nén WebP"
+                    >
+                      <Zap className="h-3.5 w-3.5 fill-white" />
+                      {compressing ? "Đang nén..." : "Nén WebP"}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { setSelectedIds([previewAsset.id]); setIsMoveFolderOpen(true); }}
+                    className="inline-flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-xs font-medium bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 transition-colors shadow-sm"
+                  >
+                    <FolderInput className="h-3.5 w-3.5" />
+                    Di chuyển
+                  </button>
+                  <button
+                    onClick={() => handleCopyUrl(previewAsset.url)}
+                    className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90 transition-colors shadow-sm"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    Copy URL
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Create / Edit Folder Dialog */}
+        {(isCreateFolderOpen || editingFolder) && (
+          <div className="fixed inset-0 z-[140] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-5 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+                {editingFolder ? 'Đổi tên thư mục' : 'Tạo thư mục mới'}
+              </h3>
+              <input
+                type="text"
+                value={newFolderName}
+                onChange={e => setNewFolderName(e.target.value)}
+                placeholder="Tên thư mục..."
+                autoFocus
+                className="w-full px-3.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent text-sm text-gray-900 dark:text-white mb-4 focus:ring-2 focus:ring-primary outline-none"
+                onKeyDown={e => e.key === 'Enter' && (editingFolder ? handleRenameFolder() : handleCreateFolder())}
+              />
+              <div className="flex justify-end gap-2.5">
+                <button
+                  onClick={() => { setIsCreateFolderOpen(false); setEditingFolder(null); }}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={editingFolder ? handleRenameFolder : handleCreateFolder}
+                  disabled={!newFolderName.trim()}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {editingFolder ? 'Lưu' : 'Tạo mới'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Upload URL Dialog */}
+        {isUploadUrlOpen && (
+          <div className="fixed inset-0 z-[140] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-5 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+                Upload ảnh từ đường dẫn (URL)
+              </h3>
+              <input
+                type="url"
+                value={uploadUrl}
+                onChange={e => setUploadUrl(e.target.value)}
+                placeholder="https://example.com/image.jpg"
+                autoFocus
+                className="w-full px-3.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent text-sm text-gray-900 dark:text-white mb-2 focus:ring-2 focus:ring-primary outline-none"
+                onKeyDown={e => e.key === 'Enter' && handleUrlUpload()}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Nhập đường dẫn trực tiếp tới hình ảnh hợp lệ.</p>
+              <div className="flex justify-end gap-2.5">
+                <button
+                  onClick={() => setIsUploadUrlOpen(false)}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleUrlUpload}
+                  disabled={uploading || !uploadUrl}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {uploading ? 'Đang tải...' : 'Upload'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Rename Asset Dialog */}
+        {editingAsset && (
+          <div className="fixed inset-0 z-[140] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-5 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+                Đổi tên file
+              </h3>
+              <input
+                type="text"
+                value={renameFileName}
+                onChange={e => setRenameFileName(e.target.value)}
+                placeholder="Tên file mới..."
+                autoFocus
+                className="w-full px-3.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent text-sm text-gray-900 dark:text-white mb-4 focus:ring-2 focus:ring-primary outline-none"
+                onKeyDown={e => e.key === 'Enter' && handleRenameAsset()}
+              />
+              <div className="flex justify-end gap-2.5">
+                <button
+                  onClick={() => setEditingAsset(null)}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleRenameAsset}
+                  disabled={!renameFileName.trim()}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50"
+                >
+                  Lưu
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Move Assets Dialog */}
+        {isMoveFolderOpen && (
+          <div className="fixed inset-0 z-[140] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-5 border border-gray-200 dark:border-gray-700 flex flex-col max-h-[75vh]">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
+                Di chuyển file vào thư mục
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                Chọn thư mục đích cho {selectedIds.length || 1} file:
+              </p>
+              <div className="flex-1 overflow-y-auto space-y-1 mb-4 border border-gray-200 dark:border-gray-700 rounded-lg p-2 max-h-56">
+                <div
+                  onClick={() => handleMoveAssets(null)}
+                  className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-xs text-gray-800 dark:text-gray-200 transition-colors"
+                >
+                  <FolderOpen className="h-4 w-4 text-primary" />
+                  <span className="font-medium">— Thư mục gốc (Tất cả ảnh) —</span>
+                </div>
+                {allFolders.map(f => (
+                  <div
+                    key={f.id}
+                    onClick={() => handleMoveAssets(f.id)}
+                    className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-xs text-gray-800 dark:text-gray-200 transition-colors border-t border-gray-100 dark:border-gray-700/50"
+                  >
+                    <Folder className="h-4 w-4 text-primary/80" />
+                    <span className="truncate">{f.name}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-end gap-2.5 shrink-0">
+                <button
+                  onClick={() => setIsMoveFolderOpen(false)}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  Hủy
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

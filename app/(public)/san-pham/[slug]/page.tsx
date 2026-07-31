@@ -33,17 +33,31 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const id = idFromSlug(slug);
   let dbProduct = null;
 
+  const productInclude = {
+    category: true,
+    brandRef: true,
+    variants: true,
+    policies: true,
+    consumables: {
+      include: {
+        category: true,
+        brandRef: true,
+        variants: true
+      }
+    }
+  };
+
   if (!isNaN(id)) {
     dbProduct = await prisma.product.findFirst({
       where: { id, deletedAt: null },
-      include: { category: true, variants: true, policies: true, consumables: { include: { category: true, variants: true } } }
+      include: productInclude
     });
   }
   
   if (!dbProduct) {
     dbProduct = await prisma.product.findFirst({
       where: { slug, deletedAt: null },
-      include: { category: true, variants: true, policies: true, consumables: { include: { category: true, variants: true } } }
+      include: productInclude
     });
   }
 
@@ -52,8 +66,19 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   }
 
   const defaultVariant = dbProduct.variants[0];
+  const brandName = dbProduct.brand || dbProduct.brandRef?.name || '';
+
+  // Extract and clean images from product & variants
   const rawProductImages = (dbProduct.images as string[] || []).map(cleanUrl).filter(Boolean);
-  const mainImage = rawProductImages[0] || cleanUrl((defaultVariant?.images as string[])?.[0]) || '/placeholder.jpg';
+  const rawVariantImages = (dbProduct.variants || []).flatMap(v => 
+    (v.images as string[] || []).map(cleanUrl).filter(Boolean)
+  );
+
+  // Main image priority: first product image -> first variant image -> placeholder
+  const mainImage = rawProductImages[0] || rawVariantImages[0] || '/placeholder.jpg';
+  
+  // All combined deduplicated images
+  const allImages = Array.from(new Set([...rawProductImages, ...rawVariantImages, mainImage].filter(Boolean)));
 
   const product = {
     id: dbProduct.id,
@@ -62,13 +87,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     sku: defaultVariant?.sku || '',
     category: dbProduct.category?.name || 'Chưa phân loại',
     categorySlug: dbProduct.category?.slug || '',
-    brand: dbProduct.brand || 'HP',
+    brand: brandName,
     price: defaultVariant?.price || 0,
     originalPrice: defaultVariant?.originalPrice,
     rating: 5,
     reviews: 120,
     image: mainImage,
-    images: rawProductImages.length > 0 ? rawProductImages : [mainImage],
+    images: allImages,
     stock: defaultVariant?.stockQuantity || 0,
     description: dbProduct.description,
     productType: dbProduct.productType,
@@ -84,30 +109,37 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     rentalTerms: dbProduct.rentalTerms,
   };
 
-  // Fetch related products and settings
+  // Build brand query condition
+  const brandWhere = dbProduct.brandId 
+    ? { OR: [{ brandId: dbProduct.brandId }, ...(dbProduct.brand ? [{ brand: dbProduct.brand }] : [])] }
+    : (dbProduct.brand ? { brand: dbProduct.brand } : null);
+
+  // Fetch related products, global policies, and settings
   const categoryId = dbProduct.categoryId;
   
-  const [similarDb, sameBrandDb, relatedDb, settingsData] = await Promise.all([
+  const [similarDb, sameBrandDb, relatedDb, globalPoliciesDb, settingsData] = await Promise.all([
     // Similar products (same category)
     prisma.product.findMany({
       where: { categoryId: categoryId, id: { not: dbProduct.id }, isActive: true, deletedAt: null },
-      include: { category: true, variants: true },
+      include: { category: true, brandRef: true, variants: true },
       take: 4
     }),
     // Same brand
-    prisma.product.findMany({
-      where: { brand: dbProduct.brand, id: { not: dbProduct.id }, isActive: true, deletedAt: null },
-      include: { category: true, variants: true },
+    brandWhere ? prisma.product.findMany({
+      where: { ...brandWhere, id: { not: dbProduct.id }, isActive: true, deletedAt: null },
+      include: { category: true, brandRef: true, variants: true },
       take: 4,
       orderBy: { id: 'desc' }
-    }),
-    // Related products (random or just some latest)
+    }) : Promise.resolve([]),
+    // Related products (latest active products)
     prisma.product.findMany({
       where: { id: { not: dbProduct.id }, isActive: true, deletedAt: null },
-      include: { category: true, variants: true },
+      include: { category: true, brandRef: true, variants: true },
       take: 4,
       orderBy: { createdAt: 'desc' }
     }),
+    // Global Policies
+    prisma.productPolicy.findMany(),
     // Settings
     prisma.setting.findMany()
   ]);
@@ -118,28 +150,32 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   });
 
   const mapProducts = (list: any[]) => list.map(p => {
-    const v = p.variants[0];
+    const v = p.variants?.[0];
+    const rawImgs = (p.images as string[] || []).map(cleanUrl).filter(Boolean);
+    const rawVarImgs = (v?.images as string[] || []).map(cleanUrl).filter(Boolean);
+    const mainImg = rawImgs[0] || rawVarImgs[0] || '/placeholder.jpg';
     return {
       id: p.id,
       name: p.name,
       slug: p.slug,
       category: p.category?.name || 'Khác',
-      brand: p.brand,
+      brand: p.brand || p.brandRef?.name || '',
       price: v?.price || 0,
       originalPrice: v?.originalPrice,
       rating: 5,
       reviews: 12,
-      image: (v?.images as string[])?.[0] || '/placeholder.jpg',
+      image: mainImg,
       stock: v?.stockQuantity || 0,
       isContactPrice: p.isContactPrice,
       productType: p.productType,
-    }
+    };
   });
 
   return (
     <ProductDetailClient 
       product={product} 
       settings={settingsMap}
+      globalPolicies={globalPoliciesDb}
       similarProducts={mapProducts(similarDb)} 
       sameBrandProducts={mapProducts(sameBrandDb)} 
       relatedProducts={mapProducts(relatedDb)} 
@@ -147,3 +183,4 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     />
   );
 }
+

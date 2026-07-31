@@ -17,6 +17,7 @@ import { cleanUrl } from '@/lib/utils';
 export default function ProductDetailClient({ 
   product, 
   settings = {},
+  globalPolicies = [],
   similarProducts = [], 
   sameBrandProducts = [], 
   relatedProducts = [], 
@@ -24,6 +25,7 @@ export default function ProductDetailClient({
 }: { 
   product: any, 
   settings?: Record<string, string>,
+  globalPolicies?: any[],
   similarProducts?: any[], 
   sameBrandProducts?: any[], 
   relatedProducts?: any[], 
@@ -110,12 +112,21 @@ export default function ProductDetailClient({
     .map((img: string) => cleanUrl(img))
     .filter(Boolean);
 
-  const gallery = cleanProductImages.length > 0
-    ? cleanProductImages
-    : (cleanVariantImages.length > 0 ? cleanVariantImages : [cleanUrl(product.image) || '/placeholder.jpg']);
+  // Dynamic gallery: variant images first (if available for selected variant), combined with main product images
+  const gallery = Array.from(
+    new Set([
+      ...cleanVariantImages,
+      ...cleanProductImages,
+      cleanUrl(product.image)
+    ].filter(Boolean))
+  );
+
+  if (gallery.length === 0) {
+    gallery.push('/placeholder.jpg');
+  }
 
   // Add state for image gallery
-  const [activeImage, setActiveImage] = useState(() => gallery[0] || cleanUrl(product.image) || '/placeholder.jpg');
+  const [activeImage, setActiveImage] = useState(() => gallery[0]);
   const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
   const [isZooming, setIsZooming] = useState(false);
 
@@ -124,10 +135,12 @@ export default function ProductDetailClient({
   const [activeRelatedTab, setActiveRelatedTab] = useState(product.category === 'Máy in' ? 'consumables' : 'similar');
 
   useEffect(() => {
-    if (gallery.length > 0 && !gallery.includes(activeImage)) {
+    if (cleanVariantImages.length > 0) {
+      setActiveImage(cleanVariantImages[0]);
+    } else if (gallery.length > 0 && !gallery.includes(activeImage)) {
       setActiveImage(gallery[0]);
     }
-  }, [selectedVariantId, gallery]);
+  }, [selectedVariantId]);
 
   const { addToCart } = useCart();
 
@@ -549,10 +562,13 @@ export default function ProductDetailClient({
 
             {/* Features / Policies */}
             <div className="grid grid-cols-2 gap-2 mt-auto mb-0">
-              {(product.policies && product.policies.length > 0 ? product.policies : [
-                { id: 1, icon: 'Truck', title: 'Giao hàng Miễn phí', description: 'Cho đơn hàng trên 500k' },
-                { id: 2, icon: 'ShieldCheck', title: 'Bảo hành Chính hãng', description: 'Tối thiểu 12 tháng' }
-              ]).map((policy: any) => {
+              {((product.policies && product.policies.length > 0)
+                ? product.policies
+                : (globalPolicies && globalPolicies.length > 0 ? globalPolicies : [
+                    { id: 1, icon: 'Truck', title: 'Giao hàng Miễn phí', description: 'Cho đơn hàng trên 500k' },
+                    { id: 2, icon: 'ShieldCheck', title: 'Bảo hành Chính hãng', description: 'Tối thiểu 12 tháng' }
+                  ])
+              ).map((policy: any) => {
                 const Icon = (LucideIcons as any)[policy.icon] || LucideIcons.CheckCircle;
                 return (
                   <div key={policy.id} className="flex items-center gap-3 p-3 bg-background border border-border rounded-xl">
@@ -627,20 +643,20 @@ export default function ProductDetailClient({
                         </tr>
                       ))
                     ) : (
-                      <>
-                        <tr className="border-b border-border last:border-0 hover:bg-gray-50/50 transition-colors">
-                          <td className="py-3.5 px-6 bg-gray-50/80 font-medium text-gray-600 w-1/3 md:w-1/4 lg:w-1/5 border-r border-border">Bảo hành</td>
-                          <td className="py-3.5 px-6 text-gray-900 font-medium">12 tháng</td>
+                      [
+                        { label: 'Tên sản phẩm', value: product.name },
+                        product.brand ? { label: 'Thương hiệu', value: product.brand } : null,
+                        product.category ? { label: 'Danh mục', value: typeof product.category === 'string' ? product.category : product.category.name } : null,
+                        (currentVariant?.sku || product.sku) ? { label: 'Mã SKU', value: currentVariant?.sku || product.sku } : null,
+                        { label: 'Loại hình', value: isRental ? 'Máy cho thuê' : 'Sản phẩm kinh doanh' },
+                        { label: 'Tình trạng', value: stock > 0 ? 'Còn hàng trong kho' : 'Hết hàng (Liên hệ)' },
+                        { label: 'Bảo hành', value: '12 tháng chính hãng' }
+                      ].filter(Boolean).map((spec: any, idx: number) => (
+                        <tr key={idx} className="border-b border-border last:border-0 hover:bg-gray-50/50 transition-colors">
+                          <td className="py-3.5 px-6 bg-gray-50/80 font-medium text-gray-600 w-1/3 md:w-1/4 lg:w-1/5 border-r border-border">{spec.label}</td>
+                          <td className="py-3.5 px-6 text-gray-900 font-medium">{spec.value}</td>
                         </tr>
-                        <tr className="border-b border-border last:border-0 hover:bg-gray-50/50 transition-colors">
-                          <td className="py-3.5 px-6 bg-gray-50/80 font-medium text-gray-600 w-1/3 md:w-1/4 lg:w-1/5 border-r border-border">Tính năng</td>
-                          <td className="py-3.5 px-6 text-gray-900 font-medium">Đang cập nhật (Printing, Scanning, Copying...)</td>
-                        </tr>
-                        <tr className="border-b border-border last:border-0 hover:bg-gray-50/50 transition-colors">
-                          <td className="py-3.5 px-6 bg-gray-50/80 font-medium text-gray-600 w-1/3 md:w-1/4 lg:w-1/5 border-r border-border">Tốc độ</td>
-                          <td className="py-3.5 px-6 text-gray-900 font-medium">Tiêu chuẩn</td>
-                        </tr>
-                      </>
+                      ))
                     )}
                   </tbody>
                 </table>

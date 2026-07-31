@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { cleanUrl } from '@/lib/utils'
 
 export async function GET(
   request: Request,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const { slug } = await params;
     const product = await prisma.product.findUnique({
-      where: { slug: params.slug },
+      where: { slug },
       include: {
         category: true,
         variants: true,
@@ -19,7 +21,10 @@ export async function GET(
     }
 
     const defaultVariant = product.variants[0]
-    
+    const rawImgs = (product.images as string[] || []).map(cleanUrl).filter(Boolean);
+    const rawVarImgs = (defaultVariant?.images as string[] || []).map(cleanUrl).filter(Boolean);
+    const mainImg = rawImgs[0] || rawVarImgs[0] || '';
+
     // Map data
     const formattedProduct = {
       id: product.id,
@@ -31,7 +36,7 @@ export async function GET(
       originalPrice: defaultVariant?.originalPrice,
       rating: 5,
       reviews: 120,
-      image: (defaultVariant?.images as string[])?.[0] || '',
+      image: mainImg,
       stock: defaultVariant?.stockQuantity || 0,
       description: product.description,
       productType: product.productType,
