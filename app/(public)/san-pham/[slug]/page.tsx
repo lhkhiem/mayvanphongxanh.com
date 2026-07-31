@@ -9,11 +9,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   let dbProduct = null;
   
   if (!isNaN(id)) {
-    dbProduct = await prisma.product.findFirst({ where: { id, deletedAt: null } });
+    dbProduct = await prisma.product.findFirst({ where: { id, deletedAt: null, isActive: true } });
   }
   
   if (!dbProduct) {
-    dbProduct = await prisma.product.findFirst({ where: { slug, deletedAt: null } });
+    dbProduct = await prisma.product.findFirst({ where: { slug, deletedAt: null, isActive: true } });
   }
 
   if (!dbProduct) {
@@ -39,6 +39,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     variants: true,
     policies: true,
     consumables: {
+      where: { isActive: true, deletedAt: null },
       include: {
         category: true,
         brandRef: true,
@@ -49,14 +50,14 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   if (!isNaN(id)) {
     dbProduct = await prisma.product.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, isActive: true },
       include: productInclude
     });
   }
   
   if (!dbProduct) {
     dbProduct = await prisma.product.findFirst({
-      where: { slug, deletedAt: null },
+      where: { slug, deletedAt: null, isActive: true },
       include: productInclude
     });
   }

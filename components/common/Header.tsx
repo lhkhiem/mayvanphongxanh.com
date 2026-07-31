@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import {
   ShoppingCart, Search, Menu, X, Phone, Mail, Clock,
   ChevronDown, ArrowRightLeft, Tag, Headphones, LayoutGrid, ArrowRight
@@ -15,12 +16,11 @@ import { useCompare } from '@/context/CompareContext';
 import { slugify, productSlug } from '@/lib/utils';
 import { useSettings } from '@/context/SettingsContext';
 
-
-
 // ──────────────────────────────────────────
 // Inline SearchBar (full-width, with category select)
 // ──────────────────────────────────────────
 function InlineSearchBar({ categories = [] }: { categories?: any[] }) {
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [isFocused, setIsFocused] = useState(false);
@@ -29,6 +29,13 @@ function InlineSearchBar({ categories = [] }: { categories?: any[] }) {
   const ref = useRef<HTMLDivElement>(null);
 
   const catList = ['Tất cả', ...categories.map(c => c.name)];
+
+  const handleSearchSubmit = () => {
+    if (query.trim()) {
+      setIsFocused(false);
+      router.push(`/tim-kiem?q=${encodeURIComponent(query.trim())}`);
+    }
+  };
 
   useEffect(() => {
     if (query.trim() === '') { setResults([]); return; }
@@ -93,13 +100,21 @@ function InlineSearchBar({ categories = [] }: { categories?: any[] }) {
           value={query}
           onChange={e => setQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              handleSearchSubmit();
+            }
+          }}
         />
         {query && (
           <button onClick={() => setQuery('')} className="px-2 text-gray-400 hover:text-gray-600">
             <X className="w-4 h-4" />
           </button>
         )}
-        <button className="px-3 sm:px-4 bg-primary hover:bg-primary/90 text-white transition-colors flex items-center gap-1.5 text-sm font-medium">
+        <button
+          onClick={handleSearchSubmit}
+          className="px-3 sm:px-4 bg-primary hover:bg-primary/90 text-white transition-colors flex items-center gap-1.5 text-sm font-medium"
+        >
           <Search className="w-4 h-4" />
           <span className="hidden sm:inline">Tìm</span>
         </button>

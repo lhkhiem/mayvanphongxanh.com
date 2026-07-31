@@ -5,6 +5,7 @@ import { cleanUrl } from '@/lib/utils'
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const categoryId = searchParams.get('category')
+  const categoryName = searchParams.get('categoryName')
   const limit = searchParams.get('limit')
   const search = searchParams.get('search')
   const ids = searchParams.get('ids')
@@ -13,9 +14,18 @@ export async function GET(request: Request) {
     const products = await prisma.product.findMany({
       where: {
         isActive: true,
+        deletedAt: null,
         ...(categoryId ? { categoryId: parseInt(categoryId) } : {}),
-        ...(search ? { name: { contains: search, mode: 'insensitive' } } : {}),
-        ...(ids ? { id: { in: ids.split(',').map(id => parseInt(id)) } } : {})
+        ...(categoryName ? { category: { name: categoryName } } : {}),
+        ...(search ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { brand: { contains: search, mode: 'insensitive' } },
+            { brandRef: { name: { contains: search, mode: 'insensitive' } } },
+            { variants: { some: { sku: { contains: search, mode: 'insensitive' } } } }
+          ]
+        } : {}),
+        ...(ids ? { id: { in: ids.split(',').map(id => parseInt(id)).filter(n => !isNaN(n)) } } : {})
       },
       include: {
         category: true,

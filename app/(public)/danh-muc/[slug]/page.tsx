@@ -5,7 +5,7 @@ import { cleanUrl } from '@/lib/utils';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const category = await prisma.category.findUnique({ where: { slug } });
+  const category = await prisma.category.findFirst({ where: { slug, isActive: true } });
   
   if (!category) {
     return { title: 'Không tìm thấy danh mục' };
@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   
-  const category = await prisma.category.findUnique({ where: { slug } });
+  const category = await prisma.category.findFirst({ where: { slug, isActive: true } });
   
   if (!category) {
     notFound();

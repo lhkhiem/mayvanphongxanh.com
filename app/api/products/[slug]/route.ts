@@ -16,7 +16,7 @@ export async function GET(
       }
     })
 
-    if (!product) {
+    if (!product || !product.isActive || product.deletedAt !== null) {
       return NextResponse.json({ error: 'Không tìm thấy sản phẩm' }, { status: 404 })
     }
 

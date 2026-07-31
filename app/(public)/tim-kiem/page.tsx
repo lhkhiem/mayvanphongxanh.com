@@ -16,10 +16,15 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     where: { 
       isActive: true,
       deletedAt: null,
-      name: { contains: keyword, mode: 'insensitive' }
+      OR: [
+        { name: { contains: keyword, mode: 'insensitive' } },
+        { brand: { contains: keyword, mode: 'insensitive' } },
+        { brandRef: { name: { contains: keyword, mode: 'insensitive' } } },
+        { variants: { some: { sku: { contains: keyword, mode: 'insensitive' } } } },
+      ]
     },
     include: { variants: true, category: true, brandRef: true },
-    take: 12
+    take: 24
   }) : [];
 
   // Tìm kiếm bài viết tin tức
@@ -29,10 +34,11 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       OR: [
         { title: { contains: keyword, mode: 'insensitive' } },
         { excerpt: { contains: keyword, mode: 'insensitive' } },
+        { content: { contains: keyword, mode: 'insensitive' } },
       ]
     },
     include: { category: true },
-    take: 6
+    take: 12
   }) : [];
 
   const searchResults = dbProducts.map(p => {
