@@ -113,11 +113,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     (v.images as string[] || []).map(cleanUrl).filter(Boolean)
   );
 
-  // Main image priority: first product image -> first variant image -> placeholder
-  const mainImage = rawProductImages[0] || rawVariantImages[0] || '/placeholder.jpg';
-  
-  // All combined deduplicated images
-  const allImages = Array.from(new Set([...rawProductImages, ...rawVariantImages, mainImage].filter(Boolean)));
+  // If Admin uploaded product-level images, prioritize them!
+  // Fall back to variant images only if product.images is empty.
+  const allImages = rawProductImages.length > 0
+    ? rawProductImages
+    : (rawVariantImages.length > 0 ? Array.from(new Set(rawVariantImages)) : ['/placeholder.jpg']);
+
+  const mainImage = allImages[0] || '/placeholder.jpg';
 
   const product = {
     id: dbProduct.id,

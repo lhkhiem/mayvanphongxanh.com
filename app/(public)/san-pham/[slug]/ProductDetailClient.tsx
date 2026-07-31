@@ -113,14 +113,23 @@ export default function ProductDetailClient({
     .map((img: string) => cleanUrl(img))
     .filter(Boolean);
 
-  // Dynamic gallery: variant images first (if available for selected variant), combined with main product images
-  const gallery = Array.from(
-    new Set([
-      ...cleanVariantImages,
-      ...cleanProductImages,
-      cleanUrl(product.image)
-    ].filter(Boolean))
-  );
+  // Dynamic gallery logic:
+  // 1. If Admin uploaded product-level images (cleanProductImages), use cleanProductImages as main gallery.
+  // 2. If the product has variant-specific images AND product-level images are empty, fallback to cleanVariantImages.
+  // 3. If selected variant has distinct custom images (different from product images), merge them appropriately.
+  let gallery: string[] = [];
+  if (cleanProductImages.length > 0) {
+    const isDistinctVariant = currentVariant && currentVariant.name && currentVariant.name !== 'Mặc định';
+    if (isDistinctVariant && cleanVariantImages.length > 0) {
+      gallery = Array.from(new Set([...cleanVariantImages, ...cleanProductImages]));
+    } else {
+      gallery = cleanProductImages;
+    }
+  } else if (cleanVariantImages.length > 0) {
+    gallery = cleanVariantImages;
+  } else {
+    gallery = [cleanUrl(product.image) || '/placeholder.jpg'];
+  }
 
   if (gallery.length === 0) {
     gallery.push('/placeholder.jpg');
