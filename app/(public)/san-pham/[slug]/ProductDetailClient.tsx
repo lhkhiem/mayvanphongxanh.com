@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { QuoteTemplate } from '@/components/print/QuoteTemplate';
 import { ProductCard } from '@/components/products/ProductCard';
+import { ShareButtons } from '@/components/blog/share-buttons';
 
 import { cleanUrl } from '@/lib/utils';
 
@@ -282,9 +283,12 @@ export default function ProductDetailClient({
 
           {/* Product Info */}
           <div className="md:col-span-7 lg:col-span-7 flex flex-col">
-            <h1 className="text-2xl font-bold text-foreground mb-4 leading-tight">
-              {product.name}
-            </h1>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <h1 className="text-2xl font-bold text-foreground leading-tight">
+                {product.name}
+              </h1>
+              <ShareButtons title={product.name} excerpt={product.name} />
+            </div>
 
             <div className="mb-4 bg-secondary/20 rounded-2xl p-4 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>

@@ -9,11 +9,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   let dbProduct = null;
   
   if (!isNaN(id)) {
-    dbProduct = await prisma.product.findFirst({ where: { id, deletedAt: null, isActive: true } });
+    dbProduct = await prisma.product.findFirst({ where: { id, deletedAt: null, isActive: true }, include: { variants: true } });
   }
   
   if (!dbProduct) {
-    dbProduct = await prisma.product.findFirst({ where: { slug, deletedAt: null, isActive: true } });
+    dbProduct = await prisma.product.findFirst({ where: { slug, deletedAt: null, isActive: true }, include: { variants: true } });
   }
 
   if (!dbProduct) {
@@ -22,9 +22,47 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     };
   }
   
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mayvanphongxanh.com';
+  const title = `${dbProduct.name} | Máy Văn Phòng Xanh`;
+  const rawDesc = dbProduct.description ? dbProduct.description.replace(/<[^>]+>/g, '').trim() : '';
+  const description = rawDesc.slice(0, 160) || `Mua ${dbProduct.name} chính hãng giá tốt nhất tại Máy Văn Phòng Xanh.`;
+  
+  const rawImages = (dbProduct.images as string[] || []).map(cleanUrl).filter(Boolean);
+  const variantImgs = (dbProduct.variants || []).flatMap(v => (v.images as string[] || []).map(cleanUrl).filter(Boolean));
+  let imageRel = rawImages[0] || variantImgs[0] || '/placeholder.jpg';
+  
+  const absoluteImageUrl = imageRel.startsWith('http://') || imageRel.startsWith('https://')
+    ? imageRel
+    : `${baseUrl}${imageRel.startsWith('/') ? '' : '/'}${imageRel}`;
+
+  const pageUrl = `${baseUrl}/san-pham/${dbProduct.slug || slug}`;
+
   return {
-    title: `${dbProduct.name} | Máy Văn Phòng Xanh`,
-    description: dbProduct.description,
+    metadataBase: new URL(baseUrl),
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName: 'Máy Văn Phòng Xanh',
+      type: 'website',
+      images: [
+        {
+          url: absoluteImageUrl,
+          width: 800,
+          height: 600,
+          alt: dbProduct.name,
+        },
+      ],
+      locale: 'vi_VN',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [absoluteImageUrl],
+    },
   };
 }
 

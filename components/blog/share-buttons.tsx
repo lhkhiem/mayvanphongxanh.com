@@ -5,29 +5,34 @@ import { Share2, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 
 interface ShareButtonsProps {
-  title: string;
+  title?: string;
   excerpt?: string;
-  slug: string;
+  slug?: string;
+  url?: string;
+  className?: string;
 }
 
-export function ShareButtons({ title, excerpt, slug }: ShareButtonsProps) {
+export function ShareButtons({ title, excerpt, slug, url, className = "" }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
   const [hasNativeShare, setHasNativeShare] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setShareUrl(`${window.location.origin}/tin-tuc/${slug}`);
+      const fullUrl = url || (slug ? `${window.location.origin}/tin-tuc/${slug}` : window.location.href);
+      setShareUrl(fullUrl);
       setHasNativeShare(!!navigator.share);
     }
-  }, [slug]);
+  }, [slug, url]);
+
+  const getTargetUrl = () => shareUrl || (typeof window !== "undefined" ? window.location.href : "");
 
   const handleCopyLink = async () => {
     try {
-      const urlToCopy = shareUrl || window.location.href;
+      const urlToCopy = getTargetUrl();
       await navigator.clipboard.writeText(urlToCopy);
       setCopied(true);
-      toast.success("Đã sao chép liên kết bài viết!");
+      toast.success("Đã sao chép liên kết!");
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       toast.error("Không thể sao chép liên kết");
@@ -35,22 +40,58 @@ export function ShareButtons({ title, excerpt, slug }: ShareButtonsProps) {
   };
 
   const handleFacebookShare = () => {
-    const url = encodeURIComponent(shareUrl || window.location.href);
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank", "width=600,height=500");
+    const targetUrl = encodeURIComponent(getTargetUrl());
+    const width = 600;
+    const height = 500;
+    const left = typeof window !== "undefined" ? Math.max(0, Math.floor(window.screen.width / 2 - width / 2)) : 0;
+    const top = typeof window !== "undefined" ? Math.max(0, Math.floor(window.screen.height / 2 - height / 2)) : 0;
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${targetUrl}`,
+      "_blank",
+      `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes`
+    );
   };
 
-  const handleZaloShare = () => {
-    const url = encodeURIComponent(shareUrl || window.location.href);
-    window.open(`https://zalo.me/share?url=${url}`, "_blank", "width=600,height=500");
+  const handleZaloShare = async () => {
+    const targetUrl = getTargetUrl();
+    const encodedUrl = encodeURIComponent(targetUrl);
+
+    // Tự động sao chép link để tiện lợi khi gửi
+    try {
+      await navigator.clipboard.writeText(targetUrl);
+    } catch (e) {
+      // Ignore clipboard error
+    }
+
+    // Link chia sẻ chuẩn của Zalo Social Plugin (mở khung chọn bạn bè / đăng nhật ký)
+    const zaloShareUrl = `https://sp.zalo.me/plugins/share?url=${encodedUrl}`;
+
+    const width = 600;
+    const height = 650;
+    const left = typeof window !== "undefined" ? Math.max(0, Math.floor(window.screen.width / 2 - width / 2)) : 0;
+    const top = typeof window !== "undefined" ? Math.max(0, Math.floor(window.screen.height / 2 - height / 2)) : 0;
+
+    const popup = window.open(
+      zaloShareUrl,
+      "zalo-share-dialog",
+      `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes`
+    );
+
+    if (popup) {
+      toast.success("Đã mở cửa sổ Zalo! Bạn có thể chọn gửi bạn bè hoặc đăng nhật ký.");
+    } else {
+      window.open(zaloShareUrl, "_blank");
+      toast.success("Đã sao chép liên kết & mở Zalo!");
+    }
   };
 
   const handleNativeShare = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title,
-          text: excerpt || title,
-          url: shareUrl || window.location.href,
+          title: title || "Chia sẻ trang này",
+          text: excerpt || title || "",
+          url: getTargetUrl(),
         });
       } catch (err) {
         // User cancelled share
@@ -59,7 +100,7 @@ export function ShareButtons({ title, excerpt, slug }: ShareButtonsProps) {
   };
 
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
+    <div className={`flex items-center gap-1.5 flex-wrap ${className}`}>
       <span className="text-xs font-semibold text-gray-500 mr-1 flex items-center gap-1 shrink-0">
         <Share2 className="w-3.5 h-3.5 text-primary" /> Chia sẻ:
       </span>
@@ -81,7 +122,7 @@ export function ShareButtons({ title, excerpt, slug }: ShareButtonsProps) {
         type="button"
         onClick={handleZaloShare}
         className="w-8 h-8 rounded-full bg-[#0068ff] hover:bg-[#005bd9] text-white font-extrabold text-xs flex items-center justify-center transition-all shadow-sm active:scale-90 cursor-pointer shrink-0"
-        title="Chia sẻ qua Zalo"
+        title="Chia sẻ qua Zalo (Gửi bạn bè / Đăng nhật ký)"
       >
         <span className="leading-none text-[11px] tracking-tight">Zalo</span>
       </button>
@@ -95,7 +136,7 @@ export function ShareButtons({ title, excerpt, slug }: ShareButtonsProps) {
             ? "bg-emerald-50 border-emerald-300 text-emerald-600"
             : "bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-600"
         }`}
-        title={copied ? "Đã sao chép liên kết!" : "Sao chép liên kết bài viết"}
+        title={copied ? "Đã sao chép liên kết!" : "Sao chép liên kết"}
       >
         {copied ? (
           <Check className="w-4 h-4 text-emerald-600" />
@@ -118,3 +159,4 @@ export function ShareButtons({ title, excerpt, slug }: ShareButtonsProps) {
     </div>
   );
 }
+

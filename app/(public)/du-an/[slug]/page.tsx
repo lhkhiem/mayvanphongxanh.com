@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db';
 import { idFromSlug, productSlug } from '@/lib/utils';
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
+import { ShareButtons } from '@/components/blog/share-buttons';
 import { Building2, ArrowLeft, Share2, MapPin, CheckCircle2, ChevronRight, Calendar } from 'lucide-react';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
   
   if (!project) {
-    project = await prisma.project.findUnique({ where: { slug } });
+    project = await prisma.project.findFirst({ where: { title: { contains: slug.replace(/-/g, ' ') } } });
   }
 
   if (!project) {
@@ -26,9 +27,49 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: 'Không tìm thấy dự án',
     };
   }
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mayvanphongxanh.com';
+  const title = `${project.title} | Máy Văn Phòng Xanh`;
+  const rawDesc = project.description ? project.description.replace(/<[^>]+>/g, '').trim() : '';
+  const description = rawDesc.slice(0, 160) || `Dự án ${project.title} thực hiện bởi Máy Văn Phòng Xanh`;
+
+  let absoluteImageUrl = `${baseUrl}/placeholder.jpg`;
+  if (project.image) {
+    if (project.image.startsWith('http://') || project.image.startsWith('https://')) {
+      absoluteImageUrl = project.image;
+    } else {
+      absoluteImageUrl = `${baseUrl}${project.image.startsWith('/') ? '' : '/'}${project.image}`;
+    }
+  }
+
+  const pageUrl = `${baseUrl}/du-an/${slug}`;
+
   return {
-    title: `${project.title} | Máy Văn Phòng Xanh`,
-    description: project.description || '',
+    metadataBase: new URL(baseUrl),
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName: 'Máy Văn Phòng Xanh',
+      type: 'article',
+      images: [
+        {
+          url: absoluteImageUrl,
+          width: 1200,
+          height: 630,
+          alt: project.title,
+        },
+      ],
+      locale: 'vi_VN',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [absoluteImageUrl],
+    },
   };
 }
 
@@ -42,12 +83,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   }
   
   if (!project) {
-    project = await prisma.project.findUnique({ where: { slug } });
+    project = await prisma.project.findFirst({ where: { title: { contains: slug.replace(/-/g, ' ') } } });
   }
   
   if (!project) {
     notFound();
   }
+
+  const projectImage = project.image || '/placeholder.jpg';
 
   const relatedProjects = await prisma.project.findMany({
     where: { isActive: true, id: { not: project.id } },
@@ -64,7 +107,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         <div className="relative bg-[#0d2a45] text-white pt-24 pb-16 lg:pt-32 lg:pb-24 overflow-hidden">
           <div className="absolute inset-0 opacity-20">
             <Image 
-              src={project.image} 
+              src={projectImage} 
               alt="Background" 
               fill 
               className="object-cover blur-sm"
@@ -118,7 +161,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <div className="w-full lg:w-[70%]">
               <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8 md:p-12 mb-8">
                 <div className="relative w-full h-[300px] md:h-[450px] rounded-lg overflow-hidden mb-10">
-                  <Image src={project.image} alt={project.title} fill className="object-cover" />
+                  <Image src={projectImage} alt={project.title} fill className="object-cover" />
                 </div>
                 
                 <div className="prose prose-lg max-w-none text-gray-700">
@@ -154,10 +197,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   </div>
                 </div>
                 
-                <div className="mt-6 pt-6 border-t border-gray-100">
-                  <button className="flex items-center justify-center w-full bg-[#0d2a45] hover:bg-primary text-white font-bold py-3 px-4 rounded transition-colors">
-                    <Share2 className="w-4 h-4 mr-2" /> Chia sẻ dự án
-                  </button>
+                <div className="mt-6 pt-6 border-t border-gray-100 flex items-center justify-between">
+                  <ShareButtons title={project.title} excerpt={project.title} />
                 </div>
               </div>
 
@@ -190,7 +231,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               <div key={p.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow group flex flex-col h-full">
                 <div className="relative h-48 w-full overflow-hidden">
                   <Image 
-                    src={p.image} 
+                    src={p.image || '/placeholder.jpg'} 
                     alt={p.title} 
                     fill 
                     className="object-cover group-hover:scale-105 transition-transform duration-500" 
