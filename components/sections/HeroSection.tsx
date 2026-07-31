@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
-import { slugify } from '@/lib/utils';
+import { slugify, cleanUrl } from '@/lib/utils';
 
 // ─────────────────────────────────────────────────
 // Trust bar items
@@ -15,11 +15,6 @@ const trustItems = [
   { icon: '🛠️', label: 'Hỗ trợ kỹ thuật' },
   { icon: '🧾', label: 'Xuất VAT đầy đủ' },
 ];
-
-const cleanUrl = (url?: string) => {
-  if (!url) return '';
-  return url.replace(/^https?:\/\/(0\.0\.0\.0|localhost|127\.0\.0\.1)(:\d+)?/i, '');
-};
 
 // ─────────────────────────────────────────────────
 // Sidebar Category Item

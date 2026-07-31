@@ -61,10 +61,12 @@ export function ProductForm({
   initialData,
   categories,
   brands = [],
+  availablePolicies: initialAvailablePolicies = [],
 }: {
   initialData?: any;
   categories: any[];
   brands?: any[];
+  availablePolicies?: any[];
 }) {
   const router = useRouter();
   const isEditing = !!initialData?.id;
@@ -151,10 +153,14 @@ export function ProductForm({
   ];
 
   // Fetch policies
-  const [availablePolicies, setAvailablePolicies] = useState<any[]>([]);
+  const [availablePolicies, setAvailablePolicies] = useState<any[]>(initialAvailablePolicies);
   useEffect(() => {
-    getPolicies().then(setAvailablePolicies).catch(console.error);
-  }, []);
+    if (initialAvailablePolicies.length > 0) {
+      setAvailablePolicies(initialAvailablePolicies);
+    } else {
+      getPolicies().then((res: any) => setAvailablePolicies(res.data || [])).catch(console.error);
+    }
+  }, [initialAvailablePolicies]);
 
   // Fetch consumables
   useEffect(() => {
@@ -949,14 +955,59 @@ export function ProductForm({
         {tab === 'seo' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] p-5 shadow-sm space-y-4">
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700">Cài đặt SEO</h2>
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700">Cài đặt SEO & Chia sẻ mạng xã hội</h2>
               <div>
-                <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">SEO Title</label>
-                <input type="text" value={form.metaTitle} onChange={(e) => setForm({ ...form, metaTitle: e.target.value })} maxLength={60} placeholder={form.name || "Tiêu đề trang"} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" />
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">SEO Title (Tiêu đề chia sẻ)</label>
+                  <span className="text-xs text-gray-400">{(form.metaTitle || '').length}/60</span>
+                </div>
+                <input type="text" value={form.metaTitle || ''} onChange={(e) => setForm({ ...form, metaTitle: e.target.value })} maxLength={60} placeholder={form.name || "Tiêu đề trang chia sẻ..."} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" />
+                <p className="text-xs text-gray-400 mt-1">Khuyên dùng 50 - 60 ký tự. Tự động lấy tên sản phẩm nếu để trống.</p>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Meta Description</label>
-                <textarea value={form.metaDescription} onChange={(e) => setForm({ ...form, metaDescription: e.target.value })} maxLength={160} rows={4} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm resize-none" />
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Meta Description (Mô tả chia sẻ)</label>
+                  <span className="text-xs text-gray-400">{(form.metaDescription || '').length}/160</span>
+                </div>
+                <textarea value={form.metaDescription || ''} onChange={(e) => setForm({ ...form, metaDescription: e.target.value })} maxLength={160} rows={4} placeholder="Nhập mô tả thu hút khi gửi liên kết qua Zalo, Facebook..." className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm resize-none" />
+                <p className="text-xs text-gray-400 mt-1">Khuyên dùng 120 - 160 ký tự. Hiển thị dưới dạng tóm tắt liên kết khi gửi qua Zalo / Facebook.</p>
+              </div>
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                <LucideIcons.Info className="w-4 h-4 shrink-0 mt-0.5" />
+                <span><strong>Hình ảnh chia sẻ:</strong> Tự động lấy <strong>Ảnh đại diện sản phẩm</strong> (ảnh đầu tiên trong tab Hình ảnh).</span>
+              </div>
+            </div>
+
+            {/* Social Share Live Preview Card */}
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] p-5 shadow-sm space-y-4">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
+                <LucideIcons.Share2 className="w-4 h-4 text-primary" /> Xem trước hiển thị khi chia sẻ (Zalo / Facebook)
+              </h2>
+              
+              <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-800/40 shadow-sm">
+                <div className="relative aspect-video w-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                  {(form.images && form.images.length > 0 && form.images[0]) ? (
+                    <img src={cleanUrl(form.images[0]) || '/placeholder.jpg'} alt="SEO Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="flex flex-col items-center gap-1 text-gray-400">
+                      <LucideIcons.Image className="w-8 h-8 opacity-40" />
+                      <span className="text-xs">Chưa có ảnh đại diện sản phẩm</span>
+                    </div>
+                  )}
+                  <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-xs">
+                    Ảnh đại diện
+                  </div>
+                </div>
+                
+                <div className="p-4 space-y-1.5 bg-white dark:bg-[#2a303d]">
+                  <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">MAYVANPHONGXANH.COM</div>
+                  <h3 className="font-bold text-base text-gray-900 dark:text-gray-100 line-clamp-2 leading-snug">
+                    {form.metaTitle || form.name || 'Tiêu đề sản phẩm khi chia sẻ'}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                    {form.metaDescription || (form.description ? form.description.replace(/<[^>]+>/g, '').trim() : '') || 'Mô tả tóm tắt liên kết hiển thị khi gửi qua Zalo, Facebook Messenger hoặc đăng bài...'}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

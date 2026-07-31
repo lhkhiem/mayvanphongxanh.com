@@ -15,29 +15,29 @@ import { ShareButtons } from '@/components/blog/share-buttons';
 
 import { cleanUrl } from '@/lib/utils';
 
-export default function ProductDetailClient({ 
-  product, 
+export default function ProductDetailClient({
+  product,
   settings = {},
   globalPolicies = [],
-  similarProducts = [], 
-  sameBrandProducts = [], 
-  relatedProducts = [], 
-  consumables = [] 
-}: { 
-  product: any, 
+  similarProducts = [],
+  sameBrandProducts = [],
+  relatedProducts = [],
+  consumables = []
+}: {
+  product: any,
   settings?: Record<string, string>,
   globalPolicies?: any[],
-  similarProducts?: any[], 
-  sameBrandProducts?: any[], 
-  relatedProducts?: any[], 
-  consumables?: any[] 
+  similarProducts?: any[],
+  sameBrandProducts?: any[],
+  relatedProducts?: any[],
+  consumables?: any[]
 }) {
   const [quantity, setQuantity] = useState(1);
-  
+
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     product?.variants?.length > 0 ? product.variants[0].id : null
   );
-  
+
   const [selectedCustomOptions, setSelectedCustomOptions] = useState<Record<string, string>>(() => {
     if (product?.productType === 'custom-build' && product.customOptions) {
       const initial: Record<string, string> = {};
@@ -155,7 +155,7 @@ export default function ProductDetailClient({
   const { addToCart } = useCart();
 
   const handleAddToCart = () => {
-    addToCart({ 
+    addToCart({
       id: product.id,
       variantId: currentVariant?.id,
       cartItemId: currentCartItemId(),
@@ -164,8 +164,8 @@ export default function ProductDetailClient({
       sku: currentVariant?.sku,
       attributes: currentVariant?.attributes,
       customOptions: product?.productType === 'custom-build' ? selectedCustomOptions : undefined,
-      price: currentPrice(), 
-      image: activeImage 
+      price: currentPrice(),
+      image: activeImage
     }, quantity);
   };
 
@@ -174,676 +174,677 @@ export default function ProductDetailClient({
   const stock = currentStock();
 
   const showContactPrice = product?.isContactPrice || price <= 0;
-  const discount = !showContactPrice && originalPrice 
-    ? Math.round(((originalPrice - price) / originalPrice) * 100) 
+  const discount = !showContactPrice && originalPrice
+    ? Math.round(((originalPrice - price) / originalPrice) * 100)
     : 0;
 
   const isRental = product?.productType === 'rental';
 
   return (
     <>
-    <main className="min-h-screen bg-background flex flex-col print:hidden">
-      <Header />
-      
-      <div className="flex-1 mx-auto max-w-7xl px-4 py-6 w-full">
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-1 sm:gap-2 text-sm text-muted-foreground mb-4 overflow-x-auto whitespace-nowrap scrollbar-hide">
-          <Link href="/" className="hover:text-primary transition-colors flex items-center gap-1">
-            Trang chủ
-          </Link>
-          <ChevronRight className="w-4 h-4 flex-shrink-0" />
-          <Link href="/san-pham" className="hover:text-primary transition-colors">
-            Sản phẩm
-          </Link>
-          {product.category && (
-            <>
-              <ChevronRight className="w-4 h-4 flex-shrink-0" />
-              <Link 
-                href={product.categorySlug ? `/danh-muc/${product.categorySlug}` : `/san-pham?category=${encodeURIComponent(typeof product.category === 'string' ? product.category : (product.category.name || ''))}`} 
-                className="hover:text-primary transition-colors"
-              >
-                {typeof product.category === 'string' ? product.category : product.category.name}
-              </Link>
-            </>
-          )}
-          <ChevronRight className="w-4 h-4 flex-shrink-0" />
-          <span className="text-foreground font-medium truncate">
-            {product.name}
-          </span>
-        </nav>
+      <main className="min-h-screen bg-background flex flex-col print:hidden">
+        <Header />
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8">
-          {/* Image Gallery */}
-          <div className="md:col-span-5 lg:col-span-5 flex flex-col gap-2">
-            <div 
-              className="relative aspect-square lg:aspect-[4/3] rounded-2xl overflow-hidden bg-white border border-border cursor-crosshair"
-              onMouseMove={(e) => {
-                const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
-                const x = ((e.clientX - left) / width) * 100;
-                const y = ((e.clientY - top) / height) * 100;
-                setMousePosition({ x, y });
-              }}
-              onMouseEnter={() => setIsZooming(true)}
-              onMouseLeave={() => setIsZooming(false)}
-            >
-              <Image 
-                src={activeImage} 
-                alt={product.name} 
-                fill 
-                className={`object-contain transition-transform duration-200 ${isZooming ? 'scale-[2]' : 'scale-100'}`}
-                style={{
-                  transformOrigin: `${mousePosition.x}% ${mousePosition.y}%`
-                }}
-                priority
-              />
-              {discount > 0 && (
-                <div className="absolute top-4 left-4 bg-accent text-accent-foreground px-4 py-2 rounded-full font-bold shadow-md z-10">
-                  -{discount}%
-                </div>
-              )}
-            </div>
-            
-            {/* Thumbnails */}
-            <div className="grid grid-cols-4 gap-2">
-              {gallery.map((img: string, idx: number) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveImage(img)}
-                  className={`relative aspect-square rounded-xl overflow-hidden bg-white border-2 transition-all ${activeImage === img ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
+        <div className="flex-1 mx-auto max-w-7xl px-4 py-6 w-full">
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-1 sm:gap-2 text-sm text-muted-foreground mb-4 overflow-x-auto whitespace-nowrap scrollbar-hide">
+            <Link href="/" className="hover:text-primary transition-colors flex items-center gap-1">
+              Trang chủ
+            </Link>
+            <ChevronRight className="w-4 h-4 flex-shrink-0" />
+            <Link href="/san-pham" className="hover:text-primary transition-colors">
+              Sản phẩm
+            </Link>
+            {product.category && (
+              <>
+                <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                <Link
+                  href={product.categorySlug ? `/danh-muc/${product.categorySlug}` : `/san-pham?category=${encodeURIComponent(typeof product.category === 'string' ? product.category : (product.category.name || ''))}`}
+                  className="hover:text-primary transition-colors"
                 >
-                  <Image src={img} alt={`${product.name} thumbnail ${idx + 1}`} fill className="object-cover" />
-                </button>
-              ))}
-            </div>
-
-            {/* Consumables (Vật tư mua kèm) - Left Column */}
-            {consumables && consumables.length > 0 && (
-              <div className="mt-auto p-3 bg-emerald-50/50 border border-emerald-100 rounded-2xl shadow-sm">
-                <h3 className="text-sm font-bold text-emerald-800 mb-2 uppercase tracking-wider flex items-center gap-2">
-                  <Package className="w-4 h-4 text-emerald-600" /> Vật tư tiêu hao khuyên dùng
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {consumables.map((item: any) => (
-                    <div key={item.id} className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-emerald-100 hover:border-emerald-300 transition-colors shadow-sm group">
-                      <Link href={`/san-pham/${item.slug}`} className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-50 flex-shrink-0 border border-border block">
-                        <Image src={item.image} alt={item.name} fill className="object-cover group-hover:scale-105 transition-transform" />
-                      </Link>
-                      <div className="flex-1 min-w-0">
-                        <Link href={`/san-pham/${item.slug}`} className="font-semibold text-[13px] text-foreground hover:text-primary truncate block leading-tight mb-0.5">
-                          {item.name}
-                        </Link>
-                        <div className="text-primary font-bold text-sm">
-                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
-                        </div>
-                      </div>
-                      <Link 
-                        href={`/san-pham/${item.slug}`}
-                        className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all flex-shrink-0"
-                        title="Xem chi tiết"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                  {typeof product.category === 'string' ? product.category : product.category.name}
+                </Link>
+              </>
             )}
-          </div>
+            <ChevronRight className="w-4 h-4 flex-shrink-0" />
+            <span className="text-foreground font-medium truncate">
+              {product.name}
+            </span>
+          </nav>
 
-          {/* Product Info */}
-          <div className="md:col-span-7 lg:col-span-7 flex flex-col">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <h1 className="text-2xl font-bold text-foreground leading-tight">
-                {product.name}
-              </h1>
-              <ShareButtons title={product.name} excerpt={product.name} />
-            </div>
-
-            <div className="mb-4 bg-secondary/20 rounded-2xl p-4 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                {!showContactPrice ? (
-                  <>
-                    <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1 mb-1">
-                      <span className="text-4xl font-extrabold text-foreground tracking-tight">
-                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)}
-                        {isRental && <span className="text-2xl font-semibold text-muted-foreground ml-1">/ tháng</span>}
-                      </span>
-                      {!isRental && (
-                        <span className="text-sm font-medium text-muted-foreground">
-                          (Đã bao gồm VAT)
-                        </span>
-                      )}
-                    </div>
-                    {originalPrice && discount > 0 && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-sm text-muted-foreground line-through">
-                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(originalPrice)}
-                        </span>
-                        <span className="text-xs font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">
-                          Giảm {discount}%
-                        </span>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-extrabold text-amber-600 dark:text-amber-500 tracking-tight">
-                      Giá: Liên hệ
-                    </span>
-                    <span className="text-xs text-muted-foreground font-medium">
-                      (Vui lòng liên hệ để nhận báo giá chi tiết)
-                    </span>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8">
+            {/* Image Gallery */}
+            <div className="md:col-span-5 lg:col-span-5 flex flex-col gap-2">
+              <div
+                className="relative aspect-square lg:aspect-[4/3] rounded-2xl overflow-hidden bg-white border border-border cursor-crosshair"
+                onMouseMove={(e) => {
+                  const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+                  const x = ((e.clientX - left) / width) * 100;
+                  const y = ((e.clientY - top) / height) * 100;
+                  setMousePosition({ x, y });
+                }}
+                onMouseEnter={() => setIsZooming(true)}
+                onMouseLeave={() => setIsZooming(false)}
+              >
+                <Image
+                  src={activeImage}
+                  alt={product.name}
+                  fill
+                  className={`object-contain transition-transform duration-200 ${isZooming ? 'scale-[2]' : 'scale-100'}`}
+                  style={{
+                    transformOrigin: `${mousePosition.x}% ${mousePosition.y}%`
+                  }}
+                  priority
+                />
+                {discount > 0 && (
+                  <div className="absolute top-4 left-4 bg-accent text-accent-foreground px-4 py-2 rounded-full font-bold shadow-md z-10">
+                    -{discount}%
                   </div>
                 )}
               </div>
-              <div className="flex-shrink-0">
-                <span className={stock > 0 ? "inline-flex items-center gap-1.5 text-sm font-semibold text-primary bg-primary/10 px-4 py-2 rounded-full" : "inline-flex items-center gap-1.5 text-sm font-semibold text-destructive bg-destructive/10 px-4 py-2 rounded-full"}>
-                  {stock > 0 ? (
-                    <><CheckCircle2 className="w-4 h-4" /> Có sẵn hàng</>
-                  ) : (
-                    "Hết hàng"
-                  )}
-                </span>
-              </div>
-            </div>
 
-            {/* Variants Selection UI */}
-            {product.variants && product.variants.length > 1 && (
-              <div className="mb-6">
-                <h3 className="text-sm font-bold text-foreground mb-3 uppercase tracking-wider">Chọn cấu hình:</h3>
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                  {product.variants.map((variant: any) => (
-                    <button
-                      key={variant.id}
-                      onClick={() => setSelectedVariantId(variant.id)}
-                      className={`relative text-left p-3 rounded-xl border-2 transition-all overflow-hidden flex flex-col justify-between min-h-[90px] ${
-                        selectedVariantId === variant.id
-                          ? 'border-primary ring-1 ring-primary shadow-sm bg-primary/5'
-                          : 'border-border hover:border-primary/40 bg-card hover:bg-secondary/20'
-                      }`}
-                    >
-                      {selectedVariantId === variant.id && (
-                        <div className="absolute top-0 right-0 bg-primary text-primary-foreground p-1 rounded-bl-lg">
-                          <CheckCircle2 className="w-3 h-3" />
-                        </div>
-                      )}
-                      <div className="text-sm font-bold text-foreground mb-1 pr-4 line-clamp-2">
-                        {variant.name ? variant.name.replace(`${product.name} - `, '') : 'Mặc định'} {variant.sku && <span className="text-muted-foreground font-normal text-[11px] ml-1">({variant.sku})</span>}
-                      </div>
-                      <div className="text-primary font-bold text-sm">
-                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(variant.price)}
-                        {isRental && <span className="font-normal text-xs text-muted-foreground ml-1">/ tháng</span>}
-                      </div>
-                      {variant.attributes && Object.keys(variant.attributes).length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-border/50">
-                          {Object.entries(variant.attributes).map(([k, v]) => (
-                            <span key={k} className="text-[10px] px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded font-medium">
-                              {k}: {v as string}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Custom Build Selection UI */}
-            {product.productType === 'custom-build' && product.customOptions && (
-              <div className="mb-6 space-y-4">
-                {product.customOptions.map((group: any) => (
-                  <div key={group.name} className="bg-secondary/30 p-4 rounded-xl border border-border">
-                    <h3 className="text-sm font-semibold text-foreground mb-3">{group.name}:</h3>
-                    <div className="space-y-2">
-                      {group.choices.map((choice: any) => (
-                        <label key={choice.id} className="flex items-center gap-3 cursor-pointer group/label">
-                          <input
-                            type="radio"
-                            name={`option-${group.name}`}
-                            value={choice.id}
-                            checked={selectedCustomOptions[group.name] === choice.id}
-                            onChange={() => setSelectedCustomOptions(prev => ({ ...prev, [group.name]: choice.id }))}
-                            className="w-4 h-4 text-primary focus:ring-primary border-border mt-0.5 cursor-pointer"
-                          />
-                          <div className="flex-1 flex justify-between items-center text-sm">
-                            <span className="text-foreground group-hover/label:text-primary transition-colors">{choice.name}</span>
-                            {choice.priceModifier > 0 && (
-                              <span className="text-muted-foreground">+ {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(choice.priceModifier)}</span>
-                            )}
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+              {/* Thumbnails */}
+              <div className="grid grid-cols-4 gap-2">
+                {gallery.map((img: string, idx: number) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImage(img)}
+                    className={`relative aspect-square rounded-xl overflow-hidden bg-white border-2 transition-all ${activeImage === img ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
+                  >
+                    <Image src={img} alt={`${product.name} thumbnail ${idx + 1}`} fill className="object-cover" />
+                  </button>
                 ))}
               </div>
-            )}
-            {/* Included Items for Service Packages */}
-            {product.includedItems && product.includedItems.length > 0 && (
-              <div className="mb-8 p-6 bg-primary/5 border border-primary/20 rounded-xl">
-                <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-primary" />
-                  Trọn gói bao gồm:
-                </h3>
-                <ul className="space-y-3">
-                  {product.includedItems.map((item: any, idx: number) => (
-                    <li key={idx} className="flex gap-3 text-muted-foreground">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
 
-            {/* Rental Terms */}
-            {isRental && product.rentalTerms && (
-              <div className="mb-6 p-5 bg-blue-50/50 border border-blue-100 rounded-2xl">
-                <h3 className="text-sm font-bold text-blue-900 mb-4 uppercase tracking-wider flex items-center gap-2">
-                  <Info className="w-5 h-5 text-blue-600" /> Cấu hình thuê máy
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-muted-foreground text-xs">Phí đặt cọc</span>
-                    <span className="font-semibold text-foreground">
-                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.rentalTerms.deposit || 0)}
-                    </span>
+              {/* Consumables (Vật tư mua kèm) - Left Column */}
+              {consumables && consumables.length > 0 && (
+                <div className="mt-auto p-3 bg-emerald-50/50 border border-emerald-100 rounded-2xl shadow-sm">
+                  <h3 className="text-sm font-bold text-emerald-800 mb-2 uppercase tracking-wider flex items-center gap-2">
+                    <Package className="w-4 h-4 text-emerald-600" /> Vật tư tiêu hao khuyên dùng
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {consumables.map((item: any) => (
+                      <div key={item.id} className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-emerald-100 hover:border-emerald-300 transition-colors shadow-sm group">
+                        <Link href={`/san-pham/${item.slug}`} className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-50 flex-shrink-0 border border-border block">
+                          <Image src={item.image} alt={item.name} fill className="object-cover group-hover:scale-105 transition-transform" />
+                        </Link>
+                        <div className="flex-1 min-w-0">
+                          <Link href={`/san-pham/${item.slug}`} className="font-semibold text-[13px] text-foreground hover:text-primary truncate block leading-tight mb-0.5">
+                            {item.name}
+                          </Link>
+                          <div className="text-primary font-bold text-sm">
+                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
+                          </div>
+                        </div>
+                        <Link
+                          href={`/san-pham/${item.slug}`}
+                          className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all flex-shrink-0"
+                          title="Xem chi tiết"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-muted-foreground text-xs">Kì hạn thuê tối thiểu</span>
-                    <span className="font-semibold text-foreground">{product.rentalTerms.minMonths || 12} tháng</span>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-muted-foreground text-xs">Định mức in Đen trắng</span>
-                    <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN').format(product.rentalTerms.freeBw || 0)} trang/tháng</span>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-muted-foreground text-xs">Phí vượt mức Đen trắng</span>
-                    <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.rentalTerms.overageBw || 0)} / trang</span>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-muted-foreground text-xs">Định mức in Màu</span>
-                    <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN').format(product.rentalTerms.freeColor || 0)} trang/tháng</span>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-muted-foreground text-xs">Phí vượt mức Màu</span>
-                    <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.rentalTerms.overageColor || 0)} / trang</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Quick Specs */}
-            <div className="mb-4 bg-secondary/20 rounded-2xl p-4 border border-border">
-              <h3 className="text-sm font-bold text-foreground mb-3 uppercase tracking-wider flex items-center gap-2">
-                <Info className="w-5 h-5 text-primary" /> Thông số nổi bật
-              </h3>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 text-sm text-foreground">
-                <li className="flex gap-2 items-start">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                  <span><span className="text-muted-foreground">Sản phẩm:</span> {product.name}</span>
-                </li>
-                {(product.quickSpecs && product.quickSpecs.length > 0) ? (
-                  product.quickSpecs.map((spec: any, idx: number) => (
-                    <li key={idx} className="flex gap-2 items-start">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                      <span>
-                        {typeof spec === 'string' ? spec : (spec.label ? <><span className="text-muted-foreground">{spec.label}:</span> {spec.value}</> : '')}
-                      </span>
-                    </li>
-                  ))
-                ) : (
-                  <>
-                    <li className="flex gap-2 items-start"><span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" /><span>Sản phẩm chính hãng mới 100%</span></li>
-                    <li className="flex gap-2 items-start"><span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" /><span>Bảo hành 1 đổi 1 trong 12 tháng</span></li>
-                    <li className="flex gap-2 items-start"><span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" /><span>Hỗ trợ kỹ thuật 24/7 chuyên nghiệp</span></li>
-                  </>
-                )}
-              </ul>
-            </div>
-
-            {/* Actions */}
-            <div className="mb-4">
-              {!showContactPrice ? (
-                <div className="flex flex-row items-center gap-1.5 sm:gap-3">
-                  <div className="flex items-center border-2 border-primary/20 bg-background rounded-xl h-12 w-24 sm:w-28 lg:w-32 flex-shrink-0">
-                    <button 
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-7 sm:w-9 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-l-xl"
-                    >
-                      <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    </button>
-                    <span className="flex-1 text-center font-bold text-base sm:text-lg">{quantity}</span>
-                    <button 
-                      onClick={() => setQuantity(Math.min(stock, quantity + 1))}
-                      className="w-7 sm:w-9 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-r-xl"
-                      disabled={quantity >= stock}
-                    >
-                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    </button>
-                  </div>
-    
-                  <div className="flex flex-1 items-center gap-1.5 sm:gap-3 min-w-0">
-                    <button 
-                      onClick={handleAddToCart}
-                      disabled={stock === 0}
-                      className="w-10 h-12 sm:w-12 sm:h-12 bg-primary/10 text-primary border-2 border-primary/20 rounded-xl hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
-                      title={isRental ? "Thêm vào giỏ (Thuê)" : "Thêm vào giỏ"}
-                    >
-                      <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
-
-                    <button 
-                      onClick={handleAddToCart}
-                      disabled={stock === 0}
-                      className="flex-1 h-12 bg-primary text-primary-foreground rounded-xl font-bold text-xs sm:text-sm md:text-base hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 sm:gap-2 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 px-1.5 sm:px-3 whitespace-nowrap min-w-0"
-                    >
-                      {isRental ? 'ĐĂNG KÝ THUÊ' : 'MUA NGAY'}
-                    </button>
-
-                    <button 
-                      onClick={() => window.print()}
-                      className="w-10 sm:w-12 xl:w-auto h-12 px-0 xl:px-4 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-bold text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 flex-shrink-0"
-                      title="Yêu cầu báo giá"
-                    >
-                      <Printer className="w-4 h-4 sm:w-5 sm:h-5" />
-                      <span className="hidden xl:inline">BÁO GIÁ</span>
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-row items-center gap-2 sm:gap-3">
-                  <a
-                    href="/lien-he"
-                    className="flex-1 h-12 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs sm:text-base transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-600/25 hover:shadow-amber-600/40 hover:-translate-y-0.5 px-3 whitespace-nowrap min-w-0"
-                  >
-                    <PhoneCall className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                    LIÊN HỆ BÁO GIÁ NGAY
-                  </a>
-                  <button 
-                    onClick={() => window.print()}
-                    className="w-10 sm:w-auto px-0 sm:px-4 h-12 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-bold text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 flex-shrink-0"
-                    title="In báo giá"
-                  >
-                    <Printer className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span className="hidden sm:inline">IN BÁO GIÁ</span>
-                  </button>
                 </div>
               )}
             </div>
 
-            {/* Features / Policies */}
-            <div className="grid grid-cols-2 gap-2 mt-auto mb-0">
-              {((product.policies && product.policies.length > 0)
-                ? product.policies
-                : (globalPolicies && globalPolicies.length > 0 ? globalPolicies : [
+            {/* Product Info */}
+            <div className="md:col-span-7 lg:col-span-7 flex flex-col">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <h1 className="text-2xl font-bold text-foreground leading-tight">
+                  {product.name}
+                </h1>
+                <ShareButtons title={product.name} excerpt={product.name} />
+              </div>
+
+              <div className="mb-4 bg-secondary/20 rounded-2xl p-4 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  {!showContactPrice ? (
+                    <>
+                      <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1 mb-1">
+                        <span className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight whitespace-nowrap">
+                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)}
+                          {isRental && <span className="text-xl sm:text-2xl font-semibold text-muted-foreground ml-1">/ tháng</span>}
+                        </span>
+                        {!isRental && (
+                          <span className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">
+                            (Đã bao gồm VAT)
+                          </span>
+                        )}
+                      </div>
+                      {originalPrice && discount > 0 && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-sm text-muted-foreground line-through">
+                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(originalPrice)}
+                          </span>
+                          <span className="text-xs font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">
+                            Giảm {discount}%
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <span className="text-2xl sm:text-3xl font-extrabold text-amber-600 dark:text-amber-500 tracking-tight whitespace-nowrap">
+                        Giá: Liên hệ
+                      </span>
+                      <span className="text-xs sm:text-sm text-muted-foreground font-normal">
+                        (Vui lòng liên hệ để nhận báo giá chi tiết)
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-shrink-0 self-start sm:self-center">
+                  <span className={stock > 0 ? "inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-primary bg-primary/10 px-3.5 py-1.5 rounded-full whitespace-nowrap" : "inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-destructive bg-destructive/10 px-3.5 py-1.5 rounded-full whitespace-nowrap"}>
+                    {stock > 0 ? (
+                      <><CheckCircle2 className="w-4 h-4" /> Có sẵn hàng</>
+                    ) : (
+                      "Hết hàng"
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Variants Selection UI */}
+              {product.variants && product.variants.length > 1 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-bold text-foreground mb-3 uppercase tracking-wider">Chọn cấu hình:</h3>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                    {product.variants.map((variant: any) => (
+                      <button
+                        key={variant.id}
+                        onClick={() => setSelectedVariantId(variant.id)}
+                        className={`relative text-left p-3 rounded-xl border-2 transition-all overflow-hidden flex flex-col justify-between min-h-[90px] ${selectedVariantId === variant.id
+                            ? 'border-primary ring-1 ring-primary shadow-sm bg-primary/5'
+                            : 'border-border hover:border-primary/40 bg-card hover:bg-secondary/20'
+                          }`}
+                      >
+                        {selectedVariantId === variant.id && (
+                          <div className="absolute top-0 right-0 bg-primary text-primary-foreground p-1 rounded-bl-lg">
+                            <CheckCircle2 className="w-3 h-3" />
+                          </div>
+                        )}
+                        <div className="text-sm font-bold text-foreground mb-1 pr-4 line-clamp-2">
+                          {variant.name ? variant.name.replace(`${product.name} - `, '') : 'Mặc định'} {variant.sku && <span className="text-muted-foreground font-normal text-[11px] ml-1">({variant.sku})</span>}
+                        </div>
+                        <div className="text-primary font-bold text-sm">
+                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(variant.price)}
+                          {isRental && <span className="font-normal text-xs text-muted-foreground ml-1">/ tháng</span>}
+                        </div>
+                        {variant.attributes && Object.keys(variant.attributes).length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-border/50">
+                            {Object.entries(variant.attributes).map(([k, v]) => (
+                              <span key={k} className="text-[10px] px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded font-medium">
+                                {k}: {v as string}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Custom Build Selection UI */}
+              {product.productType === 'custom-build' && product.customOptions && (
+                <div className="mb-6 space-y-4">
+                  {product.customOptions.map((group: any) => (
+                    <div key={group.name} className="bg-secondary/30 p-4 rounded-xl border border-border">
+                      <h3 className="text-sm font-semibold text-foreground mb-3">{group.name}:</h3>
+                      <div className="space-y-2">
+                        {group.choices.map((choice: any) => (
+                          <label key={choice.id} className="flex items-center gap-3 cursor-pointer group/label">
+                            <input
+                              type="radio"
+                              name={`option-${group.name}`}
+                              value={choice.id}
+                              checked={selectedCustomOptions[group.name] === choice.id}
+                              onChange={() => setSelectedCustomOptions(prev => ({ ...prev, [group.name]: choice.id }))}
+                              className="w-4 h-4 text-primary focus:ring-primary border-border mt-0.5 cursor-pointer"
+                            />
+                            <div className="flex-1 flex justify-between items-center text-sm">
+                              <span className="text-foreground group-hover/label:text-primary transition-colors">{choice.name}</span>
+                              {choice.priceModifier > 0 && (
+                                <span className="text-muted-foreground">+ {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(choice.priceModifier)}</span>
+                              )}
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Included Items for Service Packages */}
+              {product.includedItems && product.includedItems.length > 0 && (
+                <div className="mb-8 p-6 bg-primary/5 border border-primary/20 rounded-xl">
+                  <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-primary" />
+                    Trọn gói bao gồm:
+                  </h3>
+                  <ul className="space-y-3">
+                    {product.includedItems.map((item: any, idx: number) => (
+                      <li key={idx} className="flex gap-3 text-muted-foreground">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Rental Terms */}
+              {isRental && product.rentalTerms && (
+                <div className="mb-6 p-5 bg-blue-50/50 border border-blue-100 rounded-2xl">
+                  <h3 className="text-sm font-bold text-blue-900 mb-4 uppercase tracking-wider flex items-center gap-2">
+                    <Info className="w-5 h-5 text-blue-600" /> Cấu hình thuê máy
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-muted-foreground text-xs">Phí đặt cọc</span>
+                      <span className="font-semibold text-foreground">
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.rentalTerms.deposit || 0)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-muted-foreground text-xs">Kì hạn thuê tối thiểu</span>
+                      <span className="font-semibold text-foreground">{product.rentalTerms.minMonths || 12} tháng</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-muted-foreground text-xs">Định mức in Đen trắng</span>
+                      <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN').format(product.rentalTerms.freeBw || 0)} trang/tháng</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-muted-foreground text-xs">Phí vượt mức Đen trắng</span>
+                      <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.rentalTerms.overageBw || 0)} / trang</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-muted-foreground text-xs">Định mức in Màu</span>
+                      <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN').format(product.rentalTerms.freeColor || 0)} trang/tháng</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-muted-foreground text-xs">Phí vượt mức Màu</span>
+                      <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.rentalTerms.overageColor || 0)} / trang</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Quick Specs */}
+              {(() => {
+                const hasQuickSpecs = Array.isArray(product.quickSpecs) && product.quickSpecs.length > 0;
+                const totalSpecsCount = 1 + (hasQuickSpecs ? product.quickSpecs.length : 3);
+                // 1 cột làm mặc định, từ 9 mục trở lên mới chuyển sang 2 cột
+                const isMultiCol = totalSpecsCount >= 9;
+
+                return (
+                  <div className="mb-4 bg-secondary/20 rounded-2xl p-4 sm:p-4.5 border border-border">
+                    <h3 className="text-sm font-bold text-foreground mb-3 uppercase tracking-wider flex items-center gap-2">
+                      <Info className="w-4.5 h-4.5 text-primary" /> Thông số nổi bật
+                    </h3>
+                    <ul className={`grid ${isMultiCol ? 'grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5' : 'grid-cols-1 gap-y-2.5'} text-sm text-foreground`}>
+                      <li className="flex gap-2.5 items-start">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
+                        <span className="leading-relaxed"><span className="text-muted-foreground font-medium">Sản phẩm:</span> {product.name}</span>
+                      </li>
+                      {hasQuickSpecs ? (
+                        product.quickSpecs.map((spec: any, idx: number) => (
+                          <li key={idx} className="flex gap-2.5 items-start">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
+                            <span className="leading-relaxed">
+                              {typeof spec === 'string' ? spec : (spec.label ? <><span className="text-muted-foreground font-medium">{spec.label}:</span> {spec.value}</> : '')}
+                            </span>
+                          </li>
+                        ))
+                      ) : (
+                        <>
+                          <li className="flex gap-2.5 items-start"><span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" /><span className="leading-relaxed">Sản phẩm chính hãng mới 100%</span></li>
+                          <li className="flex gap-2.5 items-start"><span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" /><span className="leading-relaxed">Bảo hành 1 đổi 1 trong 12 tháng</span></li>
+                          <li className="flex gap-2.5 items-start"><span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" /><span className="leading-relaxed">Hỗ trợ kỹ thuật 24/7 chuyên nghiệp</span></li>
+                        </>
+                      )}
+                    </ul>
+                  </div>
+                );
+              })()}
+
+              {/* Actions */}
+              <div className="mb-4">
+                {!showContactPrice ? (
+                  <div className="flex flex-row items-center gap-1.5 sm:gap-3">
+                    <div className="flex items-center border-2 border-primary/20 bg-background rounded-xl h-12 w-24 sm:w-28 lg:w-32 flex-shrink-0">
+                      <button
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        className="w-7 sm:w-9 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-l-xl"
+                      >
+                        <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </button>
+                      <span className="flex-1 text-center font-bold text-base sm:text-lg">{quantity}</span>
+                      <button
+                        onClick={() => setQuantity(Math.min(stock, quantity + 1))}
+                        className="w-7 sm:w-9 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-r-xl"
+                        disabled={quantity >= stock}
+                      >
+                        <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </button>
+                    </div>
+
+                    <div className="flex flex-1 items-center gap-1.5 sm:gap-3 min-w-0">
+                      <button
+                        onClick={handleAddToCart}
+                        disabled={stock === 0}
+                        className="w-10 h-12 sm:w-12 sm:h-12 bg-primary/10 text-primary border-2 border-primary/20 rounded-xl hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
+                        title={isRental ? "Thêm vào giỏ (Thuê)" : "Thêm vào giỏ"}
+                      >
+                        <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </button>
+
+                      <button
+                        onClick={handleAddToCart}
+                        disabled={stock === 0}
+                        className="flex-1 h-12 bg-primary text-primary-foreground rounded-xl font-bold text-xs sm:text-sm md:text-base hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 sm:gap-2 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 px-1.5 sm:px-3 whitespace-nowrap min-w-0"
+                      >
+                        {isRental ? 'ĐĂNG KÝ THUÊ' : 'MUA NGAY'}
+                      </button>
+
+                      <button
+                        onClick={() => window.print()}
+                        className="w-10 sm:w-12 xl:w-auto h-12 px-0 xl:px-4 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-bold text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 flex-shrink-0"
+                        title="Yêu cầu báo giá"
+                      >
+                        <Printer className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span className="hidden xl:inline">BÁO GIÁ</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-row items-center gap-2 sm:gap-3">
+                    <a
+                      href="/lien-he"
+                      className="flex-1 h-12 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs sm:text-base transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-600/25 hover:shadow-amber-600/40 hover:-translate-y-0.5 px-3 whitespace-nowrap min-w-0"
+                    >
+                      <PhoneCall className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                      LIÊN HỆ BÁO GIÁ NGAY
+                    </a>
+                    <button
+                      onClick={() => window.print()}
+                      className="w-10 sm:w-auto px-0 sm:px-4 h-12 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-bold text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 flex-shrink-0"
+                      title="In báo giá"
+                    >
+                      <Printer className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span className="hidden sm:inline">IN BÁO GIÁ</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Features / Policies */}
+              <div className="grid grid-cols-2 gap-2 mt-auto mb-0">
+                {((product.policies && product.policies.length > 0)
+                  ? product.policies
+                  : (globalPolicies && globalPolicies.length > 0 ? globalPolicies : [
                     { id: 1, icon: 'Truck', title: 'Giao hàng Miễn phí', description: 'Cho đơn hàng trên 500k' },
                     { id: 2, icon: 'ShieldCheck', title: 'Bảo hành Chính hãng', description: 'Tối thiểu 12 tháng' }
                   ])
-              ).map((policy: any) => {
-                const Icon = (LucideIcons as any)[policy.icon] || LucideIcons.CheckCircle;
-                return (
-                  <div key={policy.id} className="flex items-center gap-3 p-3 bg-background border border-border rounded-xl">
-                    <div className="bg-primary/10 p-2 rounded-lg text-primary">
-                      <Icon className="w-5 h-5 flex-shrink-0" />
+                ).map((policy: any) => {
+                  const Icon = (LucideIcons as any)[policy.icon] || LucideIcons.CheckCircle;
+                  return (
+                    <div key={policy.id} className="flex items-center gap-3 p-3 bg-background border border-border rounded-xl">
+                      <div className="bg-primary/10 p-2 rounded-lg text-primary">
+                        <Icon className="w-5 h-5 flex-shrink-0" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-foreground text-[13px] leading-tight mb-0.5">{policy.title}</h4>
+                        {policy.description && (
+                          <p className="text-[11px] text-muted-foreground line-clamp-1">{policy.description}</p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-foreground text-[13px] leading-tight mb-0.5">{policy.title}</h4>
-                      {policy.description && (
-                        <p className="text-[11px] text-muted-foreground line-clamp-1">{policy.description}</p>
+                  );
+                })}
+              </div>
+
+            </div>
+          </div>
+
+          {/* Detailed Description with Tabs */}
+          <div className="mt-16 pt-8 border-t border-border">
+            {/* Tabs Navigation */}
+            <div className="flex items-center overflow-x-auto scrollbar-hide border-b border-border mb-6 gap-1 sm:gap-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+              <button
+                onClick={() => setActiveTab('specs')}
+                className={`px-3.5 sm:px-6 py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeTab === 'specs'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                  }`}
+              >
+                Thông số kỹ thuật
+              </button>
+              <button
+                onClick={() => setActiveTab('desc')}
+                className={`px-3.5 sm:px-6 py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeTab === 'desc'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                  }`}
+              >
+                Mô tả sản phẩm
+              </button>
+              <button
+                onClick={() => setActiveTab('docs')}
+                className={`px-3.5 sm:px-6 py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeTab === 'docs'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                  }`}
+              >
+                Hướng dẫn & Tài liệu
+              </button>
+            </div>
+
+            {/* Tabs Content */}
+            <div className="min-h-[300px]">
+              {activeTab === 'specs' && (
+                <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+                  <table className="w-full text-sm text-left border-collapse">
+                    <tbody>
+                      {product.specifications && product.specifications.length > 0 ? (
+                        product.specifications.map((spec: any, idx: number) => (
+                          <tr key={idx} className="border-b border-border last:border-0 hover:bg-gray-50/50 transition-colors">
+                            <td className="py-3.5 px-6 bg-gray-50/80 font-medium text-gray-600 w-1/3 md:w-1/4 lg:w-1/5 border-r border-border">
+                              {spec.label}
+                            </td>
+                            <td className="py-3.5 px-6 text-gray-900 font-medium">
+                              {spec.value}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        [
+                          { label: 'Tên sản phẩm', value: product.name },
+                          product.brand ? { label: 'Thương hiệu', value: product.brand } : null,
+                          product.category ? { label: 'Danh mục', value: typeof product.category === 'string' ? product.category : product.category.name } : null,
+                          (currentVariant?.sku || product.sku) ? { label: 'Mã SKU', value: currentVariant?.sku || product.sku } : null,
+                          { label: 'Loại hình', value: isRental ? 'Máy cho thuê' : 'Sản phẩm kinh doanh' },
+                          { label: 'Tình trạng', value: stock > 0 ? 'Còn hàng trong kho' : 'Hết hàng (Liên hệ)' },
+                          { label: 'Bảo hành', value: '12 tháng chính hãng' }
+                        ].filter(Boolean).map((spec: any, idx: number) => (
+                          <tr key={idx} className="border-b border-border last:border-0 hover:bg-gray-50/50 transition-colors">
+                            <td className="py-3.5 px-6 bg-gray-50/80 font-medium text-gray-600 w-1/3 md:w-1/4 lg:w-1/5 border-r border-border">{spec.label}</td>
+                            <td className="py-3.5 px-6 text-gray-900 font-medium">{spec.value}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {activeTab === 'desc' && (
+                <div className="prose prose-lg text-muted-foreground max-w-none bg-white p-8 rounded-xl border border-border shadow-sm">
+                  <h3 className="text-xl font-bold text-foreground mb-4">Chi tiết sản phẩm: {product.name}</h3>
+                  <div dangerouslySetInnerHTML={{ __html: product.description }} />
+                </div>
+              )}
+
+              {activeTab === 'docs' && (
+                <div className="space-y-6">
+                  {(product.manuals?.content || (product.manuals?.files && product.manuals.files.length > 0)) && (
+                    <div className="bg-white p-8 rounded-xl border border-border shadow-sm">
+                      <h3 className="text-lg font-bold text-foreground mb-4">Hướng dẫn sử dụng</h3>
+                      {product.manuals.content && (
+                        <div
+                          className="prose prose-sm max-w-none text-muted-foreground mb-6"
+                          dangerouslySetInnerHTML={{ __html: product.manuals.content }}
+                        />
+                      )}
+                      {product.manuals.files && product.manuals.files.length > 0 && (
+                        <div className="space-y-3">
+                          {product.manuals.files.map((file: string, idx: number) => (
+                            <div key={idx} className="p-4 bg-primary/5 rounded-lg border border-primary/20 flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <LucideIcons.FileText className="w-5 h-5 text-primary" />
+                                <h4 className="font-semibold text-foreground text-sm truncate max-w-[200px] sm:max-w-xs">{file.split('/').pop()}</h4>
+                              </div>
+                              <a href={file} download target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+                                <Download className="w-4 h-4" /> Tải xuống
+                              </a>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  )}
 
-          </div>
-        </div>
-
-        {/* Detailed Description with Tabs */}
-        <div className="mt-16 pt-8 border-t border-border">
-          {/* Tabs Navigation */}
-          <div className="flex items-center overflow-x-auto scrollbar-hide border-b border-border mb-6 gap-1 sm:gap-4 -mx-4 px-4 sm:mx-0 sm:px-0">
-            <button
-              onClick={() => setActiveTab('specs')}
-              className={`px-3.5 sm:px-6 py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${
-                activeTab === 'specs' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-              }`}
-            >
-              Thông số kỹ thuật
-            </button>
-            <button
-              onClick={() => setActiveTab('desc')}
-              className={`px-3.5 sm:px-6 py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${
-                activeTab === 'desc' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-              }`}
-            >
-              Mô tả sản phẩm
-            </button>
-            <button
-              onClick={() => setActiveTab('docs')}
-              className={`px-3.5 sm:px-6 py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${
-                activeTab === 'docs' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-              }`}
-            >
-              Hướng dẫn & Tài liệu
-            </button>
-          </div>
-
-          {/* Tabs Content */}
-          <div className="min-h-[300px]">
-            {activeTab === 'specs' && (
-              <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
-                <table className="w-full text-sm text-left border-collapse">
-                  <tbody>
-                    {product.specifications && product.specifications.length > 0 ? (
-                      product.specifications.map((spec: any, idx: number) => (
-                        <tr key={idx} className="border-b border-border last:border-0 hover:bg-gray-50/50 transition-colors">
-                          <td className="py-3.5 px-6 bg-gray-50/80 font-medium text-gray-600 w-1/3 md:w-1/4 lg:w-1/5 border-r border-border">
-                            {spec.label}
-                          </td>
-                          <td className="py-3.5 px-6 text-gray-900 font-medium">
-                            {spec.value}
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      [
-                        { label: 'Tên sản phẩm', value: product.name },
-                        product.brand ? { label: 'Thương hiệu', value: product.brand } : null,
-                        product.category ? { label: 'Danh mục', value: typeof product.category === 'string' ? product.category : product.category.name } : null,
-                        (currentVariant?.sku || product.sku) ? { label: 'Mã SKU', value: currentVariant?.sku || product.sku } : null,
-                        { label: 'Loại hình', value: isRental ? 'Máy cho thuê' : 'Sản phẩm kinh doanh' },
-                        { label: 'Tình trạng', value: stock > 0 ? 'Còn hàng trong kho' : 'Hết hàng (Liên hệ)' },
-                        { label: 'Bảo hành', value: '12 tháng chính hãng' }
-                      ].filter(Boolean).map((spec: any, idx: number) => (
-                        <tr key={idx} className="border-b border-border last:border-0 hover:bg-gray-50/50 transition-colors">
-                          <td className="py-3.5 px-6 bg-gray-50/80 font-medium text-gray-600 w-1/3 md:w-1/4 lg:w-1/5 border-r border-border">{spec.label}</td>
-                          <td className="py-3.5 px-6 text-gray-900 font-medium">{spec.value}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {activeTab === 'desc' && (
-              <div className="prose prose-lg text-muted-foreground max-w-none bg-white p-8 rounded-xl border border-border shadow-sm">
-                <h3 className="text-xl font-bold text-foreground mb-4">Chi tiết sản phẩm: {product.name}</h3>
-                <div dangerouslySetInnerHTML={{ __html: product.description }} />
-              </div>
-            )}
-
-            {activeTab === 'docs' && (
-              <div className="space-y-6">
-                {(product.manuals?.content || (product.manuals?.files && product.manuals.files.length > 0)) && (
-                  <div className="bg-white p-8 rounded-xl border border-border shadow-sm">
-                    <h3 className="text-lg font-bold text-foreground mb-4">Hướng dẫn sử dụng</h3>
-                    {product.manuals.content && (
-                      <div 
-                        className="prose prose-sm max-w-none text-muted-foreground mb-6" 
-                        dangerouslySetInnerHTML={{ __html: product.manuals.content }} 
-                      />
-                    )}
-                    {product.manuals.files && product.manuals.files.length > 0 && (
-                      <div className="space-y-3">
-                        {product.manuals.files.map((file: string, idx: number) => (
-                          <div key={idx} className="p-4 bg-primary/5 rounded-lg border border-primary/20 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <LucideIcons.FileText className="w-5 h-5 text-primary" />
-                              <h4 className="font-semibold text-foreground text-sm truncate max-w-[200px] sm:max-w-xs">{file.split('/').pop()}</h4>
-                            </div>
-                            <a href={file} download target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
-                              <Download className="w-4 h-4" /> Tải xuống
+                  {(product.drivers?.content || (product.drivers?.files && product.drivers.files.length > 0)) && (
+                    <div className="bg-white p-8 rounded-xl border border-border shadow-sm">
+                      <h3 className="text-lg font-bold text-foreground mb-4">Driver & Phần mềm</h3>
+                      {product.drivers.content && (
+                        <div
+                          className="prose prose-sm max-w-none text-muted-foreground mb-6"
+                          dangerouslySetInnerHTML={{ __html: product.drivers.content }}
+                        />
+                      )}
+                      {product.drivers.files && product.drivers.files.length > 0 && (
+                        <div className="grid gap-4 md:grid-cols-2">
+                          {product.drivers.files.map((file: string, idx: number) => (
+                            <a key={idx} href={file} download target="_blank" rel="noopener noreferrer" className="border border-border p-4 rounded-lg flex items-center justify-between hover:border-primary transition-colors cursor-pointer group">
+                              <div className="flex items-center gap-3 overflow-hidden">
+                                <div className="w-10 h-10 shrink-0 bg-secondary rounded flex items-center justify-center text-xl font-bold group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                  <Download className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                                </div>
+                                <div className="truncate">
+                                  <h4 className="font-semibold text-foreground text-sm truncate">{file.split('/').pop()}</h4>
+                                  <p className="text-xs text-muted-foreground">Tải xuống Driver</p>
+                                </div>
+                              </div>
                             </a>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                {(product.drivers?.content || (product.drivers?.files && product.drivers.files.length > 0)) && (
-                  <div className="bg-white p-8 rounded-xl border border-border shadow-sm">
-                    <h3 className="text-lg font-bold text-foreground mb-4">Driver & Phần mềm</h3>
-                    {product.drivers.content && (
-                      <div 
-                        className="prose prose-sm max-w-none text-muted-foreground mb-6"
-                        dangerouslySetInnerHTML={{ __html: product.drivers.content }}
-                      />
-                    )}
-                    {product.drivers.files && product.drivers.files.length > 0 && (
-                      <div className="grid gap-4 md:grid-cols-2">
-                        {product.drivers.files.map((file: string, idx: number) => (
-                          <a key={idx} href={file} download target="_blank" rel="noopener noreferrer" className="border border-border p-4 rounded-lg flex items-center justify-between hover:border-primary transition-colors cursor-pointer group">
-                            <div className="flex items-center gap-3 overflow-hidden">
-                              <div className="w-10 h-10 shrink-0 bg-secondary rounded flex items-center justify-center text-xl font-bold group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                                <Download className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                              </div>
-                              <div className="truncate">
-                                <h4 className="font-semibold text-foreground text-sm truncate">{file.split('/').pop()}</h4>
-                                <p className="text-xs text-muted-foreground">Tải xuống Driver</p>
-                              </div>
-                            </div>
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {(!product.manuals?.content && !product.manuals?.files?.length && !product.drivers?.content && !product.drivers?.files?.length) && (
-                  <div className="bg-white p-12 rounded-xl border border-border shadow-sm flex flex-col items-center justify-center text-muted-foreground">
-                    <LucideIcons.FileText className="w-12 h-12 mb-4 opacity-20" />
-                    <p>Sản phẩm này chưa có tài liệu hướng dẫn hay driver nào được đính kèm.</p>
-                  </div>
-                )}
-              </div>
-            )}
+                  {(!product.manuals?.content && !product.manuals?.files?.length && !product.drivers?.content && !product.drivers?.files?.length) && (
+                    <div className="bg-white p-12 rounded-xl border border-border shadow-sm flex flex-col items-center justify-center text-muted-foreground">
+                      <LucideIcons.FileText className="w-12 h-12 mb-4 opacity-20" />
+                      <p>Sản phẩm này chưa có tài liệu hướng dẫn hay driver nào được đính kèm.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Related Products Section */}
-        <div className="mt-16 bg-white rounded-xl border border-border overflow-hidden shadow-sm">
-          <div className="flex items-center overflow-x-auto scrollbar-hide border-b border-border bg-gray-50/50">
-            {product.category === 'Máy in' && (
+          {/* Related Products Section */}
+          <div className="mt-16 bg-white rounded-xl border border-border overflow-hidden shadow-sm">
+            <div className="flex items-center overflow-x-auto scrollbar-hide border-b border-border bg-gray-50/50">
+              {product.category === 'Máy in' && (
+                <button
+                  onClick={() => setActiveRelatedTab('consumables')}
+                  className={`px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeRelatedTab === 'consumables'
+                      ? 'border-primary text-primary bg-white'
+                      : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-gray-100/50'
+                    }`}
+                >
+                  SẢN PHẨM VẬT TƯ TIÊU HAO
+                </button>
+              )}
               <button
-                onClick={() => setActiveRelatedTab('consumables')}
-                className={`px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${
-                  activeRelatedTab === 'consumables' 
-                    ? 'border-primary text-primary bg-white' 
+                onClick={() => setActiveRelatedTab('similar')}
+                className={`px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeRelatedTab === 'similar'
+                    ? 'border-primary text-primary bg-white'
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-gray-100/50'
-                }`}
+                  }`}
               >
-                SẢN PHẨM VẬT TƯ TIÊU HAO
+                SẢN PHẨM TƯƠNG TỰ
               </button>
-            )}
-            <button
-              onClick={() => setActiveRelatedTab('similar')}
-              className={`px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${
-                activeRelatedTab === 'similar' 
-                  ? 'border-primary text-primary bg-white' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-gray-100/50'
-              }`}
-            >
-              SẢN PHẨM TƯƠNG TỰ
-            </button>
-            <button
-              onClick={() => setActiveRelatedTab('same-brand')}
-              className={`px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${
-                activeRelatedTab === 'same-brand' 
-                  ? 'border-primary text-primary bg-white' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-gray-100/50'
-              }`}
-            >
-              SẢN PHẨM CÙNG HÃNG
-            </button>
-            <button
-              onClick={() => setActiveRelatedTab('related')}
-              className={`px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${
-                activeRelatedTab === 'related' 
-                  ? 'border-primary text-primary bg-white' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-gray-100/50'
-              }`}
-            >
-              SẢN PHẨM LIÊN QUAN
-            </button>
-          </div>
-          
-          <div className="p-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {activeRelatedTab === 'consumables' && consumables.length > 0 && consumables.map(p => (
-                <div key={p.id}>
-                  <ProductCard {...p} />
-                </div>
-              ))}
-              
-              {activeRelatedTab === 'consumables' && consumables.length === 0 && (
-                <div className="col-span-full py-8 text-center text-muted-foreground">
-                  Đang cập nhật vật tư tiêu hao cho sản phẩm này.
-                </div>
-              )}
+              <button
+                onClick={() => setActiveRelatedTab('same-brand')}
+                className={`px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeRelatedTab === 'same-brand'
+                    ? 'border-primary text-primary bg-white'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-gray-100/50'
+                  }`}
+              >
+                SẢN PHẨM CÙNG HÃNG
+              </button>
+              <button
+                onClick={() => setActiveRelatedTab('related')}
+                className={`px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeRelatedTab === 'related'
+                    ? 'border-primary text-primary bg-white'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-gray-100/50'
+                  }`}
+              >
+                SẢN PHẨM LIÊN QUAN
+              </button>
+            </div>
 
-              {activeRelatedTab === 'similar' && similarProducts.map(p => (
-                <div key={p.id}>
-                  <ProductCard {...p} />
-                </div>
-              ))}
-              
-              {activeRelatedTab === 'similar' && similarProducts.length === 0 && (
-                <div className="col-span-full py-8 text-center text-muted-foreground">
-                  Đang cập nhật sản phẩm tương tự.
-                </div>
-              )}
+            <div className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {activeRelatedTab === 'consumables' && consumables.length > 0 && consumables.map(p => (
+                  <div key={p.id}>
+                    <ProductCard {...p} />
+                  </div>
+                ))}
 
-              {activeRelatedTab === 'same-brand' && sameBrandProducts.map(p => (
-                <div key={p.id}>
-                  <ProductCard {...p} />
-                </div>
-              ))}
+                {activeRelatedTab === 'consumables' && consumables.length === 0 && (
+                  <div className="col-span-full py-8 text-center text-muted-foreground">
+                    Đang cập nhật vật tư tiêu hao cho sản phẩm này.
+                  </div>
+                )}
 
-              {activeRelatedTab === 'related' && relatedProducts.map(p => (
-                <div key={p.id}>
-                  <ProductCard {...p} />
-                </div>
-              ))}
+                {activeRelatedTab === 'similar' && similarProducts.map(p => (
+                  <div key={p.id}>
+                    <ProductCard {...p} />
+                  </div>
+                ))}
+
+                {activeRelatedTab === 'similar' && similarProducts.length === 0 && (
+                  <div className="col-span-full py-8 text-center text-muted-foreground">
+                    Đang cập nhật sản phẩm tương tự.
+                  </div>
+                )}
+
+                {activeRelatedTab === 'same-brand' && sameBrandProducts.map(p => (
+                  <div key={p.id}>
+                    <ProductCard {...p} />
+                  </div>
+                ))}
+
+                {activeRelatedTab === 'related' && relatedProducts.map(p => (
+                  <div key={p.id}>
+                    <ProductCard {...p} />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      
-      <Footer />
-    </main>
-    <QuoteTemplate product={product} quantity={quantity} settings={settings} />
+
+        <Footer />
+      </main>
+      <QuoteTemplate product={product} quantity={quantity} settings={settings} />
     </>
   );
 }

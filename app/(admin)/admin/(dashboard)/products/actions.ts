@@ -147,6 +147,18 @@ export async function getProducts(params?: {
   }
 }
 
+export async function getPolicies() {
+  try {
+    const policies = await prisma.productPolicy.findMany({
+      orderBy: { id: 'asc' }
+    })
+    return { data: policies }
+  } catch (error) {
+    console.error("getPolicies error:", error)
+    return { data: [] }
+  }
+}
+
 export async function getProduct(id: number) {
   try {
     const product = await prisma.product.findUnique({

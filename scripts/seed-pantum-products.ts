@@ -27,8 +27,8 @@ async function main() {
   const CATEGORY_MAY_IN = 50;
   const CATEGORY_VAT_TU = 51;
 
-  const defaultPrinterImage = 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=500&h=500&fit=crop';
-  const defaultSupplyImage = 'https://images.unsplash.com/photo-1633356122544-f134324ef6db?w=500&h=500&fit=crop';
+  const defaultPrinterImage = '';
+  const defaultSupplyImage = '';
 
   const productsData = [
     // --------------------------------------------------------------------------

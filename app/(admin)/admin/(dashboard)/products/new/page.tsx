@@ -1,19 +1,21 @@
 import { ProductForm } from "@/components/admin/product-form";
 import { getCategories } from "@/app/(admin)/admin/(dashboard)/categories/actions";
 import { getBrands } from "@/app/(admin)/admin/(dashboard)/brands/actions";
-import { getProduct } from "@/app/(admin)/admin/(dashboard)/products/actions";
+import { getProduct, getPolicies } from "@/app/(admin)/admin/(dashboard)/products/actions";
 
 export default async function NewProductPage({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const [categoriesRes, brandsRes] = await Promise.all([
+  const [categoriesRes, brandsRes, policiesRes] = await Promise.all([
     getCategories(),
-    getBrands()
+    getBrands(),
+    getPolicies(),
   ]);
   const categories = categoriesRes.data || [];
   const brands = brandsRes.data || [];
+  const availablePolicies = policiesRes.data || [];
   
   const resolvedParams = await searchParams;
   
@@ -53,6 +55,7 @@ export default async function NewProductPage({
     <ProductForm 
       categories={categories} 
       brands={brands}
+      availablePolicies={availablePolicies}
       initialData={Object.keys(initialData).length > 0 ? initialData : undefined}
     />
   );

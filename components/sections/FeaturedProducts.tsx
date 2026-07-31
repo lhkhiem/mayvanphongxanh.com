@@ -78,7 +78,7 @@ export function FeaturedProducts({ products = [], categories = [] }: { products?
             className="flex gap-4 overflow-x-auto scroll-smooth pb-2 snap-x snap-mandatory scrollbar-hide"
           >
             {filtered.map(product => (
-              <div key={product.id} className="shrink-0 w-[calc(50%-6px)] sm:w-[calc(50%-8px)] md:w-[calc(33.333333%-10.666667px)] xl:w-[calc(25%-12px)] snap-center">
+              <div key={product.id} className="shrink-0 w-full sm:w-[calc(50%-8px)] md:w-[calc(33.333333%-10.666667px)] xl:w-[calc(25%-12px)] snap-center">
                 <ProductCard
                   id={product.id}
                   name={product.name}

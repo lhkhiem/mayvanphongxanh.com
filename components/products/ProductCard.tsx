@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingCart, Star, ArrowRightLeft } from 'lucide-react';
+import { ShoppingCart, Star, ArrowRightLeft, PhoneCall } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useCompare } from '@/context/CompareContext';
 import { productSlug } from '@/lib/utils';
@@ -45,16 +45,16 @@ export function ProductCard({
   const [showCompareToast, setShowCompareToast] = useState(false);
   const [showCompareErrorToast, setShowCompareErrorToast] = useState('');
   const [imageError, setImageError] = useState(false);
-  
+
   const hrefSlug = slug || productSlug(name, id);
-  
+
   const { addToCart } = useCart();
   const { addCompareItem, removeCompareItem, hasItem } = useCompare();
-  
+
   const router = useRouter();
   const showContactPrice = isContactPrice || price <= 0;
   const discount = !showContactPrice && originalPrice && price > 0 ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
-  
+
   const isCompared = hasItem(id);
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -68,7 +68,7 @@ export function ProductCard({
 
   const handleToggleCompare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     if (!isCompared) {
       const result = addCompareItem({ id, name, category, image });
       if (!result.success) {
@@ -100,19 +100,49 @@ export function ProductCard({
     <div className="group bg-white border border-gray-200 hover:border-primary overflow-hidden transition-all duration-300 h-full flex flex-col relative p-3 md:p-4 rounded-lg hover:shadow-[0_0_15px_rgba(46,125,50,0.15)]">
       {/* Image Container */}
       <div 
-        className="relative overflow-hidden bg-white h-48 sm:h-52 md:h-56 mb-3 sm:mb-4 flex items-center justify-center cursor-pointer"
+        className="relative overflow-hidden bg-white h-72 sm:h-60 md:h-60 mb-3 sm:mb-4 flex items-center justify-center cursor-pointer group/img"
         onClick={() => router.push(`/san-pham/${hrefSlug}`)}
       >
-        {productType === 'rental' && (
-          <div className="absolute top-2 left-2 z-10 bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm uppercase tracking-wider">
-            Cho Thuê
-          </div>
-        )}
+        {/* Badges on Image (Cho thuê & Stock status) */}
+        <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 items-start">
+          {productType === 'rental' && (
+            <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-xs uppercase tracking-wider">
+              Cho Thuê
+            </span>
+          )}
+          {stock > 0 ? (
+            <span className="bg-emerald-600/90 text-white text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-xs backdrop-blur-xs flex items-center gap-1">
+              ✓ Còn hàng
+            </span>
+          ) : (
+            <span className="bg-red-600/90 text-white text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-xs backdrop-blur-xs">
+              Hết hàng
+            </span>
+          )}
+        </div>
+
+        {/* Compare Button (Hiện sẵn trên Mobile, Hover trên Desktop) */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleToggleCompare(e);
+          }}
+          className={`absolute top-2 right-2 z-20 flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full shadow-md backdrop-blur-xs transition-all duration-200 text-[11px] sm:text-xs font-semibold ${
+            isCompared 
+              ? 'bg-primary text-white opacity-100 scale-100' 
+              : 'bg-white/95 text-gray-700 hover:text-primary hover:bg-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 translate-y-0 sm:translate-y-1 sm:group-hover:translate-y-0'
+          }`}
+          title={isCompared ? "Bỏ so sánh" : "Thêm vào so sánh"}
+        >
+          <ArrowRightLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+          <span>{isCompared ? 'Đã so sánh' : 'So sánh'}</span>
+        </button>
+
         {!imageError ? (
           <img
             src={image}
             alt={name}
-            className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-contain p-0 group-hover:scale-105 transition-transform duration-300"
             onError={() => setImageError(true)}
           />
         ) : (
@@ -149,70 +179,52 @@ export function ProductCard({
           {category}
         </div>
 
-        {/* Price */}
-        <div className="mt-auto">
+        {/* Footer: Giá & Nút Thao tác (Liên hệ / Giỏ hàng) */}
+        <div className="mt-auto pt-2.5 border-t border-gray-100 flex items-center justify-between gap-2">
           {!showContactPrice ? (
-            <div className="flex items-end gap-2 justify-between">
-              <div>
-                {originalPrice && (
-                  <div className="text-xs text-gray-400 line-through mb-0.5">
-                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(originalPrice)}
+            <>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-end gap-1.5 justify-between">
+                  <div>
+                    {originalPrice && (
+                      <div className="text-xs text-gray-400 line-through mb-0.5">
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(originalPrice)}
+                      </div>
+                    )}
+                    <div className="font-bold text-base sm:text-lg text-primary truncate">
+                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)}
+                      {productType === 'rental' && <span className="text-xs font-normal text-muted-foreground ml-0.5">/ tháng</span>}
+                    </div>
                   </div>
-                )}
-                <div className="font-bold text-base sm:text-lg md:text-[19px] text-primary">
-                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)}
-                  {productType === 'rental' && <span className="text-xs font-normal text-muted-foreground ml-0.5">/ tháng</span>}
+                  {discount > 0 && (
+                    <div className="bg-primary text-white px-1.5 py-0.5 text-[11px] font-bold rounded mb-0.5 shrink-0">
+                      -{discount}%
+                    </div>
+                  )}
                 </div>
               </div>
-              {/* Discount Badge on the right of price */}
-              {discount > 0 && (
-                <div className="bg-primary text-white px-2 py-1 text-[11px] font-bold rounded mb-1">
-                  -{discount}%
-                </div>
-              )}
-            </div>
+
+              <button 
+                onClick={handleAddToCart}
+                disabled={stock === 0}
+                className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 bg-primary hover:bg-primary/90 text-white rounded-lg flex items-center justify-center disabled:bg-gray-300 disabled:cursor-not-allowed shadow-xs transition-colors"
+                title={productType === 'rental' ? "Đăng ký thuê" : "Thêm vào giỏ"}
+              >
+                <ShoppingCart className="w-4 h-4" />
+              </button>
+            </>
           ) : (
-            <div className="font-bold text-base sm:text-lg md:text-[19px] text-amber-600 mt-2 sm:mt-4">Liên hệ</div>
+            /* Khi sản phẩm có Giá Liên hệ: Chỉ hiển thị duy nhất 1 Nút Liên hệ tràn chiều ngang */
+            <button 
+              onClick={handleAddToCart}
+              className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold rounded-lg flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+              title="Liên hệ báo giá"
+            >
+              <PhoneCall className="w-4 h-4 shrink-0" />
+              <span>Liên hệ</span>
+            </button>
           )}
         </div>
-      </div>
-
-      {/* Footer Actions */}
-      <div className="mt-3 pt-3 sm:mt-4 sm:pt-4 border-t border-gray-100 flex items-center justify-between gap-2">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs min-w-0">
-          <button 
-            onClick={handleToggleCompare}
-            className={`flex items-center gap-1.5 transition-colors font-medium whitespace-nowrap shrink-0 ${
-              isCompared ? 'text-primary font-semibold' : 'text-gray-500 hover:text-primary'
-            }`}
-            title={isCompared ? "Bỏ so sánh" : "Thêm vào so sánh"}
-          >
-            <ArrowRightLeft className="w-3.5 h-3.5 shrink-0" />
-            <span>So sánh</span>
-          </button>
-          
-          {stock > 0 ? (
-            <div className="flex items-center gap-1 text-green-600 font-medium whitespace-nowrap shrink-0">
-              <span className="text-[13px] sm:text-[14px] leading-none shrink-0">✓</span>
-              <span>Còn hàng</span>
-            </div>
-          ) : (
-            <div className="text-red-500 font-medium whitespace-nowrap shrink-0">Hết hàng</div>
-          )}
-        </div>
-
-        <button 
-          onClick={handleAddToCart}
-          disabled={!showContactPrice && stock === 0}
-          className={`shrink-0 flex items-center justify-center text-white rounded-md shadow transition-colors ${
-            showContactPrice
-              ? 'px-3 py-2 bg-amber-600 hover:bg-amber-700 text-xs font-semibold whitespace-nowrap'
-              : 'w-9 h-9 bg-primary hover:bg-primary/90 disabled:bg-gray-300 disabled:cursor-not-allowed'
-          }`}
-          title={showContactPrice ? "Liên hệ báo giá" : productType === 'rental' ? "Đăng ký thuê" : "Thêm vào giỏ"}
-        >
-          {showContactPrice ? 'Liên hệ' : <ShoppingCart className="w-4 h-4" />}
-        </button>
       </div>
 
       {/* Local Toasts */}

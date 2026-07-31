@@ -32,9 +32,11 @@ export function idFromSlug(slug: string): number {
   return parseInt(parts[parts.length - 1], 10);
 }
 
-/** Làm sạch URL ảnh, tự động loại bỏ tiền tố domain localhost/0.0.0.0 không hợp lệ */
+/** Làm sạch URL ảnh, tự động loại bỏ tiền tố domain localhost/0.0.0.0 không hợp lệ và loại bỏ ảnh unsplash */
 export function cleanUrl(url?: string | null): string {
   if (!url || typeof url !== 'string') return '';
+  if (url.includes('unsplash.com')) return '';
   return url.replace(/^https?:\/\/(0\.0\.0\.0|localhost|127\.0\.0\.1)(:\d+)?/i, '');
 }
+
 

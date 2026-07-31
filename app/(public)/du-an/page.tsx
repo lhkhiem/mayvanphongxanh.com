@@ -105,7 +105,7 @@ export default async function ImplementedProjectsPage() {
               <div key={project.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow group flex flex-col h-full">
                 <div className="relative h-60 w-full overflow-hidden">
                   <Image 
-                    src={project.image} 
+                    src={project.image || '/placeholder.jpg'} 
                     alt={project.title} 
                     fill 
                     className="object-cover group-hover:scale-105 transition-transform duration-500" 

@@ -11,6 +11,7 @@ import { CompareBar } from "@/components/compare/CompareBar";
 
 import { SettingsProvider } from "@/context/SettingsContext";
 import { prisma } from "@/lib/db";
+import { cleanUrl } from "@/lib/utils";
 
 const inter = Inter({ variable: '--font-inter', subsets: ['latin', 'vietnamese'] })
 const jetbrainsMono = JetBrains_Mono({
@@ -19,11 +20,6 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const revalidate = 0;
-
-const cleanUrl = (url?: string) => {
-  if (!url) return url;
-  return url.replace(/^https?:\/\/(0\.0\.0\.0|localhost|127\.0\.0\.1)(:\d+)?/i, '');
-};
 
 export async function generateMetadata(): Promise<Metadata> {
   let dbSettings: any[] = [];

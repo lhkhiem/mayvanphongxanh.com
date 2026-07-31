@@ -97,7 +97,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                   <Package className="w-5 h-5 text-primary" />
                   <h2 className="text-xl font-bold text-[#0d2a45]">Sản phẩm ({searchResults.length})</h2>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
                   {searchResults.map((product) => (
                     <ProductCard
                       key={product.id}
