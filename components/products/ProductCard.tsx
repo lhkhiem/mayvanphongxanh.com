@@ -7,7 +7,7 @@ import { ShoppingCart, Star, ArrowRightLeft, PhoneCall } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useCompare } from '@/context/CompareContext';
 import { productSlug } from '@/lib/utils';
-import { VatBadge } from './VatBadge';
+import { WatermarkedImage } from './WatermarkedImage';
 
 export interface ProductCardProps {
   id: number;
@@ -142,7 +142,7 @@ export function ProductCard({
         </button>
 
         {!imageError ? (
-          <img
+          <WatermarkedImage
             src={image}
             alt={name}
             className="w-full h-full object-contain p-0 group-hover:scale-105 transition-transform duration-300"
@@ -199,9 +199,6 @@ export function ProductCard({
                     <div className="font-bold text-base sm:text-lg text-primary truncate flex items-center gap-1.5 flex-wrap">
                       <span>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)}</span>
                       {productType === 'rental' && <span className="text-xs font-normal text-muted-foreground ml-0.5">/ tháng</span>}
-                    </div>
-                    <div className="mt-0.5">
-                      <VatBadge vatStatus={vatStatus} />
                     </div>
                   </div>
                   {discount > 0 && (

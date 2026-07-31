@@ -13,6 +13,7 @@ import { QuoteTemplate } from '@/components/print/QuoteTemplate';
 import { ProductCard } from '@/components/products/ProductCard';
 import { ShareButtons } from '@/components/blog/share-buttons';
 import { VatBadge } from '@/components/products/VatBadge';
+import { WatermarkedImage } from '@/components/products/WatermarkedImage';
 
 import { cleanUrl } from '@/lib/utils';
 
@@ -227,15 +228,13 @@ export default function ProductDetailClient({
                 onMouseEnter={() => setIsZooming(true)}
                 onMouseLeave={() => setIsZooming(false)}
               >
-                <Image
+                <WatermarkedImage
                   src={activeImage}
                   alt={product.name}
-                  fill
-                  className={`object-contain transition-transform duration-200 ${isZooming ? 'scale-[2]' : 'scale-100'}`}
+                  className={`w-full h-full object-contain transition-transform duration-200 ${isZooming ? 'scale-[2]' : 'scale-100'}`}
                   style={{
                     transformOrigin: `${mousePosition.x}% ${mousePosition.y}%`
                   }}
-                  priority
                 />
                 {discount > 0 && (
                   <div className="absolute top-4 left-4 bg-accent text-accent-foreground px-4 py-2 rounded-full font-bold shadow-md z-10">
@@ -475,8 +474,11 @@ export default function ProductDetailClient({
               {/* Quick Specs */}
               {(() => {
                 const hasQuickSpecs = Array.isArray(product.quickSpecs) && product.quickSpecs.length > 0;
-                const totalSpecsCount = hasQuickSpecs ? product.quickSpecs.length : 0;
-                // 1 cột làm mặc định, từ 9 mục trở lên mới chuyển sang 2 cột
+                const specifications = Array.isArray(product.specifications) ? product.specifications : [];
+                const displaySpecs = hasQuickSpecs 
+                  ? product.quickSpecs 
+                  : (specifications.length > 0 ? specifications.slice(0, 6) : []);
+                const totalSpecsCount = displaySpecs.length;
                 const isMultiCol = totalSpecsCount >= 9;
 
                 return (
@@ -485,15 +487,27 @@ export default function ProductDetailClient({
                       <Info className="w-4.5 h-4.5 text-primary" /> Thông số nổi bật
                     </h3>
                     <ul className={`grid ${isMultiCol ? 'grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5' : 'grid-cols-1 gap-y-2.5'} text-sm text-foreground`}>
-                      {hasQuickSpecs ? (
-                        product.quickSpecs.map((spec: any, idx: number) => (
-                          <li key={idx} className="flex gap-2.5 items-start">
-                            <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
-                            <span className="leading-relaxed">
-                              {typeof spec === 'string' ? spec : (spec.label ? <><span className="text-muted-foreground font-medium">{spec.label}:</span> {spec.value}</> : '')}
-                            </span>
-                          </li>
-                        ))
+                      {displaySpecs.length > 0 ? (
+                        displaySpecs.map((spec: any, idx: number) => {
+                          if (typeof spec === 'string') {
+                            return (
+                              <li key={idx} className="flex gap-2.5 items-start">
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
+                                <span className="leading-relaxed">{spec}</span>
+                              </li>
+                            );
+                          }
+                          const label = spec?.label || spec?.name;
+                          const value = spec?.value || spec?.val;
+                          return (
+                            <li key={idx} className="flex gap-2.5 items-start">
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
+                              <span className="leading-relaxed">
+                                {label ? <><span className="text-muted-foreground font-medium">{label}:</span> {value}</> : value}
+                              </span>
+                            </li>
+                          );
+                        })
                       ) : (
                         <li className="flex gap-2.5 items-center text-muted-foreground text-xs italic py-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 shrink-0" />

@@ -34,17 +34,35 @@ export function QuoteTemplate({ product, quantity, settings = {} }: QuoteTemplat
   const bankNote = settings['quote_bank_note'] || '*LƯU Ý: Công ty MPX không chịu bất cứ chi phí phát sinh nào trong quá trình chuyển khoản.';
 
   // Commercial Terms Settings
-  const rawTerms = settings['quote_terms'] || `• Đơn giá trên đã bao gồm VAT.
+  const vatStatus = product?.vatStatus || 'INCLUDED';
+  let vatTerm = '• Đơn giá trên đã bao gồm VAT.';
+  if (vatStatus === 'EXCLUDED') {
+    vatTerm = '• Đơn giá trên chưa bao gồm VAT (10%).';
+  } else if (vatStatus === 'NONE') {
+    vatTerm = '• Đơn giá trên không thuộc đối tượng chịu thuế VAT.';
+  }
+
+  const defaultTerms = `${vatTerm}
 • Hình thức thanh toán: Tiền mặt hoặc chuyển khoản sau khi xác nhận đơn hàng.
 • Thời gian bảo hành: Theo quy định của nhà sản xuất.
 • Quy cách: Hàng mới 100%, nguyên đai, nguyên kiện, Chính hãng.
 • Báo giá trên có giá trị 10 ngày, kể từ ngày phát hành báo giá.`;
 
+  const rawTerms = settings['quote_terms'] || defaultTerms;
+
   const termsList = rawTerms.split('\n').map(t => t.trim()).filter(Boolean);
 
-  // Product Thumbnail & Quick Specs
+  // Product Thumbnail & Specs Extraction from DB
   const productImage = product?.image || product?.images?.[0] || '/placeholder.jpg';
-  const quickSpecs = Array.isArray(product?.quickSpecs) ? product.quickSpecs : [];
+  const quickSpecs = Array.isArray(product?.quickSpecs) ? product.quickSpecs.filter(Boolean) : [];
+  const specifications = Array.isArray(product?.specifications) ? product.specifications.filter(Boolean) : [];
+  const brandName = typeof product?.brand === 'string' ? product.brand : (product?.brand?.name || '');
+  const categoryName = typeof product?.category === 'string' ? product.category : (product?.category?.name || '');
+  const sku = product?.sku || '';
+  const rawDescription = product?.description ? product.description.replace(/<[^>]*>/g, '').trim() : '';
+
+  const hasQuickSpecs = quickSpecs.length > 0;
+  const hasSpecs = specifications.length > 0;
 
   return (
     <div className="hidden print:block bg-white text-black text-[13px] leading-relaxed p-8 mx-auto" style={{ width: '210mm', minHeight: '297mm' }}>
@@ -103,34 +121,47 @@ export function QuoteTemplate({ product, quantity, settings = {} }: QuoteTemplat
             <td className="border border-black p-3 align-top">
               <div className="font-bold text-sm mb-2 text-black">{product?.name}</div>
               
-              {quickSpecs.length > 0 ? (
-                <div className="space-y-1 text-xs text-gray-800">
-                  {quickSpecs.map((spec: any, idx: number) => {
-                    const text = typeof spec === 'string' ? spec : (spec?.value || spec?.label || '');
+              <div className="space-y-1 text-xs text-gray-800">
+                {/* Render quickSpecs if present */}
+                {hasQuickSpecs && (
+                  quickSpecs.map((spec: any, idx: number) => {
+                    const text = typeof spec === 'string' ? spec : (spec?.value ? `${spec?.label ? spec.label + ': ' : ''}${spec.value}` : (spec?.label || ''));
                     if (!text) return null;
                     const colonIdx = text.indexOf(':');
                     if (colonIdx > 0 && colonIdx < text.length - 1) {
                       const label = text.substring(0, colonIdx).trim();
                       const val = text.substring(colonIdx + 1).trim();
                       return (
-                        <p key={idx}><strong>{label}:</strong> {val}</p>
+                        <p key={`qs-${idx}`}><strong>{label}:</strong> {val}</p>
                       );
                     }
-                    return <p key={idx}>• {text}</p>;
-                  })}
-                  <p className="italic text-[11px] text-gray-600 mt-2">* Lưu ý: Giá trên chưa bao gồm chi phí cài đặt phần mềm đặc thù (nếu có)</p>
-                </div>
-              ) : (
-                <div className="space-y-1 text-xs text-gray-800">
-                  <p><strong>Loại máy:</strong> Theo tiêu chuẩn NSX</p>
-                  <p><strong>Bảo hành:</strong> 12 tháng chính hãng</p>
-                  <p><strong>Giao hàng:</strong> Miễn phí phạm vi TPHCM và Hà Nội</p>
-                  {product?.description && (
-                    <p className="line-clamp-2"><strong>Mô tả:</strong> {product.description.replace(/<[^>]*>/g, '')}</p>
-                  )}
-                  <p className="italic text-[11px] text-gray-600 mt-2">* Lưu ý: Giá trên chưa bao gồm chi phí cài đặt phần mềm đặc thù (nếu có)</p>
-                </div>
-              )}
+                    return <p key={`qs-${idx}`}>• {text}</p>;
+                  })
+                )}
+
+                {/* Render detailed specifications if quickSpecs not available */}
+                {!hasQuickSpecs && hasSpecs && (
+                  specifications.slice(0, 5).map((spec: any, idx: number) => {
+                    const label = typeof spec === 'object' ? (spec?.label || spec?.name || '') : '';
+                    const val = typeof spec === 'object' ? (spec?.value || spec?.val || '') : String(spec);
+                    if (!label && !val) return null;
+                    return (
+                      <p key={`spec-${idx}`}>
+                        {label ? <strong>{label}: </strong> : null}
+                        {val}
+                      </p>
+                    );
+                  })
+                )}
+
+                {/* DB Metadata */}
+                {brandName && <p><strong>Thương hiệu:</strong> {brandName}</p>}
+                {categoryName && categoryName !== 'Chưa phân loại' && <p><strong>Danh mục:</strong> {categoryName}</p>}
+                {sku && <p><strong>Mã SKU:</strong> {sku}</p>}
+                {!hasQuickSpecs && !hasSpecs && rawDescription && (
+                  <p className="line-clamp-2"><strong>Mô tả:</strong> {rawDescription}</p>
+                )}
+              </div>
             </td>
             <td className="border border-black p-2 text-center align-middle font-bold">{quantity}</td>
             <td className="border border-black p-2 text-right align-middle font-medium">{formatPrice(price)}</td>
