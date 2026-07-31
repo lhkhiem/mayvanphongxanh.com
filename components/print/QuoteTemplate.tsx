@@ -119,12 +119,11 @@ export function QuoteTemplate({ product, quantity, settings = {} }: QuoteTemplat
               <img src={productImage} alt={product?.name || ''} className="w-full max-w-[100px] max-h-[100px] mx-auto object-contain" />
             </td>
             <td className="border border-black p-3 align-top">
-              <div className="font-bold text-sm mb-2 text-black">{product?.name}</div>
+              <div className={`font-bold text-sm text-black ${hasQuickSpecs ? 'mb-2' : ''}`}>{product?.name}</div>
               
-              <div className="space-y-1 text-xs text-gray-800">
-                {/* Render quickSpecs if present */}
-                {hasQuickSpecs && (
-                  quickSpecs.map((spec: any, idx: number) => {
+              {hasQuickSpecs && (
+                <div className="space-y-1 text-xs text-gray-800">
+                  {quickSpecs.map((spec: any, idx: number) => {
                     const text = typeof spec === 'string' ? spec : (spec?.value ? `${spec?.label ? spec.label + ': ' : ''}${spec.value}` : (spec?.label || ''));
                     if (!text) return null;
                     const colonIdx = text.indexOf(':');
@@ -136,32 +135,9 @@ export function QuoteTemplate({ product, quantity, settings = {} }: QuoteTemplat
                       );
                     }
                     return <p key={`qs-${idx}`}>• {text}</p>;
-                  })
-                )}
-
-                {/* Render detailed specifications if quickSpecs not available */}
-                {!hasQuickSpecs && hasSpecs && (
-                  specifications.slice(0, 5).map((spec: any, idx: number) => {
-                    const label = typeof spec === 'object' ? (spec?.label || spec?.name || '') : '';
-                    const val = typeof spec === 'object' ? (spec?.value || spec?.val || '') : String(spec);
-                    if (!label && !val) return null;
-                    return (
-                      <p key={`spec-${idx}`}>
-                        {label ? <strong>{label}: </strong> : null}
-                        {val}
-                      </p>
-                    );
-                  })
-                )}
-
-                {/* DB Metadata */}
-                {brandName && <p><strong>Thương hiệu:</strong> {brandName}</p>}
-                {categoryName && categoryName !== 'Chưa phân loại' && <p><strong>Danh mục:</strong> {categoryName}</p>}
-                {sku && <p><strong>Mã SKU:</strong> {sku}</p>}
-                {!hasQuickSpecs && !hasSpecs && rawDescription && (
-                  <p className="line-clamp-2"><strong>Mô tả:</strong> {rawDescription}</p>
-                )}
-              </div>
+                  })}
+                </div>
+              )}
             </td>
             <td className="border border-black p-2 text-center align-middle font-bold">{quantity}</td>
             <td className="border border-black p-2 text-right align-middle font-medium">{formatPrice(price)}</td>

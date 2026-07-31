@@ -50,7 +50,7 @@ export function WatermarkedImage({
     const generateWatermark = async () => {
       try {
         // Safe loader using fetch + Blob URL to prevent CORS/tainted canvas errors
-        const loadElement = async (url: string): Promise<HTMLImageElement> => {
+        const loadElement = async (url: string): Promise<HTMLImageElement | null> => {
           let imageUri = url;
           try {
             const response = await fetch(url);
@@ -64,23 +64,36 @@ export function WatermarkedImage({
           }
 
           const image = new Image();
+          image.crossOrigin = 'anonymous';
           image.src = imageUri;
-          await new Promise((resolve, reject) => {
-            if (image.complete) resolve(true);
-            image.onload = () => resolve(true);
-            image.onerror = (e) => reject(e);
+          
+          return new Promise((resolve) => {
+            if (image.complete && image.naturalWidth > 0) {
+              resolve(image);
+              return;
+            }
+            image.onload = () => resolve(image);
+            image.onerror = () => resolve(null);
           });
-          return image;
         };
 
         // 1. Load main product image
         const img = await loadElement(src);
+        if (!img || !isMounted) {
+          if (isMounted) setWatermarkedSrc(src);
+          return;
+        }
 
         const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth || img.width;
-        canvas.height = img.naturalHeight || img.height;
+        const width = img.naturalWidth || img.width || 400;
+        const height = img.naturalHeight || img.height || 400;
+        canvas.width = width;
+        canvas.height = height;
         const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+        if (!ctx) {
+          if (isMounted) setWatermarkedSrc(src);
+          return;
+        }
 
         // Fill background with white to avoid black area artifacts
         ctx.fillStyle = '#ffffff';
@@ -91,9 +104,8 @@ export function WatermarkedImage({
 
         // 2. Load and overlay watermark logo if present
         if (effectiveLogoSrc) {
-          try {
-            const logo = await loadElement(effectiveLogoSrc);
-
+          const logo = await loadElement(effectiveLogoSrc);
+          if (logo && logo.naturalWidth > 0) {
             const logoWidth = Math.max(60, Math.min(canvas.width * 0.25, 260));
             const logoHeight = (logo.naturalHeight / logo.naturalWidth) * logoWidth;
             const padding = Math.max(12, canvas.width * 0.02);
@@ -119,17 +131,20 @@ export function WatermarkedImage({
             ctx.globalAlpha = opacity; // 30% transparent watermark
             ctx.drawImage(logo, x, y, logoWidth, logoHeight);
             ctx.restore();
-          } catch (logoErr) {
-            console.warn('Watermark logo load warning:', logoErr);
           }
         }
 
-        const dataUrl = canvas.toDataURL('image/png');
-        if (isMounted) {
-          setWatermarkedSrc(dataUrl);
+        try {
+          const dataUrl = canvas.toDataURL('image/png');
+          if (isMounted) {
+            setWatermarkedSrc(dataUrl);
+          }
+        } catch (dataUrlErr) {
+          if (isMounted) {
+            setWatermarkedSrc(src);
+          }
         }
       } catch (err) {
-        console.error('Watermark generation error:', err);
         if (isMounted) {
           setWatermarkedSrc(src);
         }
