@@ -4,15 +4,15 @@ import { useCompare } from '@/context/CompareContext';
 import { X, ChevronDown, ChevronUp } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { slugify } from '@/lib/utils';
+import { slugify, cleanUrl } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 
 export function CompareBar() {
   const { items, isOpen, setIsOpen, removeCompareItem, clearCompare } = useCompare();
   const pathname = usePathname();
 
-  // Hide on compare page, admin pages, or if no items
-  if (items.length === 0 || pathname === '/compare' || pathname?.startsWith('/admin')) return null;
+  // Hide on compare page (/so-sanh), admin pages, or if no items
+  if (items.length === 0 || pathname === '/so-sanh' || pathname === '/compare' || pathname?.startsWith('/admin')) return null;
 
   return (
     <div className={`fixed bottom-0 left-0 w-full z-50 bg-background border-t shadow-[0_-4px_10px_rgba(0,0,0,0.05)] transition-transform duration-300 ${isOpen ? 'translate-y-0' : 'translate-y-[calc(100%-40px)]'}`}>
@@ -31,6 +31,7 @@ export function CompareBar() {
         <div className="flex gap-4 items-center flex-1 min-w-max">
           {[0, 1, 2].map((index) => {
             const item = items[index];
+            const itemImage = cleanUrl(item?.image) || '/placeholder.jpg';
             return (
               <div key={index} className="w-40 md:w-48 flex-shrink-0 flex items-center border border-border rounded-lg bg-card overflow-hidden h-24 md:h-28 relative group">
                 {item ? (
@@ -42,7 +43,7 @@ export function CompareBar() {
                       <X className="w-3.5 h-3.5" />
                     </button>
                     <div className="w-20 md:w-24 h-full relative bg-secondary flex-shrink-0 border-r border-border">
-                      <Image src={item.image} alt={item.name} fill className="object-cover p-1" />
+                      <Image src={itemImage} alt={item.name} fill className="object-contain p-1" />
                     </div>
                     <div className="p-2 flex-1 flex flex-col justify-center">
                       <p className="text-xs md:text-sm font-medium line-clamp-2 text-foreground" title={item.name}>{item.name}</p>

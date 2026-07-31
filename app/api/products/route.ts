@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { cleanUrl } from '@/lib/utils'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -18,7 +19,8 @@ export async function GET(request: Request) {
       },
       include: {
         category: true,
-        variants: true, // Lấy luôn variant để có giá và hình ảnh
+        brandRef: true,
+        variants: true,
       },
       take: limit ? parseInt(limit) : undefined,
       orderBy: [{ category: { order: 'asc' } }, { order: 'asc' }, { id: 'desc' }]
@@ -27,23 +29,35 @@ export async function GET(request: Request) {
     // Map lại data cho giống với UI hiện tại đang dùng (Product interface)
     const formattedProducts = products.map(p => {
       const defaultVariant = p.variants[0]
+      const rawImgs = (p.images as string[] || []).map(cleanUrl).filter(Boolean);
+      const rawVarImgs = (defaultVariant?.images as string[] || []).map(cleanUrl).filter(Boolean);
+      const mainImg = rawImgs[0] || rawVarImgs[0] || '/placeholder.jpg';
+
       return {
         id: p.id,
         name: p.name,
         slug: p.slug,
-        category: p.category.name,
-        brand: p.brand,
+        category: p.category?.name || 'Khác',
+        brand: p.brand || p.brandRef?.name || '',
         price: defaultVariant?.price || 0,
         originalPrice: defaultVariant?.originalPrice,
-        rating: 5, // Mock data
-        reviews: 120, // Mock data
-        image: (defaultVariant?.images as string[])?.[0] || '',
+        rating: 5,
+        reviews: 120,
+        image: mainImg,
+        images: rawImgs.length > 0 ? rawImgs : [mainImg],
         stock: defaultVariant?.stockQuantity || 0,
+        sku: defaultVariant?.sku || '',
         description: p.description,
         productType: p.productType,
+        isContactPrice: p.isContactPrice,
         attributes: defaultVariant?.attributes,
         variants: p.variants,
-        customOptions: p.customOptions
+        customOptions: p.customOptions,
+        quickSpecs: p.quickSpecs,
+        specifications: p.specifications,
+        manuals: p.manuals,
+        drivers: p.drivers,
+        rentalTerms: p.rentalTerms
       }
     })
 
