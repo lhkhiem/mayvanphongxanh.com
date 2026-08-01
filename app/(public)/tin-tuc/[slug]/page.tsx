@@ -10,7 +10,8 @@ import { ShareButtons } from '@/components/blog/share-buttons';
 import { Calendar, User, ArrowLeft, Folder } from 'lucide-react';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = rawSlug.replace(/\.html$/, '');
   const post = await prisma.post.findFirst({
     where: { slug, isActive: true },
     include: { category: true }
@@ -72,7 +73,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = rawSlug.replace(/\.html$/, '');
   const dbPost = await prisma.post.findFirst({
     where: { slug, isActive: true },
     include: { category: true }

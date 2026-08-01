@@ -4,7 +4,8 @@ import ProductsClient from '@/app/(public)/san-pham/ProductsClient';
 import { cleanUrl } from '@/lib/utils';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = rawSlug.replace(/\.html$/, '');
   const category = await prisma.category.findFirst({ where: { slug, isActive: true } });
   
   if (!category) {
@@ -17,7 +18,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = rawSlug.replace(/\.html$/, '');
   
   const category = await prisma.category.findFirst({ where: { slug, isActive: true } });
   

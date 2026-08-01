@@ -121,19 +121,19 @@ export default function HelpPage() {
 
         {/* Quick Links */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <Link href="/faq" className="bg-primary/5 border border-primary/20 rounded-lg p-6 hover:border-primary transition-colors">
+          <Link href="/hoi-dap" className="bg-primary/5 border border-primary/20 rounded-lg p-6 hover:border-primary transition-colors">
             <BookOpen className="w-8 h-8 text-primary mb-3" />
             <h3 className="font-bold text-foreground mb-2">FAQ</h3>
             <p className="text-sm text-muted-foreground">Browse frequently asked questions</p>
           </Link>
 
-          <Link href="/contact" className="bg-primary/5 border border-primary/20 rounded-lg p-6 hover:border-primary transition-colors">
+          <Link href="/lien-he" className="bg-primary/5 border border-primary/20 rounded-lg p-6 hover:border-primary transition-colors">
             <LifeBuoy className="w-8 h-8 text-primary mb-3" />
             <h3 className="font-bold text-foreground mb-2">Contact Support</h3>
             <p className="text-sm text-muted-foreground">Reach our support team directly</p>
           </Link>
 
-          <Link href="/contact" className="bg-primary/5 border border-primary/20 rounded-lg p-6 hover:border-primary transition-colors">
+          <Link href="/lien-he" className="bg-primary/5 border border-primary/20 rounded-lg p-6 hover:border-primary transition-colors">
             <MessageSquare className="w-8 h-8 text-primary mb-3" />
             <h3 className="font-bold text-foreground mb-2">Live Chat</h3>
             <p className="text-sm text-muted-foreground">Chat with our support team</p>

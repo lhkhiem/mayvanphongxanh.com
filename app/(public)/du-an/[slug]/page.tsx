@@ -208,7 +208,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <p className="text-primary-foreground/90 text-sm mb-6">
                   Đội ngũ kỹ sư của Máy Văn Phòng Xanh sẵn sàng tư vấn và cung cấp giải pháp thiết bị tối ưu nhất.
                 </p>
-                <Link href="/contact" className="inline-flex items-center justify-center bg-yellow-500 hover:bg-yellow-600 text-[#0d2a45] font-bold py-3 px-6 rounded transition-colors w-full">
+                <Link href="/lien-he" className="inline-flex items-center justify-center bg-yellow-500 hover:bg-yellow-600 text-[#0d2a45] font-bold py-3 px-6 rounded transition-colors w-full">
                   Nhận báo giá ngay
                 </Link>
               </div>

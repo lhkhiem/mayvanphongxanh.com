@@ -4,7 +4,8 @@ import ProductDetailClient from './ProductDetailClient';
 import { idFromSlug, cleanUrl } from '@/lib/utils';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = rawSlug.replace(/\.html$/, '');
   const id = idFromSlug(slug);
   let dbProduct = null;
   
@@ -67,7 +68,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = rawSlug.replace(/\.html$/, '');
   const id = idFromSlug(slug);
   let dbProduct = null;
 
