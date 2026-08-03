@@ -154,11 +154,11 @@ export function HeroSection({ categories = [], sliders = [], banners = [] }: { c
           </div>
 
           {/* ── Center: Carousel ── */}
-          <div className="flex-1 min-w-0 flex flex-col gap-2">
+          <div className="w-full lg:flex-1 min-w-0 flex flex-col gap-2">
             {/* Carousel */}
-            <div className={`relative rounded-lg overflow-hidden bg-gray-900 group transition-all duration-300 ${hasBanners ? 'h-[320px] lg:h-[380px] shrink-0' : 'h-[320px] sm:h-[380px] lg:h-full flex-1'}`}>
+            <div className={`relative rounded-lg overflow-hidden bg-gray-900 group transition-all duration-300 ${hasBanners ? 'h-48 sm:h-80 lg:h-[380px] shrink-0' : 'h-48 sm:h-80 lg:h-full flex-1 min-h-[380px]'}`}>
               {sliders.length === 0 ? (
-                <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-800">
+                <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-800 text-xs sm:text-base">
                   Chưa có Slider nào
                 </div>
               ) : sliders.map((slide, i) => (
@@ -171,32 +171,32 @@ export function HeroSection({ categories = [], sliders = [], banners = [] }: { c
                     style={{ backgroundImage: `url(${slide.image})` }}
                   />
 
-                  {/* Localized gradient strictly behind 1/3 text area */}
+                  {/* Localized gradient strictly behind text area */}
                   {(slide.title || slide.description || slide.badge || slide.btnPrimaryLabel || slide.btnSecondaryLabel) && (
-                    <div className="absolute inset-y-0 left-0 w-full sm:w-1/2 md:w-5/12 lg:w-[42%] bg-gradient-to-r from-black/75 via-black/40 to-transparent pointer-events-none" />
+                    <div className="absolute inset-y-0 left-0 w-full sm:w-1/2 md:w-5/12 lg:w-[42%] bg-gradient-to-r from-black/80 via-black/50 to-transparent pointer-events-none" />
                   )}
 
-                  <div className="relative h-full flex flex-col justify-center px-4 sm:px-8 max-w-[90%] sm:max-w-[45%] md:max-w-[38%] lg:max-w-[35%]">
+                  <div className="relative h-full flex flex-col justify-center px-3.5 sm:px-8 max-w-[85%] sm:max-w-[45%] md:max-w-[38%] lg:max-w-[35%]">
                     {slide.badge && (
-                      <span className="inline-block text-xs font-semibold text-yellow-300 bg-yellow-300/20 border border-yellow-300/30 rounded-full px-3 py-1 mb-3 w-fit backdrop-blur-sm shadow-sm">
+                      <span className="inline-block text-[10px] sm:text-xs font-semibold text-yellow-300 bg-yellow-300/20 border border-yellow-300/30 rounded-full px-2 py-0.5 sm:px-3 sm:py-1 mb-1 sm:mb-3 w-fit backdrop-blur-sm shadow-sm">
                         {slide.badge}
                       </span>
                     )}
                     {slide.title && (
-                      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-tight mb-3 [text-shadow:_0_2px_8px_rgba(0,0,0,0.85)]">
+                      <h1 className="text-sm sm:text-2xl md:text-3xl font-bold text-white leading-tight mb-1 sm:mb-3 line-clamp-2 [text-shadow:_0_2px_8px_rgba(0,0,0,0.85)]">
                         {slide.title.split('\n').map((line: string, j: number) => (
-                          <span key={j}>{line}{j === 0 && <br />}</span>
+                          <span key={j}>{line}{j === 0 && <br className="hidden sm:inline" />}</span>
                         ))}
                       </h1>
                     )}
                     {slide.description && (
-                      <p className="text-white/90 text-xs sm:text-sm mb-5 line-clamp-2 [text-shadow:_0_1px_4px_rgba(0,0,0,0.8)]">{slide.description}</p>
+                      <p className="text-white/90 text-[11px] sm:text-sm mb-2 sm:mb-5 line-clamp-1 sm:line-clamp-2 [text-shadow:_0_1px_4px_rgba(0,0,0,0.8)]">{slide.description}</p>
                     )}
-                    <div className="flex gap-2 flex-wrap">
+                    <div className="flex gap-1.5 sm:gap-2 flex-wrap">
                       {slide.btnPrimaryLabel && (
                         <Link
                           href={slide.btnPrimaryUrl || '#'}
-                          className="px-4 py-2 sm:px-5 sm:py-2 bg-primary text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-primary/90 transition-colors shadow-md"
+                          className="px-2.5 py-1 sm:px-5 sm:py-2 bg-primary text-white rounded-md sm:rounded-lg text-[11px] sm:text-sm font-semibold hover:bg-primary/90 transition-colors shadow-md"
                         >
                           {slide.btnPrimaryLabel}
                         </Link>
@@ -204,7 +204,7 @@ export function HeroSection({ categories = [], sliders = [], banners = [] }: { c
                       {slide.btnSecondaryLabel && (
                         <Link
                           href={slide.btnSecondaryUrl || '#'}
-                          className="px-4 py-2 sm:px-5 sm:py-2 border border-white/70 text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-white hover:text-primary transition-colors backdrop-blur-sm shadow-sm"
+                          className="px-2.5 py-1 sm:px-5 sm:py-2 border border-white/70 text-white rounded-md sm:rounded-lg text-[11px] sm:text-sm font-semibold hover:bg-white hover:text-primary transition-colors backdrop-blur-sm shadow-sm"
                         >
                           {slide.btnSecondaryLabel}
                         </Link>
