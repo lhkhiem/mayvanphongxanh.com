@@ -96,7 +96,7 @@ export function ProductForm({
     specifications: Array.isArray(initialData?.specifications) ? initialData.specifications : [],
     manuals: initialData?.manuals || { content: '', files: [] },
     drivers: initialData?.drivers || { content: '', files: [] },
-    rentalTerms: initialData?.rentalTerms || { deposit: 0, minMonths: 12, freeBw: 0, freeColor: 0, overageBw: 0, overageColor: 0 },
+    rentalTerms: initialData?.rentalTerms || { deposit: 0, minMonths: 12, freeBw: 0, freeColor: 0, overageBw: 0, overageColor: 0, notes: '' },
     policyIds: Array.isArray(initialData?.policies) ? initialData.policies.map((p: any) => p.id) : [],
     consumableIds: Array.isArray(initialData?.consumables) ? initialData.consumables.map((c: any) => c.id) : [],
   });
@@ -753,6 +753,16 @@ export function ProductForm({
                     <div>
                       <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Phí vượt mức Màu (đ/trang)</label>
                       <input type="number" min={0} value={form.rentalTerms?.overageColor || ''} onChange={(e) => setForm({ ...form, rentalTerms: { ...form.rentalTerms, overageColor: parseFloat(e.target.value) || 0 } })} placeholder="VD: 1000" className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Thông tin thêm cho cấu hình thuê máy</label>
+                      <textarea
+                        rows={3}
+                        value={form.rentalTerms?.notes || ''}
+                        onChange={(e) => setForm({ ...form, rentalTerms: { ...form.rentalTerms, notes: e.target.value } })}
+                        placeholder="VD: Giá thuê đã bao gồm chi phí bảo trì, mực in và vật tư thay thế tận nơi..."
+                        className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm resize-none"
+                      />
                     </div>
                   </div>
                 </div>

@@ -144,7 +144,7 @@ export default function ProductDetailClient({
   const [isZooming, setIsZooming] = useState(false);
 
   // Tabs state
-  const [activeTab, setActiveTab] = useState('specs');
+  const [activeTab, setActiveTab] = useState('desc');
   const [activeRelatedTab, setActiveRelatedTab] = useState(product.category === 'Máy in' ? 'consumables' : 'similar');
 
   useEffect(() => {
@@ -436,41 +436,74 @@ export default function ProductDetailClient({
               )}
 
               {/* Rental Terms */}
-              {isRental && product.rentalTerms && (
-                <div className="mb-6 p-5 bg-blue-50/50 border border-blue-100 rounded-2xl">
-                  <h3 className="text-sm font-bold text-blue-900 mb-4 uppercase tracking-wider flex items-center gap-2">
-                    <Info className="w-5 h-5 text-blue-600" /> Cấu hình thuê máy
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-muted-foreground text-xs">Phí đặt cọc</span>
-                      <span className="font-semibold text-foreground">
-                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.rentalTerms.deposit || 0)}
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-muted-foreground text-xs">Kì hạn thuê tối thiểu</span>
-                      <span className="font-semibold text-foreground">{product.rentalTerms.minMonths || 12} tháng</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-muted-foreground text-xs">Định mức in Đen trắng</span>
-                      <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN').format(product.rentalTerms.freeBw || 0)} trang/tháng</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-muted-foreground text-xs">Phí vượt mức Đen trắng</span>
-                      <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.rentalTerms.overageBw || 0)} / trang</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-muted-foreground text-xs">Định mức in Màu</span>
-                      <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN').format(product.rentalTerms.freeColor || 0)} trang/tháng</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-muted-foreground text-xs">Phí vượt mức Màu</span>
-                      <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.rentalTerms.overageColor || 0)} / trang</span>
+              {isRental && product.rentalTerms && (() => {
+                const terms = product.rentalTerms;
+                const notesText = terms.notes || terms.additionalInfo || terms.note;
+                const hasDeposit = Boolean(terms.deposit && Number(terms.deposit) > 0);
+                const hasMinMonths = Boolean(terms.minMonths && Number(terms.minMonths) > 0);
+                const hasFreeBw = Boolean(terms.freeBw && Number(terms.freeBw) > 0);
+                const hasOverageBw = Boolean(terms.overageBw && Number(terms.overageBw) > 0);
+                const hasFreeColor = Boolean(terms.freeColor && Number(terms.freeColor) > 0);
+                const hasOverageColor = Boolean(terms.overageColor && Number(terms.overageColor) > 0);
+                const hasNotes = Boolean(notesText && String(notesText).trim());
+
+                const hasAnySpec = hasDeposit || hasMinMonths || hasFreeBw || hasOverageBw || hasFreeColor || hasOverageColor || hasNotes;
+
+                if (!hasAnySpec) return null;
+
+                return (
+                  <div className="mb-6 p-5 bg-blue-50/50 border border-blue-100 rounded-2xl">
+                    <h3 className="text-sm font-bold text-blue-900 mb-4 uppercase tracking-wider flex items-center gap-2">
+                      <Info className="w-5 h-5 text-blue-600" /> Cấu hình thuê máy
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                      {hasDeposit && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-muted-foreground text-xs">Phí đặt cọc</span>
+                          <span className="font-semibold text-foreground">
+                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(terms.deposit))}
+                          </span>
+                        </div>
+                      )}
+                      {hasMinMonths && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-muted-foreground text-xs">Kì hạn thuê tối thiểu</span>
+                          <span className="font-semibold text-foreground">{terms.minMonths} tháng</span>
+                        </div>
+                      )}
+                      {hasFreeBw && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-muted-foreground text-xs">Định mức in Đen trắng</span>
+                          <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN').format(Number(terms.freeBw))} trang/tháng</span>
+                        </div>
+                      )}
+                      {hasOverageBw && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-muted-foreground text-xs">Phí vượt mức Đen trắng</span>
+                          <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(terms.overageBw))} / trang</span>
+                        </div>
+                      )}
+                      {hasFreeColor && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-muted-foreground text-xs">Định mức in Màu</span>
+                          <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN').format(Number(terms.freeColor))} trang/tháng</span>
+                        </div>
+                      )}
+                      {hasOverageColor && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-muted-foreground text-xs">Phí vượt mức Màu</span>
+                          <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(terms.overageColor))} / trang</span>
+                        </div>
+                      )}
+                      {hasNotes && (
+                        <div className="sm:col-span-2 pt-3 border-t border-blue-200/60 mt-1">
+                          <p className="text-foreground text-xs sm:text-sm leading-relaxed whitespace-pre-line">{notesText}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Quick Specs */}
               {(() => {
@@ -637,15 +670,6 @@ export default function ProductDetailClient({
             {/* Tabs Navigation */}
             <div className="flex items-center overflow-x-auto scrollbar-hide border-b border-border mb-6 gap-1 sm:gap-4 -mx-4 px-4 sm:mx-0 sm:px-0">
               <button
-                onClick={() => setActiveTab('specs')}
-                className={`px-3.5 sm:px-6 py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeTab === 'specs'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-                  }`}
-              >
-                Thông số kỹ thuật
-              </button>
-              <button
                 onClick={() => setActiveTab('desc')}
                 className={`px-3.5 sm:px-6 py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeTab === 'desc'
                     ? 'border-primary text-primary'
@@ -653,6 +677,15 @@ export default function ProductDetailClient({
                   }`}
               >
                 Mô tả sản phẩm
+              </button>
+              <button
+                onClick={() => setActiveTab('specs')}
+                className={`px-3.5 sm:px-6 py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeTab === 'specs'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                  }`}
+              >
+                Thông số kỹ thuật
               </button>
               <button
                 onClick={() => setActiveTab('docs')}
@@ -669,10 +702,10 @@ export default function ProductDetailClient({
             <div className="min-h-[300px]">
               {activeTab === 'specs' && (
                 <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
-                  <table className="w-full text-sm text-left border-collapse">
-                    <tbody>
-                      {product.specifications && product.specifications.length > 0 ? (
-                        product.specifications.map((spec: any, idx: number) => (
+                  {product.specifications && product.specifications.length > 0 ? (
+                    <table className="w-full text-sm text-left border-collapse">
+                      <tbody>
+                        {product.specifications.map((spec: any, idx: number) => (
                           <tr key={idx} className="border-b border-border last:border-0 hover:bg-gray-50/50 transition-colors">
                             <td className="py-3.5 px-6 bg-gray-50/80 font-medium text-gray-600 w-1/3 md:w-1/4 lg:w-1/5 border-r border-border">
                               {spec.label}
@@ -681,24 +714,14 @@ export default function ProductDetailClient({
                               {spec.value}
                             </td>
                           </tr>
-                        ))
-                      ) : (
-                        [
-                          { label: 'Tên sản phẩm', value: product.name },
-                          product.brand ? { label: 'Thương hiệu', value: product.brand } : null,
-                          product.category ? { label: 'Danh mục', value: typeof product.category === 'string' ? product.category : product.category.name } : null,
-                          (currentVariant?.sku || product.sku) ? { label: 'Mã SKU', value: currentVariant?.sku || product.sku } : null,
-                          { label: 'Loại hình', value: isRental ? 'Máy cho thuê' : 'Sản phẩm kinh doanh' },
-                          { label: 'Tình trạng', value: stock > 0 ? 'Còn hàng trong kho' : 'Hết hàng (Liên hệ)' },
-                        ].filter(Boolean).map((spec: any, idx: number) => (
-                          <tr key={idx} className="border-b border-border last:border-0 hover:bg-gray-50/50 transition-colors">
-                            <td className="py-3.5 px-6 bg-gray-50/80 font-medium text-gray-600 w-1/3 md:w-1/4 lg:w-1/5 border-r border-border">{spec.label}</td>
-                            <td className="py-3.5 px-6 text-gray-900 font-medium">{spec.value}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div className="p-8 text-center text-muted-foreground italic text-sm">
+                      Thông số kỹ thuật đang được cập nhật...
+                    </div>
+                  )}
                 </div>
               )}
 

@@ -56,6 +56,7 @@ export type ProductInput = {
     freeColor?: number
     overageBw?: number
     overageColor?: number
+    notes?: string
   }
   customOptions?: any // Added for custom-build addons
   variants: ProductVariantInput[]
