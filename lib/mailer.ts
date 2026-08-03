@@ -287,3 +287,156 @@ export async function sendRegisterNotification(userData: {
 
   return await sendEmail({ to: userData.email, subject: welcomeSubject, html: welcomeHtml });
 }
+
+export interface OrderNotificationItem {
+  productName: string;
+  variantName?: string | null;
+  sku?: string;
+  price: number;
+  quantity: number;
+  customOptions?: any;
+}
+
+export interface OrderNotificationData {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string | null;
+  shippingAddress: string;
+  notes?: string | null;
+  paymentMethod?: string;
+  totalAmount: number;
+  subTotal?: number;
+  items: OrderNotificationItem[];
+  createdAt?: Date;
+}
+
+export async function sendOrderNotification(order: OrderNotificationData) {
+  try {
+    const config = await getSmtpConfig();
+    const adminEmail = config.admin_receive_email;
+
+    const formattedTotal = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount);
+    const itemsHtml = order.items.map((item, idx) => {
+      const itemTotal = item.price * item.quantity;
+      const formattedPrice = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price);
+      const formattedItemTotal = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(itemTotal);
+      
+      let optionsText = "";
+      if (item.customOptions && Array.isArray(item.customOptions) && item.customOptions.length > 0) {
+        optionsText = `<br/><span style="font-size: 12px; color: #64748b;">${item.customOptions.map((o: any) => `${o.group}: ${o.choiceName}`).join(', ')}</span>`;
+      }
+
+      return `
+        <tr style="border-bottom: 1px solid #e2e8f0; ${idx % 2 === 1 ? 'background-color: #f8fafc;' : ''}">
+          <td style="padding: 10px; font-size: 14px; color: #334155;">
+            <strong>${item.productName}</strong>
+            ${item.variantName && item.variantName !== 'Mặc định' ? `<br/><span style="font-size: 12px; color: #64748b;">Biến thể: ${item.variantName}</span>` : ''}
+            ${optionsText}
+          </td>
+          <td style="padding: 10px; font-size: 14px; text-align: center; color: #334155;">${item.quantity}</td>
+          <td style="padding: 10px; font-size: 14px; text-align: right; color: #334155;">${formattedPrice}</td>
+          <td style="padding: 10px; font-size: 14px; text-align: right; font-weight: bold; color: #16a34a;">${formattedItemTotal}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // 1. Email cho Admin
+    if (adminEmail) {
+      const adminSubject = `🛒 [ĐƠN HÀNG MỚI #${order.id.slice(0, 8)}] Từ ${order.customerName} - ${formattedTotal}`;
+      const adminHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; background-color: #ffffff;">
+          <div style="background-color: #16a34a; color: #ffffff; padding: 20px; text-align: center;">
+            <h2 style="margin: 0; font-size: 20px; text-transform: uppercase;">Thông Báo Đơn Hàng Mới</h2>
+            <p style="margin: 6px 0 0 0; font-size: 14px; opacity: 0.9;">Mã đơn hàng: #${order.id}</p>
+          </div>
+          <div style="padding: 24px; color: #334155; line-height: 1.6;">
+            <h3 style="margin-top: 0; color: #0f172a; border-bottom: 2px solid #16a34a; padding-bottom: 6px;">Thông tin khách hàng</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+              <tr><td style="padding: 6px 0; width: 35%; font-weight: bold;">Họ và tên:</td><td>${order.customerName}</td></tr>
+              <tr><td style="padding: 6px 0; font-weight: bold;">Số điện thoại:</td><td><a href="tel:${order.customerPhone}" style="color: #16a34a; font-weight: bold;">${order.customerPhone}</a></td></tr>
+              ${order.customerEmail ? `<tr><td style="padding: 6px 0; font-weight: bold;">Email:</td><td><a href="mailto:${order.customerEmail}">${order.customerEmail}</a></td></tr>` : ''}
+              <tr><td style="padding: 6px 0; font-weight: bold;">Địa chỉ giao hàng:</td><td>${order.shippingAddress}</td></tr>
+              <tr><td style="padding: 6px 0; font-weight: bold;">Hình thức thanh toán:</td><td>${order.paymentMethod || 'COD'}</td></tr>
+              ${order.notes ? `<tr><td style="padding: 6px 0; font-weight: bold;">Ghi chú:</td><td style="color: #d97706;">${order.notes}</td></tr>` : ''}
+            </table>
+
+            <h3 style="color: #0f172a; border-bottom: 2px solid #16a34a; padding-bottom: 6px;">Chi tiết sản phẩm đặt mua</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+              <thead>
+                <tr style="background-color: #f1f5f9; text-align: left;">
+                  <th style="padding: 10px;">Sản phẩm</th>
+                  <th style="padding: 10px; text-align: center;">SL</th>
+                  <th style="padding: 10px; text-align: right;">Đơn giá</th>
+                  <th style="padding: 10px; text-align: right;">Thành tiền</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+
+            <div style="margin-top: 20px; text-align: right; font-size: 16px;">
+              <p style="margin: 4px 0;"><strong>Tổng tiền thanh toán:</strong> <span style="color: #16a34a; font-size: 20px; font-weight: bold;">${formattedTotal}</span></p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      await sendEmail({ to: adminEmail, subject: adminSubject, html: adminHtml });
+    }
+
+    // 2. Email cho Khách hàng (nếu có email)
+    if (order.customerEmail) {
+      const customerSubject = `✅ Xác nhận đơn hàng #${order.id.slice(0, 8)} - Máy Văn Phòng Xanh`;
+      const customerHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; background-color: #ffffff;">
+          <div style="background-color: #16a34a; color: #ffffff; padding: 20px; text-align: center;">
+            <h2 style="margin: 0; font-size: 20px;">Cảm Ơn Bạn Đã Đặt Hàng!</h2>
+            <p style="margin: 6px 0 0 0; font-size: 14px; opacity: 0.9;">Mã đơn hàng của bạn: #${order.id}</p>
+          </div>
+          <div style="padding: 24px; color: #334155; line-height: 1.6;">
+            <p>Kính gửi <strong>${order.customerName}</strong>,</p>
+            <p>Cảm ơn bạn đã tin tưởng mua sắm tại <strong>Máy Văn Phòng Xanh</strong>. Đơn hàng của bạn đã được ghi nhận và đang được xử lý.</p>
+            
+            <h3 style="color: #0f172a; border-bottom: 2px solid #16a34a; padding-bottom: 6px; margin-top: 24px;">Thông tin giao hàng</h3>
+            <p style="margin: 4px 0;"><strong>Người nhận:</strong> ${order.customerName} - ${order.customerPhone}</p>
+            <p style="margin: 4px 0;"><strong>Địa chỉ:</strong> ${order.shippingAddress}</p>
+            <p style="margin: 4px 0;"><strong>Phương thức thanh toán:</strong> ${order.paymentMethod || 'COD'}</p>
+
+            <h3 style="color: #0f172a; border-bottom: 2px solid #16a34a; padding-bottom: 6px; margin-top: 24px;">Danh sách sản phẩm</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+              <thead>
+                <tr style="background-color: #f1f5f9; text-align: left;">
+                  <th style="padding: 10px;">Sản phẩm</th>
+                  <th style="padding: 10px; text-align: center;">SL</th>
+                  <th style="padding: 10px; text-align: right;">Đơn giá</th>
+                  <th style="padding: 10px; text-align: right;">Thành tiền</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+
+            <div style="margin-top: 20px; text-align: right; font-size: 16px;">
+              <p style="margin: 4px 0;"><strong>Tổng thanh toán:</strong> <span style="color: #16a34a; font-size: 20px; font-weight: bold;">${formattedTotal}</span></p>
+            </div>
+
+            <div style="margin-top: 30px; padding: 16px; background-color: #f8fafc; border-radius: 8px; font-size: 13px; color: #64748b;">
+              <p style="margin: 0 0 6px 0; font-weight: bold; color: #334155;">Bạn có câu hỏi hoặc cần hỗ trợ gấp?</p>
+              <p style="margin: 0;">Vui lòng gọi hotline CSKH hoặc truy cập website <a href="${process.env.NEXTAUTH_URL || 'https://mayvanphongxanh.com'}" style="color: #16a34a;">mayvanphongxanh.com</a> để được trợ giúp.</p>
+            </div>
+
+            <p style="margin-top: 24px;">Trân trọng,<br/><strong>Đội ngũ Máy Văn Phòng Xanh</strong></p>
+          </div>
+        </div>
+      `;
+
+      await sendEmail({ to: order.customerEmail, subject: customerSubject, html: customerHtml });
+    }
+  } catch (error) {
+    console.error("[Mailer] Lỗi gửi mail đơn hàng:", error);
+  }
+}
+

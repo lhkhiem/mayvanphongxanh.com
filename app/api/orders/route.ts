@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
-import { Prisma } from '@prisma/client'
+import { Prisma, PaymentMethod } from '@prisma/client'
 import { prisma } from '@/lib/db'
+import { sendOrderNotification } from '@/lib/mailer'
 
 type OrderRequestItem = {
   id?: number
@@ -8,6 +9,9 @@ type OrderRequestItem = {
   quantity?: number
   customOptions?: unknown
 }
+
+const VN_PHONE_REGEX = /^(0[35789])\d{8}$/
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function cleanText(value: unknown, maxLength: number) {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : ''
@@ -68,14 +72,28 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const customerName = cleanText(body.customerName, 120)
-    const customerPhone = cleanText(body.customerPhone, 32)
+    const rawPhone = cleanText(body.customerPhone, 32)
+    const customerPhone = rawPhone.replace(/[\s\-\.]/g, '')
     const customerEmail = cleanText(body.customerEmail, 160) || null
     const shippingAddress = cleanText(body.shippingAddress, 500)
     const notes = cleanText(body.notes, 1000) || null
+    const paymentMethod: PaymentMethod = body.payment === 'transfer' ? 'BANK_TRANSFER' : 'COD'
     const rawItems = Array.isArray(body.items) ? body.items as OrderRequestItem[] : []
 
     if (!customerName || !customerPhone || !shippingAddress || rawItems.length === 0) {
       return NextResponse.json({ error: 'Vui lòng điền đầy đủ thông tin bắt buộc.' }, { status: 400 })
+    }
+
+    if (!VN_PHONE_REGEX.test(customerPhone)) {
+      return NextResponse.json({
+        error: 'Số điện thoại không hợp lệ. Số điện thoại phải gồm 10 chữ số tại Việt Nam (bắt đầu bằng 03, 05, 07, 08, 09).'
+      }, { status: 400 })
+    }
+
+    if (customerEmail && !EMAIL_REGEX.test(customerEmail)) {
+      return NextResponse.json({
+        error: 'Email không đúng định dạng (ví dụ: example@gmail.com).'
+      }, { status: 400 })
     }
 
     const normalizedItems = rawItems.map((item) => {
@@ -199,7 +217,7 @@ export async function POST(request: Request) {
           shippingFee,
           discount,
           totalAmount,
-          paymentMethod: 'COD',
+          paymentMethod,
           paymentStatus: 'UNPAID',
           items: { create: orderItems },
         },
@@ -207,6 +225,30 @@ export async function POST(request: Request) {
       })
     }, {
       isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    })
+
+    // Gửi email thông báo cho Khách hàng & Admin
+    sendOrderNotification({
+      id: order.id,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      customerEmail: order.customerEmail,
+      shippingAddress: order.shippingAddress,
+      notes: order.notes,
+      paymentMethod: order.paymentMethod === 'BANK_TRANSFER' ? 'Chuyển khoản ngân hàng' : 'Thanh toán khi nhận hàng (COD)',
+      totalAmount: order.totalAmount,
+      subTotal: order.subTotal,
+      items: order.items.map((i) => ({
+        productName: i.productName,
+        variantName: i.variantName,
+        sku: i.sku,
+        price: i.price,
+        quantity: i.quantity,
+        customOptions: i.customOptions,
+      })),
+      createdAt: order.createdAt,
+    }).catch((err) => {
+      console.error('Lỗi không gửi được mail thông báo đơn hàng:', err)
     })
 
     return NextResponse.json({
@@ -221,3 +263,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 400 })
   }
 }
+
