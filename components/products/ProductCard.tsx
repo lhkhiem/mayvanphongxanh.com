@@ -107,22 +107,20 @@ export function ProductCard({
         onClick={() => router.push(`/san-pham/${hrefSlug}`)}
       >
         {/* Badges on Image (Cho thuê & Stock status) */}
-        <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 items-start">
-          {productType === 'rental' && (
-            <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-xs uppercase tracking-wider">
-              Cho Thuê
-            </span>
-          )}
-          {stock > 0 ? (
-            <span className="bg-emerald-600/90 text-white text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-xs backdrop-blur-xs flex items-center gap-1">
-              ✓ Còn hàng
-            </span>
-          ) : (
-            <span className="bg-red-600/90 text-white text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-xs backdrop-blur-xs">
-              Hết hàng
-            </span>
-          )}
-        </div>
+        {(productType === 'rental' || stock <= 0) && (
+          <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 items-start">
+            {productType === 'rental' && (
+              <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-xs uppercase tracking-wider">
+                Cho Thuê
+              </span>
+            )}
+            {stock <= 0 && (
+              <span className="bg-red-600/90 text-white text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded shadow-xs backdrop-blur-xs">
+                Hết hàng
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Compare Button (Hiện sẵn trên Mobile, Hover trên Desktop) */}
         <button
