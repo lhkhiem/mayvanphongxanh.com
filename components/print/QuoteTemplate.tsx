@@ -35,10 +35,13 @@ export function QuoteTemplate({ product, quantity, settings = {} }: QuoteTemplat
 
   // Commercial Terms Settings
   const vatStatus = product?.vatStatus || 'INCLUDED';
+  let vatNoticeText = '*(Ghi chú: Đơn giá trên đã bao gồm thuế VAT)';
   let vatTerm = '• Đơn giá trên đã bao gồm VAT.';
   if (vatStatus === 'EXCLUDED') {
-    vatTerm = '• Đơn giá trên chưa bao gồm VAT (10%).';
+    vatNoticeText = '*(Ghi chú: Đơn giá trên chưa bao gồm thuế VAT)';
+    vatTerm = '• Đơn giá trên chưa bao gồm VAT.';
   } else if (vatStatus === 'NONE') {
+    vatNoticeText = '*(Ghi chú: Đơn giá trên không thuộc đối tượng chịu thuế VAT)';
     vatTerm = '• Đơn giá trên không thuộc đối tượng chịu thuế VAT.';
   }
 
@@ -149,6 +152,11 @@ export function QuoteTemplate({ product, quantity, settings = {} }: QuoteTemplat
           </tr>
         </tbody>
       </table>
+
+      {/* VAT Notice line right below table */}
+      <div className="mt-1.5 mb-5 text-xs font-semibold italic text-gray-800">
+        {vatNoticeText}
+      </div>
 
       {/* Commercial Terms Section */}
       <div className="mb-6">

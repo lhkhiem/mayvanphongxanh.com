@@ -31,12 +31,13 @@ export async function createFaq(data: FaqFormData) {
       data: {
         question: data.question,
         answer: data.answer,
-        category: data.category || null,
+        category: data.category?.trim() || null,
         order: data.order,
         isActive: data.isActive,
       },
     });
     revalidatePath("/");
+    revalidatePath("/hoi-dap");
     return { data: faq };
   } catch (error: any) {
     return { error: error.message || "Failed to create FAQ" };
@@ -50,12 +51,13 @@ export async function updateFaq(id: number, data: FaqFormData) {
       data: {
         question: data.question,
         answer: data.answer,
-        category: data.category || null,
+        category: data.category?.trim() || null,
         order: data.order,
         isActive: data.isActive,
       },
     });
     revalidatePath("/");
+    revalidatePath("/hoi-dap");
     return { data: faq };
   } catch (error: any) {
     return { error: error.message || "Failed to update FAQ" };
@@ -66,6 +68,7 @@ export async function deleteFaq(id: number) {
   try {
     await db.faq.delete({ where: { id } });
     revalidatePath("/");
+    revalidatePath("/hoi-dap");
     return { success: true };
   } catch (error: any) {
     return { error: error.message || "Failed to delete FAQ" };
@@ -79,8 +82,41 @@ export async function toggleFaqActive(id: number, currentStatus: boolean) {
       data: { isActive: !currentStatus },
     });
     revalidatePath("/");
+    revalidatePath("/hoi-dap");
     return { success: true };
   } catch (error: any) {
     return { error: error.message || "Failed to toggle FAQ status" };
+  }
+}
+
+export async function renameFaqCategory(oldCategory: string, newCategory: string) {
+  try {
+    const trimmedNew = newCategory.trim();
+    if (!trimmedNew) {
+      return { error: "Tên danh mục mới không được để trống" };
+    }
+    await db.faq.updateMany({
+      where: { category: oldCategory },
+      data: { category: trimmedNew },
+    });
+    revalidatePath("/");
+    revalidatePath("/hoi-dap");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Lỗi khi đổi tên danh mục" };
+  }
+}
+
+export async function deleteFaqCategory(categoryName: string) {
+  try {
+    await db.faq.updateMany({
+      where: { category: categoryName },
+      data: { category: null },
+    });
+    revalidatePath("/");
+    revalidatePath("/hoi-dap");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Lỗi khi xóa danh mục" };
   }
 }
