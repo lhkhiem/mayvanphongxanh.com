@@ -41,7 +41,6 @@ function generateSku(name: string, index: number = 0) {
 
 const PRODUCT_TYPES = [
   { value: 'standard', label: 'Tiêu chuẩn (Có nhiều biến thể)' },
-  { value: 'pre-packaged', label: 'Trọn gói (Máy + Dịch vụ)' },
   { value: 'custom-build', label: 'Tùy chỉnh (Độ thêm linh kiện)' },
   { value: 'rental', label: 'Cho thuê (Dịch vụ thuê máy)' },
 ];

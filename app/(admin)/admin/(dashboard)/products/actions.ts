@@ -599,9 +599,9 @@ export async function duplicateProduct(id: number) {
       },
     })
 
-    const timestamp = Date.now().toString().slice(-4)
+    const uniqueSuffix = `${Date.now()}-${Math.floor(100 + Math.random() * 900)}`
     const newName = `${source.name} (Bản sao)`
-    const newSlug = `${source.slug}-copy-${timestamp}`
+    const newSlug = `${source.slug}-copy-${uniqueSuffix}`
 
     const newProduct = await prisma.product.create({
       data: {
@@ -635,7 +635,7 @@ export async function duplicateProduct(id: number) {
         },
         variants: {
           create: source.variants.map((v, index) => ({
-            sku: `${v.sku}-COPY-${timestamp}${index > 0 ? `-${index}` : ''}`,
+            sku: `${v.sku || 'SKU'}-COPY-${uniqueSuffix}${index > 0 ? `-${index}` : ''}`,
             name: v.name,
             price: v.price,
             originalPrice: v.originalPrice,

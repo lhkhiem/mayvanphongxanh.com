@@ -27,12 +27,23 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     notFound();
   }
 
-  // Fetch all active products so the user can still use the category filter sidebar to switch
-  const dbProducts = await prisma.product.findMany({
-    where: { isActive: true, deletedAt: null },
-    orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
-    include: { category: true, brandRef: true, variants: true }
-  });
+  const [dbProducts, dbCategories] = await Promise.all([
+    prisma.product.findMany({
+      where: { isActive: true, deletedAt: null },
+      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+      include: { category: true, brandRef: true, variants: true }
+    }),
+    prisma.category.findMany({
+      where: { isActive: true, parentId: null },
+      orderBy: [{ order: 'asc' }, { id: 'asc' }],
+      include: {
+        children: {
+          where: { isActive: true },
+          orderBy: [{ order: 'asc' }, { id: 'asc' }]
+        }
+      }
+    })
+  ]);
 
   const products = dbProducts.map(p => {
     const defaultVariant = p.variants[0];
@@ -62,5 +73,5 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   });
 
   // Render the same generic products view but pre-filter by the current category
-  return <ProductsClient products={products} initialCategory={category.name} />;
+  return <ProductsClient products={products} categories={dbCategories} initialCategory={category.name} />;
 }

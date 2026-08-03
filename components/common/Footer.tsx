@@ -51,7 +51,7 @@ export function Footer() {
     { label: 'Hệ thống POS', href: '/danh-muc/he-thong-pos' },
     { label: 'Thiết bị mạng', href: '/danh-muc/mang-vien-thong' },
     { label: 'Thiết bị văn phòng', href: '/danh-muc/thiet-bi' },
-    { label: 'Gói dịch vụ', href: '/danh-muc/goi-dich-vu' },
+    { label: 'Dự án triển khai', href: '/du-an' },
   ]);
 
   useEffect(() => {

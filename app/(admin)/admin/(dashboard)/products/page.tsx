@@ -288,7 +288,6 @@ export default function ProductsPage() {
   };
 
   const handleDuplicate = async (p: any) => {
-    if (!confirm(`Bạn có chắc chắn muốn sao chép sản phẩm "${p.name}"?`)) return;
     toast.loading("Đang sao chép sản phẩm...", { id: "dup-toast" });
     const res = await duplicateProduct(p.id);
     if (res.error) {

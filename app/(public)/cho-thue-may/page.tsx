@@ -7,14 +7,26 @@ export const metadata = {
 };
 
 export default async function RentalPage() {
-  const dbProducts = await prisma.product.findMany({
-    where: { 
-      isActive: true,
-      deletedAt: null,
-      productType: 'rental'
-    },
-    include: { category: true, variants: true }
-  });
+  const [dbProducts, dbCategories] = await Promise.all([
+    prisma.product.findMany({
+      where: { 
+        isActive: true,
+        deletedAt: null,
+        productType: 'rental'
+      },
+      include: { category: true, variants: true }
+    }),
+    prisma.category.findMany({
+      where: { isActive: true, parentId: null },
+      orderBy: [{ order: 'asc' }, { id: 'asc' }],
+      include: {
+        children: {
+          where: { isActive: true },
+          orderBy: [{ order: 'asc' }, { id: 'asc' }]
+        }
+      }
+    })
+  ]);
 
   const products = dbProducts.map(p => {
     const defaultVariant = p.variants[0];
@@ -41,6 +53,6 @@ export default async function RentalPage() {
   });
 
   return (
-    <ProductsClient products={products} />
+    <ProductsClient products={products} categories={dbCategories} />
   );
 }

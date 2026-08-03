@@ -29,11 +29,23 @@ export default async function ProductsPage({
     }
   }
 
-  const dbProducts = await prisma.product.findMany({
-    where: { isActive: true, productType: { not: 'rental' }, deletedAt: null },
-    orderBy: [{ category: { order: 'asc' } }, { order: 'asc' }, { createdAt: 'desc' }],
-    include: { category: true, brandRef: true, variants: true }
-  });
+  const [dbProducts, dbCategories] = await Promise.all([
+    prisma.product.findMany({
+      where: { isActive: true, productType: { not: 'rental' }, deletedAt: null },
+      orderBy: [{ category: { order: 'asc' } }, { order: 'asc' }, { createdAt: 'desc' }],
+      include: { category: true, brandRef: true, variants: true }
+    }),
+    prisma.category.findMany({
+      where: { isActive: true, parentId: null },
+      orderBy: [{ order: 'asc' }, { id: 'asc' }],
+      include: {
+        children: {
+          where: { isActive: true },
+          orderBy: [{ order: 'asc' }, { id: 'asc' }]
+        }
+      }
+    })
+  ]);
 
   const products = dbProducts.map(p => {
     const defaultVariant = p.variants[0];
@@ -62,5 +74,5 @@ export default async function ProductsPage({
     };
   });
 
-  return <ProductsClient products={products} initialCategory={categoryFilter} />;
+  return <ProductsClient products={products} categories={dbCategories} initialCategory={categoryFilter} />;
 }

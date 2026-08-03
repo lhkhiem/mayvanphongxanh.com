@@ -6,6 +6,7 @@ import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
 import { ProductCard } from '@/components/products/ProductCard';
 import { ChevronDown, ChevronRight, Search, Home, Filter, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const SORT_OPTIONS = [
   { label: 'Phù hợp nhất', value: 'featured' },
@@ -15,15 +16,15 @@ const SORT_OPTIONS = [
   { label: 'Bán chạy', value: 'best-sellers' },
 ];
 
-
-
 export default function ProductsClient({ 
   products = [], 
   initialCategory,
+  categories: categoriesProp = [],
   headerContent 
 }: { 
   products?: any[], 
   initialCategory?: string,
+  categories?: any[],
   headerContent?: React.ReactNode 
 }) {
   const [sortBy, setSortBy] = useState('featured');
@@ -38,6 +39,21 @@ export default function ProductsClient({
       setSelectedCategories([initialCategory]);
     }
   }, [initialCategory]);
+
+  const [fetchedCategories, setFetchedCategories] = useState<any[]>(categoriesProp);
+
+  useEffect(() => {
+    if (categoriesProp && categoriesProp.length > 0) {
+      setFetchedCategories(categoriesProp);
+    } else {
+      fetch('/api/categories')
+        .then(res => res.json())
+        .then(data => { if (Array.isArray(data)) setFetchedCategories(data); })
+        .catch(console.error);
+    }
+  }, [categoriesProp]);
+
+  const [expandedParents, setExpandedParents] = useState<Record<string, boolean>>({});
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(100000000);
@@ -45,13 +61,112 @@ export default function ProductsClient({
   // Dynamic attributes state
   const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string[]>>({});
 
+  // Category tree with parent-child hierarchy and combined product counts
+  const { categoryTree, categoryNameToChildrenMap } = useMemo(() => {
+    const directCounts: Record<string, number> = {};
+    products.forEach(p => {
+      if (p.category) {
+        directCounts[p.category] = (directCounts[p.category] || 0) + 1;
+      }
+    });
+
+    const childrenMap = new Map<string, string[]>();
+    const processedNames = new Set<string>();
+
+    const tree = fetchedCategories.map((cat: any) => {
+      processedNames.add(cat.name);
+      const childNodes = (cat.children || []).map((child: any) => {
+        processedNames.add(child.name);
+        return {
+          id: child.id,
+          name: child.name,
+          slug: child.slug,
+          count: directCounts[child.name] || 0,
+        };
+      });
+
+      const childNames = childNodes.map((c: any) => c.name);
+      if (childNames.length > 0) {
+        childrenMap.set(cat.name, childNames);
+      }
+
+      const childrenTotal = childNodes.reduce((acc: number, c: any) => acc + c.count, 0);
+      const parentDirect = directCounts[cat.name] || 0;
+      const parentTotal = parentDirect + childrenTotal;
+
+      return {
+        id: cat.id,
+        name: cat.name,
+        slug: cat.slug,
+        count: parentTotal,
+        children: childNodes,
+      };
+    });
+
+    Object.entries(directCounts).forEach(([name, count]) => {
+      if (!processedNames.has(name)) {
+        tree.push({
+          id: Math.random(),
+          name,
+          slug: '',
+          count,
+          children: [],
+        });
+      }
+    });
+
+    return { categoryTree: tree, categoryNameToChildrenMap: childrenMap };
+  }, [fetchedCategories, products]);
+
+  // Active category names including subcategories
+  const activeCategoryNames = useMemo(() => {
+    if (selectedCategories.length === 0) return null;
+    const set = new Set<string>();
+    selectedCategories.forEach(name => {
+      set.add(name);
+      const children = categoryNameToChildrenMap.get(name);
+      if (children) {
+        children.forEach(cName => set.add(cName));
+      }
+    });
+    return set;
+  }, [selectedCategories, categoryNameToChildrenMap]);
+
+  // Auto expand parent when any child or parent is selected
+  useEffect(() => {
+    if (selectedCategories.length > 0 && categoryTree.length > 0) {
+      const toExpand: Record<string, boolean> = {};
+      categoryTree.forEach(parent => {
+        if (parent.children && parent.children.length > 0) {
+          const hasSelectedChild = parent.children.some(child => selectedCategories.includes(child.name));
+          const isParentSelected = selectedCategories.includes(parent.name);
+          if (hasSelectedChild || isParentSelected) {
+            toExpand[parent.name] = true;
+          }
+        }
+      });
+      if (Object.keys(toExpand).length > 0) {
+        setExpandedParents(prev => ({ ...toExpand, ...prev }));
+      }
+    }
+  }, [selectedCategories, categoryTree]);
+
+  const toggleExpandParent = (parentName: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setExpandedParents(prev => ({
+      ...prev,
+      [parentName]: !prev[parentName]
+    }));
+  };
+
   // Extract all unique attributes from products matching current category & brand filters
   const availableAttributes = useMemo(() => {
     const attrs: Record<string, Set<string>> = {};
     
     products.forEach(p => {
       // Filter by selected category if active
-      if (selectedCategories.length > 0 && !selectedCategories.includes(p.category)) return;
+      if (activeCategoryNames && !activeCategoryNames.has(p.category)) return;
 
       // Filter by selected brand if active
       if (selectedBrands.length > 0) {
@@ -104,16 +219,7 @@ export default function ProductsClient({
       }
     });
     return result;
-  }, [products, selectedCategories, selectedBrands]);
-
-  // Total product count for each category
-  const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    products.forEach(p => {
-      counts[p.category] = (counts[p.category] || 0) + 1;
-    });
-    return Object.entries(counts).map(([name, count]) => ({ name, count }));
-  }, [products]);
+  }, [products, activeCategoryNames, selectedBrands]);
 
   // Dynamic brand list & counts (Category is Root Filter -> Brands depend on selected categories)
   const brandCounts = useMemo(() => {
@@ -121,7 +227,7 @@ export default function ProductsClient({
     
     products.forEach(p => {
       // Only count brands for products matching the selected category (if any)
-      if (selectedCategories.length > 0 && !selectedCategories.includes(p.category)) {
+      if (activeCategoryNames && !activeCategoryNames.has(p.category)) {
         return;
       }
 
@@ -142,7 +248,7 @@ export default function ProductsClient({
       .map(([name, count]) => ({ name, count }))
       .filter(item => item.count > 0 || selectedBrands.includes(item.name))
       .sort((a, b) => b.count - a.count);
-  }, [products, selectedCategories, selectedBrands]);
+  }, [products, activeCategoryNames, selectedBrands]);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategories(prev => 
@@ -185,7 +291,7 @@ export default function ProductsClient({
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(p.category);
+    const matchesCategory = !activeCategoryNames || activeCategoryNames.has(p.category);
     
     // For brand, we check p.brand, or p.attributes['Thương hiệu']
     const productBrand = p.brand || (p.attributes && p.attributes['Thương hiệu']);
@@ -291,29 +397,87 @@ export default function ProductsClient({
               </div>
 
               <div className="flex-1 overflow-y-auto lg:overflow-visible">
-              {/* Danh Mục (Moved above Khoảng giá) */}
+              {/* Danh Mục (Phân cấp danh mục cha con) */}
               <div className="p-4 border-b border-gray-200">
-                <h3 className="font-bold text-gray-800 text-[13px] uppercase mb-3 flex items-center justify-between cursor-pointer">
+                <h3 className="font-bold text-gray-800 text-[13px] uppercase mb-3 flex items-center justify-between">
                   DANH MỤC
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
                 </h3>
-                <div className="space-y-2.5 max-h-[250px] overflow-y-auto custom-scrollbar">
-                  {categoryCounts.map((cat) => (
-                    <label key={cat.name} className="flex items-start gap-2.5 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        checked={selectedCategories.includes(cat.name)}
-                        onChange={() => handleCategoryChange(cat.name)}
-                        className="mt-0.5 rounded border-gray-300 text-primary focus:ring-primary w-3.5 h-3.5"
-                      />
-                      <span className="text-[13px] text-gray-600 group-hover:text-primary flex-1 leading-snug">
-                        {cat.name}
-                      </span>
-                      <span className="text-[11px] text-gray-400 bg-gray-100 px-1.5 rounded">
-                        {cat.count}
-                      </span>
-                    </label>
-                  ))}
+                <div className="space-y-2">
+                  {categoryTree.map((cat) => {
+                    const hasChildren = cat.children && cat.children.length > 0;
+                    const isExpanded = !!expandedParents[cat.name];
+                    const isParentChecked = selectedCategories.includes(cat.name);
+
+                    return (
+                      <div key={cat.name} className="space-y-1">
+                        {/* Parent Category Row */}
+                        <div className="flex items-center justify-between group py-0.5">
+                          <label className="flex items-center gap-1.5 cursor-pointer flex-1 min-w-0" title={cat.name}>
+                            <input
+                              type="checkbox"
+                              checked={isParentChecked}
+                              onChange={() => handleCategoryChange(cat.name)}
+                              className="rounded border-gray-300 text-primary focus:ring-primary w-3.5 h-3.5 shrink-0"
+                            />
+                            <span className={cn(
+                              "text-[13px] text-gray-700 group-hover:text-primary leading-snug truncate",
+                              hasChildren ? "font-semibold text-gray-800" : "font-normal"
+                            )}>
+                              {cat.name}
+                            </span>
+                          </label>
+
+                          <div className="flex items-center gap-1 shrink-0 ml-1.5">
+                            <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-normal">
+                              {cat.count}
+                            </span>
+                            {hasChildren ? (
+                              <button
+                                type="button"
+                                onClick={(e) => toggleExpandParent(cat.name, e)}
+                                className="p-0.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600 transition-colors"
+                                title={isExpanded ? "Thu gọn danh mục con" : "Mở rộng danh mục con"}
+                              >
+                                <ChevronDown
+                                  className={cn(
+                                    "w-3.5 h-3.5 transition-transform duration-200",
+                                    isExpanded ? "rotate-180 text-gray-600" : "rotate-0 text-gray-400"
+                                  )}
+                                />
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        {/* Subcategories (Indented Tree) */}
+                        {hasChildren && isExpanded && (
+                          <div className="ml-2.5 pl-2 border-l border-gray-200 space-y-1.5 py-1">
+                            {cat.children.map((child: any) => {
+                              const isChildChecked = selectedCategories.includes(child.name);
+                              return (
+                                <label key={child.name} className="flex items-center justify-between cursor-pointer group py-0.5" title={child.name}>
+                                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                    <input
+                                      type="checkbox"
+                                      checked={isChildChecked}
+                                      onChange={() => handleCategoryChange(child.name)}
+                                      className="rounded border-gray-300 text-primary focus:ring-primary w-3.5 h-3.5 shrink-0"
+                                    />
+                                    <span className="text-[12px] text-gray-600 group-hover:text-primary leading-snug truncate">
+                                      {child.name}
+                                    </span>
+                                  </div>
+                                  <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded shrink-0 ml-1.5">
+                                    {child.count}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 

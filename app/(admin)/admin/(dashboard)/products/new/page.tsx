@@ -27,17 +27,17 @@ export default async function NewProductPage({
       const sourceRes = await getProduct(sourceId);
       if (sourceRes.data) {
         const source = sourceRes.data;
-        const timestamp = Date.now().toString().slice(-4);
+        const uniqueSuffix = `${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
         initialData = {
           ...source,
           id: undefined, // ensure it creates a new record
           name: `${source.name} (Bản sao)`,
-          slug: `${source.slug}-copy-${timestamp}`,
+          slug: `${source.slug}-copy-${uniqueSuffix}`,
           metaTitle: source.metaTitle ? `${source.metaTitle} (Bản sao)` : undefined,
           variants: source.variants?.map((v: any, idx: number) => ({
             ...v,
             id: undefined,
-            sku: `${v.sku}-COPY-${timestamp}${idx > 0 ? `-${idx}` : ''}`,
+            sku: `${v.sku || 'SKU'}-COPY-${uniqueSuffix}${idx > 0 ? `-${idx}` : ''}`,
           })),
         };
       }

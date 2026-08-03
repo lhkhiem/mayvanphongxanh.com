@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 const PRODUCT_TYPES = [
   { value: 'standard', label: 'Tiêu chuẩn', color: '#6b7280', icon: Package },
   { value: 'rental', label: 'Cho thuê', color: '#3b82f6', icon: Tag },
-  { value: 'pre-packaged', label: 'Trọn gói', color: '#10b981', icon: Layers },
   { value: 'custom-build', label: 'Tùy chỉnh (Build)', color: '#8b5cf6', icon: Settings2 },
 ];
 
