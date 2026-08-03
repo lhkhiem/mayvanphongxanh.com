@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
-import { Star, ShoppingCart, Truck, ShieldCheck, ArrowLeft, Plus, Minus, CheckCircle2, Printer, Phone, PhoneCall, Mail, MapPin, CreditCard, ChevronRight, Download, Info, Package } from 'lucide-react';
+import { Star, ShoppingCart, Truck, ShieldCheck, ArrowLeft, Plus, Minus, CheckCircle2, Printer, Phone, PhoneCall, Mail, MapPin, CreditCard, ChevronRight, ChevronDown, ChevronUp, Download, Info, Package } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
@@ -35,6 +35,7 @@ export default function ProductDetailClient({
   consumables?: any[]
 }) {
   const [quantity, setQuantity] = useState(1);
+  const [showAllQuickSpecs, setShowAllQuickSpecs] = useState(false);
 
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     product?.variants?.length > 0 ? product.variants[0].id : null
@@ -218,7 +219,7 @@ export default function ProductDetailClient({
             {/* Image Gallery */}
             <div className="md:col-span-5 lg:col-span-5 flex flex-col gap-2">
               <div
-                className="relative aspect-square lg:aspect-[4/3] rounded-2xl overflow-hidden bg-white border border-border cursor-crosshair"
+                className="relative aspect-square rounded-2xl overflow-hidden bg-white border border-border cursor-crosshair w-full"
                 onMouseMove={(e) => {
                   const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
                   const x = ((e.clientX - left) / width) * 100;
@@ -237,19 +238,19 @@ export default function ProductDetailClient({
                   }}
                 />
                 {discount > 0 && (
-                  <div className="absolute top-4 left-4 bg-accent text-accent-foreground px-4 py-2 rounded-full font-bold shadow-md z-10">
+                  <div className="absolute top-4 left-4 bg-accent text-accent-foreground px-3 py-1.5 rounded-full text-xs font-bold shadow-md z-10">
                     -{discount}%
                   </div>
                 )}
               </div>
 
               {/* Thumbnails */}
-              <div className="grid grid-cols-4 gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {gallery.map((img: string, idx: number) => (
                   <button
                     key={idx}
                     onClick={() => setActiveImage(img)}
-                    className={`relative aspect-square rounded-xl overflow-hidden bg-white border-2 transition-all ${activeImage === img ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
+                    className={`relative w-14 h-14 sm:w-16 sm:h-16 aspect-square rounded-xl overflow-hidden bg-white border-2 transition-all ${activeImage === img ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
                   >
                     <Image src={img} alt={`${product.name} thumbnail ${idx + 1}`} fill className="object-cover" />
                   </button>
@@ -292,21 +293,21 @@ export default function ProductDetailClient({
 
             {/* Product Info */}
             <div className="md:col-span-7 lg:col-span-7 flex flex-col">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                <h1 className="text-2xl font-bold text-foreground leading-tight">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-tight">
                   {product.name}
                 </h1>
                 <ShareButtons title={product.name} excerpt={product.name} />
               </div>
 
-              <div className="mb-4 bg-secondary/20 rounded-2xl p-4 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="mb-2.5 bg-secondary/20 rounded-xl p-3 sm:px-4 sm:py-2.5 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   {!showContactPrice ? (
                     <>
-                      <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1 mb-1">
-                        <span className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight whitespace-nowrap">
+                      <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1">
+                        <span className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight whitespace-nowrap">
                           {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)}
-                          {isRental && <span className="text-xl sm:text-2xl font-semibold text-muted-foreground ml-1">/ tháng</span>}
+                          {isRental && <span className="text-lg sm:text-xl font-semibold text-muted-foreground ml-1">/ tháng</span>}
                         </span>
                         {!isRental && (
                           <VatBadge vatStatus={product?.vatStatus} className="text-xs sm:text-sm font-semibold px-2 py-0.5" />
@@ -475,52 +476,69 @@ export default function ProductDetailClient({
               {(() => {
                 const hasQuickSpecs = Array.isArray(product.quickSpecs) && product.quickSpecs.length > 0;
                 const specifications = Array.isArray(product.specifications) ? product.specifications : [];
-                const displaySpecs = hasQuickSpecs 
+                const allSpecs = hasQuickSpecs 
                   ? product.quickSpecs 
-                  : (specifications.length > 0 ? specifications.slice(0, 6) : []);
-                const totalSpecsCount = displaySpecs.length;
-                const isMultiCol = totalSpecsCount >= 9;
+                  : (specifications.length > 0 ? specifications : []);
+                
+                const INITIAL_LIMIT = 11;
+                const hasMore = allSpecs.length > INITIAL_LIMIT;
+                const displaySpecs = showAllQuickSpecs ? allSpecs : allSpecs.slice(0, INITIAL_LIMIT);
 
                 return (
-                  <div className="mb-4 bg-secondary/20 rounded-2xl p-4 sm:p-4.5 border border-border">
-                    <h3 className="text-sm font-bold text-foreground mb-3 uppercase tracking-wider flex items-center gap-2">
-                      <Info className="w-4.5 h-4.5 text-primary" /> Thông số nổi bật
+                  <div className="mb-2.5">
+                    <h3 className="text-xs sm:text-sm font-bold text-foreground mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+                      <Info className="w-4 h-4 text-primary" /> Thông số nổi bật
                     </h3>
-                    <ul className={`grid ${isMultiCol ? 'grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5' : 'grid-cols-1 gap-y-2.5'} text-sm text-foreground`}>
-                      {displaySpecs.length > 0 ? (
-                        displaySpecs.map((spec: any, idx: number) => {
-                          if (typeof spec === 'string') {
+                    <div className="bg-secondary/20 rounded-xl p-3 sm:px-4 sm:py-3 border border-border">
+                      <ul className="space-y-1.5 text-xs sm:text-sm text-foreground">
+                        {displaySpecs.length > 0 ? (
+                          displaySpecs.map((spec: any, idx: number) => {
+                            if (typeof spec === 'string') {
+                              return (
+                                <li key={idx} className="flex gap-2 items-start">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                                  <span className="leading-normal">{spec}</span>
+                                </li>
+                              );
+                            }
+                            const label = spec?.label || spec?.name;
+                            const value = spec?.value || spec?.val;
                             return (
-                              <li key={idx} className="flex gap-2.5 items-start">
-                                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
-                                <span className="leading-relaxed">{spec}</span>
+                              <li key={idx} className="flex gap-2 items-start">
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                                <span className="leading-normal">
+                                  {label ? <><span className="text-muted-foreground font-medium">{label}:</span> {value}</> : value}
+                                </span>
                               </li>
                             );
-                          }
-                          const label = spec?.label || spec?.name;
-                          const value = spec?.value || spec?.val;
-                          return (
-                            <li key={idx} className="flex gap-2.5 items-start">
-                              <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
-                              <span className="leading-relaxed">
-                                {label ? <><span className="text-muted-foreground font-medium">{label}:</span> {value}</> : value}
-                              </span>
-                            </li>
-                          );
-                        })
-                      ) : (
-                        <li className="flex gap-2.5 items-center text-muted-foreground text-xs italic py-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
-                          <span>Thông tin nổi bật đang được cập nhật...</span>
-                        </li>
+                          })
+                        ) : (
+                          <li className="flex gap-2 items-center text-muted-foreground text-xs italic py-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
+                            <span>Thông tin nổi bật đang được cập nhật...</span>
+                          </li>
+                        )}
+                      </ul>
+                      {hasMore && (
+                        <button
+                          type="button"
+                          onClick={() => setShowAllQuickSpecs(!showAllQuickSpecs)}
+                          className="mt-2 pt-2 border-t border-border/60 text-xs font-semibold text-primary hover:text-primary/80 flex items-center justify-center gap-1 w-full transition-colors cursor-pointer"
+                        >
+                          {showAllQuickSpecs ? (
+                            <>Thu gọn <ChevronUp className="w-3.5 h-3.5" /></>
+                          ) : (
+                            <>Xem thêm ({allSpecs.length - INITIAL_LIMIT} thông số khác) <ChevronDown className="w-3.5 h-3.5" /></>
+                          )}
+                        </button>
                       )}
-                    </ul>
+                    </div>
                   </div>
                 );
               })()}
 
               {/* Actions */}
-              <div className="mb-4">
+              <div className="mb-2.5">
                 {!showContactPrice ? (
                   <div className="flex flex-row items-center gap-1.5 sm:gap-3">
                     <div className="flex items-center border-2 border-primary/20 bg-background rounded-xl h-12 w-24 sm:w-28 lg:w-32 flex-shrink-0">
@@ -591,18 +609,18 @@ export default function ProductDetailClient({
 
               {/* Features / Policies */}
               {product.policies && product.policies.length > 0 && (
-                <div className="grid grid-cols-2 gap-2 mt-auto mb-0">
+                <div className="grid grid-cols-2 gap-2 mt-1 mb-0">
                   {product.policies.map((policy: any) => {
                     const Icon = (LucideIcons as any)[policy.icon] || LucideIcons.CheckCircle;
                     return (
-                      <div key={policy.id} className="flex items-center gap-3 p-3 bg-background border border-border rounded-xl">
-                        <div className="bg-primary/10 p-2 rounded-lg text-primary">
-                          <Icon className="w-5 h-5 flex-shrink-0" />
+                      <div key={policy.id} className="flex items-center gap-2.5 p-2 sm:p-2.5 bg-background border border-border/80 rounded-xl shadow-xs">
+                        <div className="bg-primary/10 p-1.5 rounded-lg text-primary shrink-0">
+                          <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                         </div>
-                        <div>
-                          <h4 className="font-semibold text-foreground text-[13px] leading-tight mb-0.5">{policy.title}</h4>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-semibold text-foreground text-xs sm:text-[13px] leading-tight mb-0.5 truncate">{policy.title}</h4>
                           {policy.description && (
-                            <p className="text-[11px] text-muted-foreground line-clamp-1">{policy.description}</p>
+                            <p className="text-[10px] sm:text-[11px] text-muted-foreground line-clamp-1">{policy.description}</p>
                           )}
                         </div>
                       </div>
