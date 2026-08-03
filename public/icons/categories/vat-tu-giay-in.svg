@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Stacked Paper Ream Package 3D Isometric View -->
+  <!-- Bottom Layer Sheet -->
+  <path d="M12 28L24 34L36 28L24 22L12 28Z" fill="#2E7D32" fill-opacity="0.1" stroke="#2E7D32" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Ream Thick Sides -->
+  <path d="M12 28V34L24 40V34L12 28Z" fill="#2E7D32" fill-opacity="0.2" stroke="#2E7D32" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M36 28V34L24 40V34L36 28Z" fill="#2E7D32" fill-opacity="0.3" stroke="#2E7D32" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Top Stack Paper Sheet -->
+  <path d="M12 14L24 20L36 14L24 8L12 14Z" fill="#FFFFFF" stroke="#2E7D32" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Paper Ream Wrapper Band -->
+  <path d="M18 17L24 20L30 17L24 14L18 17Z" fill="#43A047" stroke="#43A047" stroke-width="1"/>
+  <!-- Corner A4 Label Text Accent -->
+  <circle cx="34" cy="34" r="7" fill="#43A047" stroke="#FFFFFF" stroke-width="2"/>
+  <path d="M32 36L34 32H35.5V36H36.5V37H35.5V38H34V37H32V36ZM34 36V33.5L32.8 36H34Z" fill="#FFFFFF"/>
+</svg>

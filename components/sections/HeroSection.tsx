@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { slugify, cleanUrl } from '@/lib/utils';
+import { CategoryIcon } from '@/components/common/CategoryIcon';
 
 // ─────────────────────────────────────────────────
 // Trust bar items
@@ -63,7 +64,13 @@ export function HeroSection({ categories = [], sliders = [], banners = [] }: { c
                         : 'border-transparent text-gray-700 hover:bg-gray-50 hover:text-primary'
                     } ${idx !== arr.length - 1 ? 'border-b border-gray-100' : ''}`}
                   >
-                    <span className="text-lg w-6 text-center">{cat.icon || '📦'}</span>
+                    <CategoryIcon
+                      icon={cat.icon}
+                      name={cat.name}
+                      color={cat.color}
+                      className="w-5 h-5 text-primary shrink-0"
+                      fallbackSize="sm"
+                    />
                     <span className="flex-1 truncate">{cat.name}</span>
                     <ChevronRight className={`w-3.5 h-3.5 text-gray-400 transition-transform ${activeSide === idx ? 'translate-x-0.5' : ''}`} />
                   </Link>
@@ -87,7 +94,13 @@ export function HeroSection({ categories = [], sliders = [], banners = [] }: { c
                 {/* Left: subcategories */}
                 <div className={`flex-1 ${categories[activeSide].hasPromo ? 'pr-6 border-r border-gray-100' : ''}`}>
                   <div className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-5 flex items-center gap-2">
-                    <span>{categories[activeSide].icon || '📦'}</span> {categories[activeSide].name}
+                    <CategoryIcon
+                      icon={categories[activeSide].icon}
+                      name={categories[activeSide].name}
+                      color={categories[activeSide].color}
+                      className="w-5 h-5 text-primary shrink-0"
+                      fallbackSize="sm"
+                    /> {categories[activeSide].name}
                   </div>
                   <div className="grid grid-cols-2 gap-y-4 gap-x-6">
                     {categories[activeSide].children && categories[activeSide].children.length > 0 ? (
@@ -125,8 +138,14 @@ export function HeroSection({ categories = [], sliders = [], banners = [] }: { c
                           />
                         </div>
                       ) : (
-                        <div className="absolute -top-6 -right-6 p-2 opacity-5 group-hover/promo:scale-110 group-hover/promo:rotate-12 transition-all duration-700 pointer-events-none">
-                          <span className="text-9xl">{categories[activeSide].icon || '📦'}</span>
+                        <div className="absolute -top-6 -right-6 p-2 opacity-10 group-hover/promo:scale-110 group-hover/promo:rotate-12 transition-all duration-700 pointer-events-none">
+                          <CategoryIcon
+                            icon={categories[activeSide].icon}
+                            name={categories[activeSide].name}
+                            color={categories[activeSide].color}
+                            className="w-32 h-32 text-primary"
+                            fallbackSize="xl"
+                          />
                         </div>
                       )}
                       <div className="relative z-10 flex-1 flex flex-col justify-end">

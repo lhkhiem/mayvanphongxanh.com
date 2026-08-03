@@ -15,6 +15,7 @@ import { CartDrawer } from './CartDrawer';
 import { useCompare } from '@/context/CompareContext';
 import { slugify, productSlug } from '@/lib/utils';
 import { useSettings } from '@/context/SettingsContext';
+import { CategoryIcon } from './CategoryIcon';
 
 // ──────────────────────────────────────────
 // Inline SearchBar (full-width, with category select)
@@ -226,9 +227,13 @@ function CompactCategoryMenu({ categories = [] }: { categories?: any[] }) {
                           : 'text-gray-700 hover:bg-gray-50 hover:text-primary'
                       }`}
                     >
-                      <span className="text-base w-5 text-center shrink-0">
-                        {cat.icon || '📦'}
-                      </span>
+                      <CategoryIcon
+                        icon={cat.icon}
+                        name={cat.name}
+                        color={cat.color}
+                        className="w-5 h-5 text-primary shrink-0"
+                        fallbackSize="sm"
+                      />
                       <span className="flex-1 truncate">{cat.name}</span>
                       {cat.children && cat.children.length > 0 && (
                         <ChevronDown className="w-3.5 h-3.5 -rotate-90 text-gray-400 shrink-0" />
@@ -242,7 +247,7 @@ function CompactCategoryMenu({ categories = [] }: { categories?: any[] }) {
                   onClick={() => setOpen(false)}
                   className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-all"
                 >
-                  <span className="text-base w-5 text-center">📦</span>
+                  <CategoryIcon name="Tất cả" className="w-5 h-5 text-primary shrink-0" fallbackSize="sm" />
                   Tất cả sản phẩm
                 </Link>
               )}
@@ -253,7 +258,13 @@ function CompactCategoryMenu({ categories = [] }: { categories?: any[] }) {
           {activeSide !== null && categories[activeSide]?.children?.length > 0 && (
             <div className="ml-1 w-[280px] bg-white border border-gray-200 shadow-xl rounded-lg p-4 max-h-[80vh] overflow-y-auto">
               <div className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2 pb-2 border-b border-gray-100">
-                <span>{categories[activeSide].icon || '📦'}</span>
+                <CategoryIcon
+                  icon={categories[activeSide].icon}
+                  name={categories[activeSide].name}
+                  color={categories[activeSide].color}
+                  className="w-5 h-5 text-primary shrink-0"
+                  fallbackSize="sm"
+                />
                 {categories[activeSide].name}
               </div>
               <div className="grid grid-cols-1 gap-1">
@@ -281,8 +292,10 @@ function CompactCategoryMenu({ categories = [] }: { categories?: any[] }) {
 // ──────────────────────────────────────────
 // Main Header
 // ──────────────────────────────────────────
-export function Header({ categories = [] }: { categories?: any[] }) {
+export function Header({ categories: initialCategories = [] }: { categories?: any[] }) {
+  const [categories, setCategories] = useState<any[]>(initialCategories);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { cartCount, setIsOpen } = useCart();
   const { items: compareItems } = useCompare();
@@ -292,6 +305,28 @@ export function Header({ categories = [] }: { categories?: any[] }) {
   const email = getSetting('contact_email', 'support@mayvanphongxanh.com');
   const workTime = getSetting('work_time', '08:00 – 17:30 (Thứ 2 – Thứ 7)');
   const siteLogo = getSetting('site_logo', '/logo.png');
+
+  // Fetch categories nếu chưa có
+  useEffect(() => {
+    if (initialCategories && initialCategories.length > 0) {
+      setCategories(initialCategories);
+      return;
+    }
+
+    let isMounted = true;
+    fetch('/api/categories')
+      .then(res => res.json())
+      .then(data => {
+        if (isMounted && Array.isArray(data)) {
+          setCategories(data);
+        }
+      })
+      .catch(err => console.error('Lỗi fetch categories trong Header:', err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialCategories.length]);
 
   // Theo dõi scroll
   useEffect(() => {
@@ -368,6 +403,16 @@ export function Header({ categories = [] }: { categories?: any[] }) {
 
             {/* Mobile Icons */}
             <div className="flex items-center gap-1 md:hidden">
+              <button
+                type="button"
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                className={`p-2 rounded-lg transition-colors ${
+                  isSearchOpen ? 'bg-primary/10 text-primary' : 'hover:bg-gray-100 text-gray-700'
+                }`}
+                aria-label="Tìm kiếm"
+              >
+                <Search className="w-6 h-6" />
+              </button>
               <button onClick={() => setIsOpen(true)} className="relative p-2 rounded-lg hover:bg-gray-100">
                 <ShoppingCart className="w-6 h-6 text-gray-700" />
                 {cartCount > 0 && (
@@ -385,7 +430,7 @@ export function Header({ categories = [] }: { categories?: any[] }) {
             </div>
 
             {/* Search bar */}
-            <div className="w-full md:w-auto md:flex-1 md:min-w-0 order-3 md:order-none">
+            <div className={`w-full md:w-auto md:flex-1 md:min-w-0 order-3 md:order-none ${isSearchOpen ? 'block' : 'hidden md:block'}`}>
               <InlineSearchBar categories={categories} />
             </div>
 
@@ -447,7 +492,7 @@ export function Header({ categories = [] }: { categories?: any[] }) {
           }`}
       >
         <div className="mx-auto max-w-7xl px-4">
-          <Navigation />
+          <Navigation categories={categories} />
         </div>
       </div>
 

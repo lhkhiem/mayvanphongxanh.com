@@ -662,7 +662,7 @@ export default function MediaPage() {
           {/* Toolbar */}
           <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row gap-3 justify-between items-center bg-gray-50/50 dark:bg-gray-800/30 shrink-0">
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 flex-1 overflow-x-auto whitespace-nowrap hide-scrollbar">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 flex-1 overflow-x-auto whitespace-nowrap hide-scrollbar scrollbar-hide">
               <button onClick={() => navigateToFolder(null)} className="hover:text-primary transition-colors font-medium">
                 Tất cả ảnh
               </button>

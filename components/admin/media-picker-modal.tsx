@@ -619,14 +619,14 @@ export function MediaPickerModal({
           <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#2a303d]">
 
             {/* Toolbar */}
-            <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row gap-2.5 justify-between items-center bg-gray-50/50 dark:bg-gray-800/30 shrink-0">
+            <div className="p-2.5 sm:p-3 border-b border-gray-200 dark:border-gray-700 flex flex-col lg:flex-row gap-2.5 justify-between items-stretch lg:items-center bg-gray-50/50 dark:bg-gray-800/30 shrink-0 min-w-0 max-w-full overflow-hidden">
               {/* Breadcrumb */}
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 flex-1 overflow-x-auto whitespace-nowrap hide-scrollbar">
-                <button onClick={() => navigateToFolder(null)} className="hover:text-primary transition-colors font-medium">
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 min-w-0 overflow-x-auto whitespace-nowrap hide-scrollbar scrollbar-hide">
+                <button onClick={() => navigateToFolder(null)} className="hover:text-primary transition-colors font-medium shrink-0">
                   Tất cả ảnh
                 </button>
                 {folderPath.map((folder, index) => (
-                  <div key={folder.id} className="flex items-center gap-2">
+                  <div key={folder.id} className="flex items-center gap-2 shrink-0">
                     <ChevronRight className="h-4 w-4 text-gray-400 shrink-0" />
                     <button
                       onClick={() => navigateToFolder(folder as MediaFolder)}
@@ -639,80 +639,75 @@ export function MediaPickerModal({
               </div>
 
               {/* Action Toolbar */}
-              <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-                <div className="relative w-36 sm:w-44">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+              <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                <div className="relative w-28 sm:w-36">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Tìm file..."
-                    className="w-full pl-8 pr-2.5 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-gray-100"
+                    className="w-full pl-7 pr-2 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary dark:text-gray-100"
                   />
                 </div>
 
                 <button
                   onClick={handleScreenCapture}
                   disabled={uploading}
-                  className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm inline-flex items-center gap-1.5"
+                  className="p-1.5 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-xs"
                   title="Chụp màn hình và upload"
                 >
-                  <Camera className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span className="hidden lg:inline">Chụp M.Hình</span>
+                  <Camera className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 </button>
 
                 <button
                   onClick={handlePasteFromClipboard}
                   disabled={uploading}
-                  className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm inline-flex items-center gap-1.5"
-                  title="Dán từ bộ nhớ tạm (PrintScreen/Ctrl+V)"
+                  className="p-1.5 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-xs"
+                  title="Dán từ bộ nhớ tạm (Ctrl+V / PrintScreen)"
                 >
-                  <Clipboard className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                  <span className="hidden lg:inline">Dán Ctrl+V</span>
+                  <Clipboard className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 </button>
 
                 <button
                   onClick={() => { setIsCreateFolderOpen(true); setNewFolderName(''); }}
-                  className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm inline-flex items-center gap-1.5"
+                  className="p-1.5 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-xs"
                   title="Tạo thư mục mới"
                 >
-                  <FolderPlus className="h-4 w-4 shrink-0" />
-                  <span className="hidden xl:inline">Tạo thư mục</span>
+                  <FolderPlus className="h-4 w-4 text-gray-700 dark:text-gray-300" />
                 </button>
 
                 <button
                   onClick={() => setIsUploadUrlOpen(true)}
-                  className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm inline-flex items-center gap-1.5"
-                  title="Upload từ Link URL"
+                  className="p-1.5 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-xs"
+                  title="Upload từ đường dẫn Link URL"
                 >
-                  <LinkIcon className="h-4 w-4 shrink-0" />
-                  <span className="hidden xl:inline">Link URL</span>
+                  <LinkIcon className="h-4 w-4 text-gray-700 dark:text-gray-300" />
                 </button>
 
                 <button
                   onClick={handleCompressAll}
                   disabled={compressing}
-                  className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 hover:bg-amber-100 text-xs font-medium transition-colors shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50"
+                  className="p-1.5 rounded-md border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 hover:bg-amber-100 transition-colors shadow-xs disabled:opacity-50"
                   title="Nén tất cả ảnh WebP"
                 >
-                  <Zap className="h-4 w-4 text-amber-500 fill-amber-500 shrink-0" />
-                  <span className="hidden xl:inline">{compressing ? "Đang nén..." : "Nén tất cả"}</span>
+                  <Zap className="h-4 w-4 text-amber-500 fill-amber-500" />
                 </button>
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs sm:text-sm font-medium text-white hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-60"
+                  className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-white hover:bg-primary/90 transition-colors shadow-xs disabled:opacity-60"
                 >
-                  <Upload className="h-4 w-4" />
-                  <span>{uploading ? "Đang tải..." : "Upload"}</span>
+                  <Upload className="h-3.5 w-3.5" />
+                  <span>{uploading ? "..." : "Upload"}</span>
                 </button>
                 <input ref={fileInputRef} type="file" multiple accept="image/*" className="hidden"
                   onChange={(e) => e.target.files && handleFileUpload(e.target.files)} />
 
-                <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden bg-white dark:bg-gray-900 ml-1">
-                  <button onClick={() => setViewMode('grid')} className={cn("p-1.5 transition-colors", viewMode === 'grid' ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800")}><Grid3x3 className="h-4 w-4" /></button>
-                  <button onClick={() => setViewMode('list')} className={cn("p-1.5 transition-colors", viewMode === 'list' ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800")}><List className="h-4 w-4" /></button>
+                <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden bg-white dark:bg-gray-900">
+                  <button onClick={() => setViewMode('grid')} className={cn("p-1 transition-colors", viewMode === 'grid' ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800")} title="Chế độ lưới"><Grid3x3 className="h-3.5 w-3.5" /></button>
+                  <button onClick={() => setViewMode('list')} className={cn("p-1 transition-colors", viewMode === 'list' ? "bg-primary text-white" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800")} title="Chế độ danh sách"><List className="h-3.5 w-3.5" /></button>
                 </div>
               </div>
             </div>

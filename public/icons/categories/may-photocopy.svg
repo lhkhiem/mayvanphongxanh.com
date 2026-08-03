@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Body Frame -->
+  <rect x="8" y="18" width="32" height="22" rx="4" fill="#2E7D32" fill-opacity="0.12" stroke="#2E7D32" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Top Document Lid / Feeder -->
+  <path d="M12 18V10C12 8.89543 12.8954 8 14 8H34C35.1046 8 36 8.89543 36 10V18" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Feeder Tray Lines -->
+  <line x1="18" y1="12" x2="30" y2="12" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Control Panel & Screen -->
+  <rect x="12" y="22" width="10" height="6" rx="1.5" fill="#2E7D32"/>
+  <circle cx="34" cy="25" r="2" fill="#43A047"/>
+  <!-- Paper Output Slot -->
+  <path d="M14 34H34" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Paper Output Sheet -->
+  <path d="M18 34V40H30V34" fill="#FFFFFF" stroke="#2E7D32" stroke-width="2" stroke-linejoin="round"/>
+</svg>

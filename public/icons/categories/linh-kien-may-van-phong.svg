@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Gear Outer Teeth -->
+  <path d="M24 8V4M24 44V40M8 24H4M44 24H40M12.6863 12.6863L9.85786 9.85786M38.1421 38.1421L35.3137 35.3137M12.6863 35.3137L9.85786 38.1421M38.1421 9.85786L35.3137 12.6863" stroke="#2E7D32" stroke-width="3" stroke-linecap="round"/>
+  <!-- Gear Ring Circle Body -->
+  <circle cx="24" cy="24" r="12" fill="#2E7D32" fill-opacity="0.12" stroke="#2E7D32" stroke-width="2.5"/>
+  <!-- Inner Shaft Hole -->
+  <circle cx="24" cy="24" r="5" fill="#FFFFFF" stroke="#43A047" stroke-width="2.5"/>
+  <!-- Wrench Overlay Icon -->
+  <path d="M36 30L42 36L38 40L32 34" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

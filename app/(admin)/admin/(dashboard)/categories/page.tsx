@@ -17,6 +17,7 @@ import {
   updateCategoryOrders,
   type CategoryFormData,
 } from "./actions";
+import { CategoryIcon } from "@/components/common/CategoryIcon";
 import { cn } from "@/lib/utils";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -507,10 +508,16 @@ function CategoryRow({
 
       {/* Color dot / icon */}
       <div
-        className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white text-sm font-bold shadow-sm"
+        className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white text-sm font-bold shadow-sm p-1.5"
         style={{ backgroundColor: category.color || "#6366f1" }}
       >
-        {category.icon || category.name.charAt(0).toUpperCase()}
+        <CategoryIcon
+          icon={category.icon}
+          name={category.name}
+          color={category.color}
+          className="w-full h-full text-white"
+          fallbackSize="sm"
+        />
       </div>
 
       <div className="flex-1 min-w-0">
@@ -740,24 +747,19 @@ function CategoryForm({
               className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-gray-100 shadow-sm font-mono"
             />
           </div>
+        </div>
 
-          {/* Icon */}
-          <div>
-            <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">
-              Icon (ký tự hoặc emoji)
-            </label>
-            <input
-              type="text"
-              value={form.icon}
-              onChange={(e) => setForm({ ...form, icon: e.target.value })}
-              placeholder="🖨️ hoặc M, P..."
-              maxLength={4}
-              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-gray-100 shadow-sm"
-            />
-            <p className="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400">
-              Mẹo: Nhấn <kbd className="px-1 py-0.5 border border-gray-200 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-mono text-[10px]">Win + .</kbd> để mở bảng Emoji, hoặc copy từ <a href="https://getemoji.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">getemoji.com</a>.
-            </p>
-          </div>
+        {/* Icon Media Picker */}
+        <div>
+          <MediaPickerInput
+            label="Icon danh mục (upload SVG / PNG)"
+            value={form.icon || ""}
+            onChange={(url) => setForm({ ...form, icon: url })}
+            placeholder="Chọn hoặc tải lên file icon SVG / PNG..."
+          />
+          <p className="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+            Khuyên dùng file ảnh vector SVG hoặc PNG nền trong suốt kích thước vuông (VD: 64x64px).
+          </p>
         </div>
 
         {/* Color Picker */}
@@ -787,13 +789,6 @@ function CategoryForm({
               className="w-7 h-7 rounded-full cursor-pointer border border-gray-200 p-0.5 bg-transparent"
               title="Chọn màu tùy chỉnh"
             />
-            <div
-              className="ml-2 w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm"
-              style={{ backgroundColor: form.color }}
-            >
-              {form.icon || form.name.charAt(0).toUpperCase() || "A"}
-            </div>
-            <span className="text-xs text-gray-400 dark:text-gray-500">Xem trước</span>
           </div>
         </div>
 

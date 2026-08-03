@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Stamp Handle Knob -->
+  <path d="M24 6C20.6863 6 18 8.68629 18 12C18 14.5 19.5 16.5 21 18V26H27V18C28.5 16.5 30 14.5 30 12C30 8.68629 27.3137 6 24 6Z" fill="#2E7D32" fill-opacity="0.2" stroke="#2E7D32" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Stamp Base Block -->
+  <rect x="10" y="26" width="28" height="10" rx="2" fill="#2E7D32" stroke="#2E7D32" stroke-width="2.5"/>
+  <!-- Stamped Ink Impression Seal Mark On Paper -->
+  <rect x="8" y="38" width="32" height="4" rx="1" fill="#43A047"/>
+</svg>

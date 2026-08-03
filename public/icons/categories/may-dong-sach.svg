@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Punching Machine Base -->
+  <rect x="6" y="24" width="36" height="16" rx="3" fill="#2E7D32" fill-opacity="0.1" stroke="#2E7D32" stroke-width="2.5"/>
+  <!-- Punching Arm Lever -->
+  <path d="M38 24V10C38 8.89543 37.1046 8 36 8H12" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="10" cy="8" r="3" fill="#2E7D32"/>
+  <!-- Spiral Ring Binding Spine -->
+  <path d="M12 28C12 26 14 26 14 28V36C14 38 12 38 12 36" stroke="#43A047" stroke-width="2"/>
+  <path d="M18 28C18 26 20 26 20 28V36C20 38 18 38 18 36" stroke="#43A047" stroke-width="2"/>
+  <path d="M24 28C24 26 26 26 26 28V36C26 38 24 38 24 36" stroke="#43A047" stroke-width="2"/>
+  <path d="M30 28C30 26 32 26 32 28V36C32 38 30 38 30 36" stroke="#43A047" stroke-width="2"/>
+</svg>

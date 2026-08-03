@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Top Paper Input Sheet -->
+  <path d="M14 16V8C14 6.89543 14.8954 6 16 6H32C33.1046 6 34 6.89543 34 8V16" fill="#2E7D32" fill-opacity="0.1" stroke="#2E7D32" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Printer Main Body -->
+  <rect x="6" y="16" width="36" height="18" rx="4" fill="#2E7D32" fill-opacity="0.15" stroke="#2E7D32" stroke-width="2.5"/>
+  <!-- Status LED & Button -->
+  <circle cx="34" cy="22" r="2" fill="#43A047"/>
+  <circle cx="28" cy="22" r="1.5" fill="#2E7D32"/>
+  <!-- Front Slot Paper Tray -->
+  <path d="M12 28H36" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Bottom Printed Page Output -->
+  <path d="M14 28V40C14 41.1046 14.8954 42 16 42H32C33.1046 42 34 41.1046 34 40V28" fill="#FFFFFF" stroke="#2E7D32" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Lines on Printed Page -->
+  <line x1="18" y1="33" x2="30" y2="33" stroke="#2E7D32" stroke-width="2" stroke-linecap="round"/>
+  <line x1="18" y1="37" x2="26" y2="37" stroke="#2E7D32" stroke-width="2" stroke-linecap="round"/>
+</svg>

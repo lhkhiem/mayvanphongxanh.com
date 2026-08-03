@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Heated Roller Body Base -->
+  <rect x="6" y="20" width="36" height="14" rx="4" fill="#2E7D32" fill-opacity="0.15" stroke="#2E7D32" stroke-width="2.5"/>
+  <!-- Status Lights (Heat / Ready) -->
+  <circle cx="34" cy="27" r="1.5" fill="#EF4444"/>
+  <circle cx="38" cy="27" r="1.5" fill="#43A047"/>
+  <!-- Laminated Document Pushing Through Rollers -->
+  <path d="M12 12H36C37.1046 12 38 12.8954 38 14V34C38 35.1046 37.1046 36 36 36H12C10.8954 36 10 35.1046 10 34V14C10 12.8954 10.8954 12 12 12Z" stroke="#2E7D32" stroke-width="2" stroke-dasharray="4 2"/>
+  <!-- Inner Sealed Paper -->
+  <rect x="15" y="16" width="18" height="16" rx="1" fill="#FFFFFF" stroke="#2E7D32" stroke-width="1.5"/>
+</svg>

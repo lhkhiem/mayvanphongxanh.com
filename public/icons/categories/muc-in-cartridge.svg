@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Toner Cartridge Main Body -->
+  <rect x="8" y="14" width="32" height="20" rx="4" fill="#2E7D32" fill-opacity="0.15" stroke="#2E7D32" stroke-width="2.5"/>
+  <!-- Cartridge Side Handles -->
+  <path d="M4 20H8V28H4C2.89543 28 2 27.1046 2 26V22C2 20.8954 2.89543 20 4 20Z" fill="#2E7D32"/>
+  <path d="M44 20H40V28H44C45.1046 28 46 27.1046 46 26V22C46 20.8954 45.1046 20 44 20Z" fill="#2E7D32"/>
+  <!-- OPC Drum Roller Roller Cylinder -->
+  <rect x="12" y="34" width="24" height="6" rx="3" fill="#43A047" stroke="#43A047" stroke-width="1.5"/>
+  <!-- Ink Drop Brand Icon Accent -->
+  <path d="M24 18C24 18 20 22 20 24.5C20 26.7091 21.7909 28.5 24 28.5C26.2091 28.5 28 26.7091 28 24.5C28 22 24 18 24 18Z" fill="#2E7D32"/>
+</svg>
