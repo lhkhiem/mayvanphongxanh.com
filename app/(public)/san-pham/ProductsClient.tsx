@@ -73,17 +73,19 @@ export default function ProductsClient({
     const childrenMap = new Map<string, string[]>();
     const processedNames = new Set<string>();
 
-    const tree = fetchedCategories.map((cat: any) => {
+    const rawTree = fetchedCategories.map((cat: any) => {
       processedNames.add(cat.name);
-      const childNodes = (cat.children || []).map((child: any) => {
-        processedNames.add(child.name);
-        return {
-          id: child.id,
-          name: child.name,
-          slug: child.slug,
-          count: directCounts[child.name] || 0,
-        };
-      });
+      const childNodes = (cat.children || [])
+        .map((child: any) => {
+          processedNames.add(child.name);
+          return {
+            id: child.id,
+            name: child.name,
+            slug: child.slug,
+            count: directCounts[child.name] || 0,
+          };
+        })
+        .filter((c: any) => c.count > 0 || selectedCategories.includes(c.name));
 
       const childNames = childNodes.map((c: any) => c.name);
       if (childNames.length > 0) {
@@ -104,8 +106,8 @@ export default function ProductsClient({
     });
 
     Object.entries(directCounts).forEach(([name, count]) => {
-      if (!processedNames.has(name)) {
-        tree.push({
+      if (!processedNames.has(name) && count > 0) {
+        rawTree.push({
           id: Math.random(),
           name,
           slug: '',
@@ -115,8 +117,10 @@ export default function ProductsClient({
       }
     });
 
+    const tree = rawTree.filter(cat => cat.count > 0 || selectedCategories.includes(cat.name));
+
     return { categoryTree: tree, categoryNameToChildrenMap: childrenMap };
-  }, [fetchedCategories, products]);
+  }, [fetchedCategories, products, selectedCategories]);
 
   // Active category names including subcategories
   const activeCategoryNames = useMemo(() => {
