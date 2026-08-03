@@ -402,7 +402,7 @@ export default function ProductsClient({
                 <h3 className="font-bold text-gray-800 text-[13px] uppercase mb-3 flex items-center justify-between">
                   DANH MỤC
                 </h3>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {categoryTree.map((cat) => {
                     const hasChildren = cat.children && cat.children.length > 0;
                     const isExpanded = !!expandedParents[cat.name];
@@ -412,7 +412,7 @@ export default function ProductsClient({
                       <div key={cat.name} className="space-y-1">
                         {/* Parent Category Row */}
                         <div className="flex items-center justify-between group py-0.5">
-                          <label className="flex items-center gap-1.5 cursor-pointer flex-1 min-w-0" title={cat.name}>
+                          <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0" title={cat.name}>
                             <input
                               type="checkbox"
                               checked={isParentChecked}
@@ -421,42 +421,49 @@ export default function ProductsClient({
                             />
                             <span className={cn(
                               "text-[13px] text-gray-700 group-hover:text-primary leading-snug truncate",
-                              hasChildren ? "font-semibold text-gray-800" : "font-normal"
+                              hasChildren ? "font-semibold text-gray-900" : "font-normal"
                             )}>
                               {cat.name}
                             </span>
                           </label>
 
-                          <div className="flex items-center gap-1 shrink-0 ml-1.5">
-                            <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-normal">
-                              {cat.count}
-                            </span>
+                          <div className="flex items-center shrink-0 ml-2">
                             {hasChildren ? (
                               <button
                                 type="button"
                                 onClick={(e) => toggleExpandParent(cat.name, e)}
-                                className="p-0.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600 transition-colors"
+                                className={cn(
+                                  "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium transition-colors",
+                                  isExpanded
+                                    ? "bg-primary/10 text-primary"
+                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                )}
                                 title={isExpanded ? "Thu gọn danh mục con" : "Mở rộng danh mục con"}
                               >
+                                <span>{cat.count}</span>
                                 <ChevronDown
                                   className={cn(
-                                    "w-3.5 h-3.5 transition-transform duration-200",
-                                    isExpanded ? "rotate-180 text-gray-600" : "rotate-0 text-gray-400"
+                                    "w-3 h-3 transition-transform duration-200",
+                                    isExpanded ? "rotate-180" : "rotate-0 text-gray-400"
                                   )}
                                 />
                               </button>
-                            ) : null}
+                            ) : (
+                              <span className="text-[11px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-normal">
+                                {cat.count}
+                              </span>
+                            )}
                           </div>
                         </div>
 
                         {/* Subcategories (Indented Tree) */}
                         {hasChildren && isExpanded && (
-                          <div className="ml-2.5 pl-2 border-l border-gray-200 space-y-1.5 py-1">
+                          <div className="ml-3.5 pl-2 border-l border-gray-200 space-y-1 py-0.5">
                             {cat.children.map((child: any) => {
                               const isChildChecked = selectedCategories.includes(child.name);
                               return (
                                 <label key={child.name} className="flex items-center justify-between cursor-pointer group py-0.5" title={child.name}>
-                                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                  <div className="flex items-center gap-2 min-w-0 flex-1">
                                     <input
                                       type="checkbox"
                                       checked={isChildChecked}
