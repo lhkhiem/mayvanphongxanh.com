@@ -32,6 +32,12 @@ model Category {
   promoTargetUrl   String?
   promoImageUrl    String?
 
+  // SEO Metadata
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String?
+  metaImage       String?
+
   parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children Category[] @relation("CategoryHierarchy")
   products Product[]

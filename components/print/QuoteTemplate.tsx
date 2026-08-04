@@ -107,19 +107,19 @@ export function QuoteTemplate({ product, quantity, settings = {} }: QuoteTemplat
       <table className="w-full border-collapse border border-black mb-6 text-xs">
         <thead>
           <tr className="bg-gray-100 font-bold text-center">
-            <th className="border border-black p-2 w-10">STT</th>
-            <th className="border border-black p-2 w-28">Hình ảnh</th>
-            <th className="border border-black p-2">Tên Sản Phẩm</th>
-            <th className="border border-black p-2 w-16">Số lượng</th>
-            <th className="border border-black p-2 w-28">Đơn giá (VND)</th>
-            <th className="border border-black p-2 w-28">Tổng (VND)</th>
+            <th className="border border-black p-2 text-center" style={{ width: '5%' }}>Stt</th>
+            <th className="border border-black p-2 text-center" style={{ width: '14%' }}>Hình ảnh</th>
+            <th className="border border-black p-2 text-center" style={{ width: '47%' }}>Tên Sản Phẩm</th>
+            <th className="border border-black p-2 text-center" style={{ width: '10%' }}>Số lượng</th>
+            <th className="border border-black p-2 text-center" style={{ width: '12%' }}>Đơn giá (Vnđ)</th>
+            <th className="border border-black p-2 text-center" style={{ width: '12%' }}>Tổng (Vnđ)</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td className="border border-black p-2 text-center align-middle font-bold">1</td>
             <td className="border border-black p-2 text-center align-middle">
-              <img src={productImage} alt={product?.name || ''} className="w-full max-w-[100px] max-h-[100px] mx-auto object-contain" />
+              <img src={productImage} alt={product?.name || ''} className="w-full max-w-[90px] max-h-[90px] mx-auto object-contain" />
             </td>
             <td className="border border-black p-3 align-top">
               <div className={`font-bold text-sm text-black ${hasQuickSpecs ? 'mb-2' : ''}`}>{product?.name}</div>
@@ -147,7 +147,7 @@ export function QuoteTemplate({ product, quantity, settings = {} }: QuoteTemplat
             <td className="border border-black p-2 text-right align-middle font-bold">{formatPrice(total)}</td>
           </tr>
           <tr>
-            <td colSpan={5} className="border border-black p-2 text-right font-bold bg-gray-100 uppercase">Tổng cộng (VND)</td>
+            <td colSpan={5} className="border border-black p-2 text-right font-bold bg-gray-100 uppercase">TỔNG CỘNG (Vnđ)</td>
             <td className="border border-black p-2 text-right font-bold bg-gray-100">{formatPrice(total)}</td>
           </tr>
         </tbody>

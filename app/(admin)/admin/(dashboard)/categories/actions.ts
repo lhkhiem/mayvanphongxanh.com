@@ -85,6 +85,10 @@ export type CategoryFormData = {
   promoTargetUrl?: string
   promoImageUrl?: string
   showInFooter?: boolean
+  metaTitle?: string
+  metaDescription?: string
+  metaKeywords?: string
+  metaImage?: string
 }
 
 export async function createCategory(data: CategoryFormData) {
@@ -118,6 +122,10 @@ export async function createCategory(data: CategoryFormData) {
         promoTargetUrl: data.promoTargetUrl || null,
         promoImageUrl: data.promoImageUrl || null,
         showInFooter: data.showInFooter || false,
+        metaTitle: data.metaTitle || null,
+        metaDescription: data.metaDescription || null,
+        metaKeywords: data.metaKeywords || null,
+        metaImage: data.metaImage || null,
       },
     })
     revalidatePath("/admin/categories")
@@ -157,6 +165,10 @@ export async function updateCategory(id: number, data: CategoryFormData) {
         promoTargetUrl: data.promoTargetUrl || null,
         promoImageUrl: data.promoImageUrl || null,
         showInFooter: data.showInFooter ?? false,
+        metaTitle: data.metaTitle || null,
+        metaDescription: data.metaDescription || null,
+        metaKeywords: data.metaKeywords || null,
+        metaImage: data.metaImage || null,
       },
     })
     revalidatePath("/admin/categories")

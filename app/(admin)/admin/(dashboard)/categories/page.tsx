@@ -54,6 +54,10 @@ type Category = {
   promoBadgeColor: string | null;
   promoTargetUrl: string | null;
   promoImageUrl: string | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  metaKeywords: string | null;
+  metaImage: string | null;
   _count: {
     products: number;
     activeProducts?: number;
@@ -88,6 +92,10 @@ const DEFAULT_FORM: CategoryFormData = {
   promoBadgeColor: "",
   promoTargetUrl: "",
   promoImageUrl: "",
+  metaTitle: "",
+  metaDescription: "",
+  metaKeywords: "",
+  metaImage: "",
 };
 
 // ── Main Component ─────────────────────────────────────────────────────────────
@@ -348,6 +356,10 @@ export default function CategoriesPage() {
                         promoBadgeColor: parent.promoBadgeColor || "",
                         promoTargetUrl: parent.promoTargetUrl || "",
                         promoImageUrl: parent.promoImageUrl || "",
+                        metaTitle: parent.metaTitle || "",
+                        metaDescription: parent.metaDescription || "",
+                        metaKeywords: parent.metaKeywords || "",
+                        metaImage: parent.metaImage || "",
                       }}
                       onSubmit={(data) => handleUpdate(parent.id, data)}
                       onCancel={() => setEditingId(null)}
@@ -402,6 +414,10 @@ export default function CategoriesPage() {
                                 promoBadgeColor: child.promoBadgeColor || "",
                                 promoTargetUrl: child.promoTargetUrl || "",
                                 promoImageUrl: child.promoImageUrl || "",
+                                metaTitle: child.metaTitle || "",
+                                metaDescription: child.metaDescription || "",
+                                metaKeywords: child.metaKeywords || "",
+                                metaImage: child.metaImage || "",
                               }}
                               onSubmit={(data) => handleUpdate(child.id, data)}
                               onCancel={() => setEditingId(null)}
@@ -863,6 +879,79 @@ function CategoryForm({
               </div>
             </div>
           )}
+        </div>
+
+        {/* SEO Metadata Settings */}
+        <div className="pt-4 mt-2 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                <Tag className="h-4 w-4 text-emerald-500" />
+                Cấu hình SEO Metadata & Chia sẻ MXH
+              </h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Tùy chỉnh thông tin tiêu đề, mô tả và hình ảnh hiển thị khi xuất hiện trên Google, Zalo, Facebook, v.v.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3 bg-emerald-50/50 dark:bg-emerald-950/20 p-4 rounded-lg border border-emerald-100 dark:border-emerald-900/30">
+            <div>
+              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                SEO Title (Tiêu đề SEO)
+              </label>
+              <input
+                type="text"
+                value={form.metaTitle || ""}
+                onChange={(e) => setForm({ ...form, metaTitle: e.target.value })}
+                placeholder={`Để trống sẽ dùng: "${form.name || 'Tên danh mục'} | Máy Văn Phòng Xanh"`}
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                SEO Description (Mô tả SEO)
+              </label>
+              <textarea
+                value={form.metaDescription || ""}
+                onChange={(e) => setForm({ ...form, metaDescription: e.target.value })}
+                placeholder="Mô tả ngắn gọn thu hút người dùng khi xem trên thẻ xem trước đường dẫn..."
+                rows={2}
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                SEO Keywords (Từ khóa SEO)
+              </label>
+              <input
+                type="text"
+                value={form.metaKeywords || ""}
+                onChange={(e) => setForm({ ...form, metaKeywords: e.target.value })}
+                placeholder="Phân cách bởi dấu phẩy, VD: máy photocopy ricoh, máy in chính hãng..."
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+              />
+            </div>
+
+            <div>
+              <MediaPickerInput
+                label="Ảnh đại diện SEO (Ảnh preview khi chia sẻ link Zalo/FB)"
+                value={form.metaImage || ""}
+                onChange={(url) => setForm({ ...form, metaImage: url })}
+                placeholder="Chọn hoặc tải lên ảnh đại diện SEO (tỷ lệ 1.91:1 hoặc 1200x630px)..."
+              />
+              <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                Nếu không chọn, hệ thống sẽ tự động dùng ảnh Promo Banner hoặc ảnh sản phẩm đầu tiên thuộc danh mục.
+              </p>
+              {form.metaImage && (
+                <div className="mt-2.5 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 max-w-xs">
+                  <img src={form.metaImage} alt="SEO Preview" className="w-full h-auto object-cover max-h-36" />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Toggles */}
