@@ -100,38 +100,8 @@ export default function ContactPage() {
           </nav>
         </div>
 
-        {/* 1. Map Section */}
+        {/* 1. Contact Form & Info Sidebar */}
         <section className="container mx-auto px-4 max-w-7xl mt-6">
-          <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-            <div className="flex flex-col gap-4 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-              <div>
-                <p className="text-sm font-bold uppercase tracking-wide text-primary">Bản đồ</p>
-                <h2 className="mt-1 text-2xl font-bold text-foreground">Vị trí Máy Văn Phòng Xanh</h2>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">Tư vấn và triển khai công nghệ cho doanh nghiệp</p>
-              </div>
-              <a 
-                href={directionLink} 
-                target="_blank" 
-                rel="noreferrer"
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 shadow-sm"
-              >
-                Chỉ đường <ExternalLink className="w-4 h-4" />
-              </a>
-            </div>
-            
-            {/* Embedded Google Map */}
-            <iframe 
-              className="h-[300px] w-full border-0 sm:h-[400px] lg:h-[480px]" 
-              src={iframeSrc} 
-              title="Vị trí Máy Văn Phòng Xanh" 
-              loading="lazy" 
-              referrerPolicy="no-referrer-when-downgrade"
-            ></iframe>
-          </div>
-        </section>
-
-        {/* 2. Contact Form & Info Sidebar */}
-        <section className="container mx-auto px-4 max-w-7xl mt-8">
           <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
             
             {/* Form */}
@@ -303,6 +273,36 @@ export default function ContactPage() {
               </div>
             </aside>
 
+          </div>
+        </section>
+
+        {/* 2. Map Section */}
+        <section className="container mx-auto px-4 max-w-7xl mt-8">
+          <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+            <div className="flex flex-col gap-4 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-wide text-primary">Bản đồ</p>
+                <h2 className="mt-1 text-2xl font-bold text-foreground">Vị trí Máy Văn Phòng Xanh</h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">Tư vấn và triển khai công nghệ cho doanh nghiệp</p>
+              </div>
+              <a 
+                href={directionLink} 
+                target="_blank" 
+                rel="noreferrer"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 shadow-sm"
+              >
+                Chỉ đường <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+            
+            {/* Embedded Google Map */}
+            <iframe 
+              className="h-[300px] w-full border-0 sm:h-[400px] lg:h-[480px]" 
+              src={iframeSrc} 
+              title="Vị trí Máy Văn Phòng Xanh" 
+              loading="lazy" 
+              referrerPolicy="no-referrer-when-downgrade"
+            ></iframe>
           </div>
         </section>
       </div>
