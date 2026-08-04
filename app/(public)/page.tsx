@@ -97,6 +97,8 @@ export default async function Home() {
       name: p.name,
       slug: p.slug,
       category: p.category.name,
+      categoryId: p.categoryId,
+      categoryParentId: p.category.parentId,
       brand: p.brand,
       price: defaultVariant?.price || 0,
       originalPrice: defaultVariant?.originalPrice,

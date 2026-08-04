@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { ProductCard } from '@/components/products/ProductCard';
 import { ChevronRight, ChevronLeft, TrendingUp } from 'lucide-react';
@@ -8,13 +8,58 @@ import { ChevronRight, ChevronLeft, TrendingUp } from 'lucide-react';
 
 
 export function FeaturedProducts({ products = [], categories = [] }: { products?: any[], categories?: any[] }) {
-  const allCategories = ['Tất cả', ...categories.map(c => c.name)];
+  const allCategories = ['Tất cả', ...categories.map(c => typeof c === 'string' ? c : c.name)];
   const [activeTab, setActiveTab] = useState('Tất cả');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const filtered = activeTab === 'Tất cả'
-    ? products.filter(p => p.category !== 'Gói dịch vụ').slice(0, 12)
-    : products.filter(p => p.category === activeTab).slice(0, 12);
+  const selectedCategoryObj = useMemo(() => {
+    if (activeTab === 'Tất cả') return null;
+    return categories.find(c => (typeof c === 'string' ? c : c.name) === activeTab);
+  }, [categories, activeTab]);
+
+  const validCategoryNames = useMemo(() => {
+    if (!selectedCategoryObj || typeof selectedCategoryObj === 'string') return null;
+    const names = new Set<string>();
+    names.add(selectedCategoryObj.name);
+    if (Array.isArray(selectedCategoryObj.children)) {
+      selectedCategoryObj.children.forEach((child: any) => {
+        if (child.name) names.add(child.name);
+      });
+    }
+    return names;
+  }, [selectedCategoryObj]);
+
+  const filtered = useMemo(() => {
+    if (activeTab === 'Tất cả') {
+      return products.filter(p => p.category !== 'Gói dịch vụ').slice(0, 12);
+    }
+
+    return products.filter(p => {
+      if (p.category === 'Gói dịch vụ') return false;
+
+      // 1. Match by category name set (parent + child category names)
+      if (validCategoryNames && validCategoryNames.has(p.category)) {
+        return true;
+      }
+
+      // 2. Match by parent category ID or category ID
+      if (selectedCategoryObj && typeof selectedCategoryObj !== 'string') {
+        if (p.categoryParentId === selectedCategoryObj.id || p.categoryId === selectedCategoryObj.id) {
+          return true;
+        }
+      }
+
+      // 3. Fallback direct string match
+      return p.category === activeTab;
+    }).slice(0, 12);
+  }, [activeTab, products, validCategoryNames, selectedCategoryObj]);
+
+  const handleTabChange = (cat: string) => {
+    setActiveTab(cat);
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = 0;
+    }
+  };
 
   const scroll = (dir: 'left' | 'right') => {
     if (!scrollRef.current) return;
@@ -50,7 +95,7 @@ export function FeaturedProducts({ products = [], categories = [] }: { products?
           {allCategories.map(cat => (
             <button
               key={cat}
-              onClick={() => setActiveTab(cat)}
+              onClick={() => handleTabChange(cat)}
               className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                 activeTab === cat
                   ? 'bg-primary text-white shadow-sm'
