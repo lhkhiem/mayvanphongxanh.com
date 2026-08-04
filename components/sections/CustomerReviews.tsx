@@ -7,7 +7,7 @@ import {
   X, RefreshCw, Send, CheckCircle2, ShieldAlert, User
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { submitPublicTestimonial } from '@/app/(public)/testimonials-action';
+import { submitPublicTestimonial, getCaptchaChallenge } from '@/app/(public)/testimonials-action';
 
 export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] }) {
   const [current, setCurrent] = useState(0);
@@ -30,7 +30,7 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
     return items;
   };
 
-  // Modal State
+  // Modal Form State
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
@@ -38,26 +38,35 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
   const [content, setContent] = useState('');
   const [image, setImage] = useState('');
 
-  // Anti-Spam Captcha State
-  const [num1, setNum1] = useState(5);
-  const [num2, setNum2] = useState(3);
+  // Anti-Spam Captcha State (Server HMAC Signed)
+  const [num1, setNum1] = useState<number | null>(null);
+  const [num2, setNum2] = useState<number | null>(null);
+  const [captchaToken, setCaptchaToken] = useState('');
   const [captchaInput, setCaptchaInput] = useState('');
+  const [loadingCaptcha, setLoadingCaptcha] = useState(false);
   const [honeypot, setHoneypot] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccessMsg, setSubmitSuccessMsg] = useState<string | null>(null);
 
-  // Refresh Math Captcha
-  const generateCaptcha = useCallback(() => {
-    const n1 = Math.floor(Math.random() * 9) + 1; // 1-9
-    const n2 = Math.floor(Math.random() * 9) + 1; // 1-9
-    setNum1(n1);
-    setNum2(n2);
-    setCaptchaInput('');
+  // Fetch Server-Signed Math Captcha
+  const loadCaptcha = useCallback(async () => {
+    setLoadingCaptcha(true);
+    try {
+      const challenge = await getCaptchaChallenge();
+      setNum1(challenge.num1);
+      setNum2(challenge.num2);
+      setCaptchaToken(challenge.token);
+      setCaptchaInput('');
+    } catch (err) {
+      console.error('Lỗi khi tạo CAPTCHA:', err);
+    } finally {
+      setLoadingCaptcha(false);
+    }
   }, []);
 
   const handleOpenModal = () => {
-    generateCaptcha();
+    loadCaptcha();
     setSubmitSuccessMsg(null);
     setShowModal(true);
   };
@@ -65,21 +74,21 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 1. Check Rate limit (Cooldown 5 phút = 300,000 ms)
-    const COOLDOWN_TIME = 5 * 60 * 1000;
+    // Client-side Rate Limit check
+    const COOLDOWN_TIME = 2 * 60 * 1000; // 2 phút
     const lastSubmitTime = localStorage.getItem('last_testimonial_submitted_at');
     if (lastSubmitTime) {
       const elapsed = Date.now() - parseInt(lastSubmitTime, 10);
       if (elapsed < COOLDOWN_TIME) {
-        const remainingMinutes = Math.ceil((COOLDOWN_TIME - elapsed) / 60000);
-        toast.error(`Bạn vừa gửi nhận xét. Vui lòng đợi thêm ${remainingMinutes} phút trước khi gửi lại.`);
+        const remainingSec = Math.ceil((COOLDOWN_TIME - elapsed) / 1000);
+        toast.error(`Bạn thao tác quá nhanh. Vui lòng đợi ${remainingSec} giây trước khi gửi lại.`);
         return;
       }
     }
 
-    if (!name.trim()) return toast.error('Vui lòng nhập Họ và tên của bạn!');
-    if (!content.trim() || content.trim().length < 10) return toast.error('Nội dung nhận xét cần ít nhất 10 ký tự!');
-    if (!captchaInput.trim()) return toast.error('Vui lòng điền kết quả phép tính xác minh CAPTCHA!');
+    if (!name.trim()) return toast.error('Vui lòng nhập Họ và tên!');
+    if (!content.trim() || content.trim().length < 10) return toast.error('Nội dung nhận xét phải từ 10 ký tự trở lên!');
+    if (!captchaInput.trim() || !captchaToken) return toast.error('Vui lòng nhập kết quả xác minh CAPTCHA!');
 
     setSubmitting(true);
 
@@ -89,8 +98,7 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
       content,
       rating,
       image,
-      num1,
-      num2,
+      captchaToken,
       captchaAnswer: captchaInput,
       honeypot,
     });
@@ -99,14 +107,13 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
 
     if (res.error) {
       toast.error(res.error);
-      generateCaptcha();
+      loadCaptcha(); // Reset Captcha khi lỗi
     } else {
-      // Save last submission timestamp
       localStorage.setItem('last_testimonial_submitted_at', Date.now().toString());
       setSubmitSuccessMsg(res.message || 'Cảm ơn bạn đã gửi đánh giá! Nhận xét đang chờ Admin phê duyệt.');
       toast.success('Đã gửi nhận xét thành công!');
 
-      // Reset Form fields
+      // Reset form fields
       setName('');
       setRole('');
       setContent('');
@@ -131,7 +138,6 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {/* Button Write Review */}
             <button
               onClick={handleOpenModal}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-primary text-white text-xs sm:text-sm font-semibold hover:bg-primary/90 transition-colors shadow-xs cursor-pointer"
@@ -139,7 +145,6 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
               <PenSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Viết đánh giá
             </button>
 
-            {/* Slider Controls */}
             {total > 1 && (
               <div className="flex items-center gap-1.5">
                 <button
@@ -159,7 +164,7 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
           </div>
         </div>
 
-        {/* Cards Grid */}
+        {/* Testimonials Cards */}
         {testimonials && testimonials.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {getVisible().map((t, i) => (
@@ -169,7 +174,6 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
               >
                 <Quote className="w-8 h-8 text-primary/10 absolute top-4 right-4" />
 
-                {/* Stars */}
                 <div className="flex gap-0.5 mb-3">
                   {[...Array(5)].map((_, j) => (
                     <Star
@@ -182,12 +186,10 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
                   <span className="text-xs text-gray-500 ml-1.5 font-semibold">{t.rating}</span>
                 </div>
 
-                {/* Content */}
                 <p className="text-sm text-gray-700 italic leading-relaxed flex-1 mb-4 line-clamp-4">
                   &ldquo;{t.content}&rdquo;
                 </p>
 
-                {/* Author */}
                 <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
                   <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 ring-2 ring-primary/20 bg-gray-100 flex items-center justify-center">
                     {t.image ? (
@@ -210,7 +212,6 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
           </div>
         )}
 
-        {/* Dots */}
         {total > 1 && (
           <div className="flex justify-center gap-1.5 mt-5">
             {testimonials.map((_, i) => (
@@ -226,11 +227,10 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
         )}
       </div>
 
-      {/* PUBLIC REVIEW SUBMISSION MODAL */}
+      {/* SUBMISSION MODAL */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-            {/* Modal Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50/50">
               <h3 className="font-bold text-base text-gray-800 flex items-center gap-2">
                 <PenSquare className="w-5 h-5 text-primary" /> Viết nhận xét đánh giá
@@ -243,7 +243,6 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-5 overflow-y-auto space-y-4">
               {submitSuccessMsg ? (
                 <div className="py-6 text-center space-y-3">
@@ -263,18 +262,18 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Honeypot field (Ẩn để bẫy Bot) */}
+                  {/* Honeypot field (Bẫy Bot) */}
                   <input
                     type="text"
                     name="website_hp"
                     value={honeypot}
                     onChange={(e) => setHoneypot(e.target.value)}
-                    style={{ display: 'none' }}
+                    className="hidden"
                     tabIndex={-1}
                     autoComplete="off"
                   />
 
-                  {/* Rating selection */}
+                  {/* Rating */}
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
                       Đánh giá trải nghiệm của bạn *
@@ -314,6 +313,7 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
                         onChange={(e) => setName(e.target.value)}
                         placeholder="VD: Nguyễn Văn Nam"
                         required
+                        maxLength={100}
                         className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
@@ -326,6 +326,7 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
                         value={role}
                         onChange={(e) => setRole(e.target.value)}
                         placeholder="VD: Anh Nam - Q.3, TP.HCM"
+                        maxLength={100}
                         className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
@@ -343,6 +344,7 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
                       placeholder="Chia sẻ trải nghiệm sử dụng sản phẩm & dịch vụ của Máy Văn Phòng Xanh..."
                       required
                       minLength={10}
+                      maxLength={2000}
                       className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
@@ -361,21 +363,26 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
                     />
                   </div>
 
-                  {/* Anti-Spam Math Captcha */}
+                  {/* Anti-Spam Server HMAC Signed Math Captcha */}
                   <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
                     <label className="block text-xs font-bold text-gray-700 mb-1.5 flex items-center gap-1.5">
-                      <ShieldAlert className="w-4 h-4 text-emerald-600" /> Xác minh chống Spam *
+                      <ShieldAlert className="w-4 h-4 text-emerald-600" /> Xác minh bảo mật CAPTCHA *
                     </label>
                     <div className="flex items-center gap-2">
-                      <div className="bg-white px-3 py-1.5 rounded-lg border border-slate-300 font-mono font-bold text-base text-slate-800 shadow-xs flex items-center gap-2 select-none">
-                        <span>{num1} + {num2} = ?</span>
+                      <div className="bg-white px-3 py-1.5 rounded-lg border border-slate-300 font-mono font-bold text-base text-slate-800 shadow-xs flex items-center gap-2 select-none min-w-[120px] justify-between">
+                        {loadingCaptcha ? (
+                          <span className="text-xs text-gray-400 font-normal">Đang tạo...</span>
+                        ) : (
+                          <span>{num1} + {num2} = ?</span>
+                        )}
                         <button
                           type="button"
-                          onClick={generateCaptcha}
+                          onClick={loadCaptcha}
+                          disabled={loadingCaptcha}
                           className="text-gray-400 hover:text-primary transition-colors cursor-pointer"
                           title="Đổi phép tính khác"
                         >
-                          <RefreshCw className="w-3.5 h-3.5" />
+                          <RefreshCw className={`w-3.5 h-3.5 ${loadingCaptcha ? 'animate-spin' : ''}`} />
                         </button>
                       </div>
 
@@ -394,7 +401,6 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
                     * Nhận xét sẽ được kiểm duyệt bởi quản trị viên trước khi hiển thị công khai trên website.
                   </p>
 
-                  {/* Buttons */}
                   <div className="flex justify-end gap-2.5 pt-2 border-t border-gray-100">
                     <button
                       type="button"
@@ -405,7 +411,7 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
                     </button>
                     <button
                       type="submit"
-                      disabled={submitting}
+                      disabled={submitting || loadingCaptcha}
                       className="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-primary/90 disabled:opacity-50 transition-colors shadow-xs cursor-pointer"
                     >
                       <Send className="w-4 h-4" /> {submitting ? 'Đang gửi...' : 'Gửi nhận xét'}

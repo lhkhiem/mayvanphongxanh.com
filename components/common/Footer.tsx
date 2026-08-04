@@ -44,6 +44,7 @@ const supportLinks = [
 export function Footer() {
   const { getSetting } = useSettings();
   const [subscriberEmail, setSubscriberEmail] = useState('');
+  const [subscriberHoneypot, setSubscriberHoneypot] = useState('');
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<{label: string, href: string}[]>([
     { label: 'Máy in các loại', href: '/danh-muc/may-in' },
@@ -66,8 +67,9 @@ export function Footer() {
   }, []);
 
   const handleSubscribe = async () => {
-    if (!subscriberEmail || !subscriberEmail.includes('@')) {
-      toast.error('Vui lòng nhập email hợp lệ!');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!subscriberEmail || !emailRegex.test(subscriberEmail.trim())) {
+      toast.error('Vui lòng nhập định dạng email hợp lệ!');
       return;
     }
     setLoading(true);
@@ -75,7 +77,7 @@ export function Footer() {
       const res = await fetch('/api/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: subscriberEmail }),
+        body: JSON.stringify({ email: subscriberEmail, honeypot: subscriberHoneypot }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -249,6 +251,15 @@ export function Footer() {
               Nhận ngay thông tin khuyến mãi, sản phẩm mới và kiến thức văn phòng hữu ích.
             </p>
             <div className="flex flex-col gap-2">
+              <input
+                type="text"
+                name="website_hp"
+                value={subscriberHoneypot}
+                onChange={(e) => setSubscriberHoneypot(e.target.value)}
+                className="hidden"
+                tabIndex={-1}
+                autoComplete="off"
+              />
               <input
                 type="email"
                 value={subscriberEmail}

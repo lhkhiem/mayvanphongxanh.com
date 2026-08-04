@@ -2,6 +2,24 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { cookies, headers } from "next/headers";
+import crypto from "crypto";
+
+const CAPTCHA_SECRET = process.env.CAPTCHA_SECRET || "mvpx-security-captcha-secret-key-2026";
+const COOLDOWN_SECONDS = 120; // 2 phút server-side rate limit
+
+// 1. Tạo CAPTCHA Challenge ký bằng Server HMAC (Không thể fake từ Client)
+export async function getCaptchaChallenge() {
+  const num1 = Math.floor(Math.random() * 9) + 1; // 1-9
+  const num2 = Math.floor(Math.random() * 9) + 1; // 1-9
+  const timestamp = Date.now();
+
+  const dataToSign = `${num1}:${num2}:${timestamp}`;
+  const hmac = crypto.createHmac("sha256", CAPTCHA_SECRET).update(dataToSign).digest("hex");
+  const token = `${dataToSign}:${hmac}`;
+
+  return { num1, num2, token };
+}
 
 export type PublicTestimonialSubmitInput = {
   name: string;
@@ -9,53 +27,143 @@ export type PublicTestimonialSubmitInput = {
   content: string;
   rating: number;
   image?: string;
-  num1: number;
-  num2: number;
+  captchaToken: string;
   captchaAnswer: string;
   honeypot?: string;
 };
 
+// Hàm làm sạch chuỗi loại bỏ thẻ HTML nguy hiểm (Chống XSS)
+function sanitizeText(str: string): string {
+  if (!str) return "";
+  return str
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;")
+    .replace(/\//g, "&#x2F;");
+}
+
 export async function submitPublicTestimonial(input: PublicTestimonialSubmitInput) {
   try {
-    // 1. Honeypot check (bẫy bot tự động)
+    // ----------------------------------------------------
+    // A. BẪY BOT (Honeypot Trap)
+    // ----------------------------------------------------
     if (input.honeypot && input.honeypot.trim() !== "") {
-      // Trả về giả lập thành công để bot tưởng thành công mà không lưu DB
-      return { success: true, message: "Cảm ơn bạn đã gửi đánh giá! Nhận xét của bạn đang được kiểm duyệt." };
+      // Giả lập gửi thành công để Bot dừng lại không thử lại
+      return { success: true, message: "Cảm ơn bạn đã gửi đánh giá! Nhận xét của bạn đang được duyệt." };
     }
 
-    // 2. Kiểm tra CAPTCHA Phép tính
-    const expectedAnswer = Number(input.num1) + Number(input.num2);
-    const userAnswer = Number(input.captchaAnswer?.trim());
+    // ----------------------------------------------------
+    // B. CHỐNG SPAM: Server-side Rate Limiting (Cookie & IP)
+    // ----------------------------------------------------
+    const cookieStore = await cookies();
+    const lastSubmitCookie = cookieStore.get("mvpx_last_testimonial_submit");
+    const now = Date.now();
 
-    if (isNaN(userAnswer) || userAnswer !== expectedAnswer) {
-      return { error: "Phép tính xác minh CAPTCHA không đúng. Vui lòng thử lại!" };
+    if (lastSubmitCookie) {
+      const lastTime = parseInt(lastSubmitCookie.value, 10);
+      if (!isNaN(lastTime) && now - lastTime < COOLDOWN_SECONDS * 1000) {
+        const remainingSec = Math.ceil((COOLDOWN_SECONDS * 1000 - (now - lastTime)) / 1000);
+        return { error: `Bạn thao tác quá nhanh! Vui lòng đợi ${remainingSec} giây trước khi gửi tiếp.` };
+      }
     }
 
-    // 3. Validation dữ liệu đầu vào
-    const name = input.name?.trim();
-    if (!name || name.length < 2) {
-      return { error: "Vui lòng nhập Họ và tên (tối thiểu 2 ký tự)." };
+    // ----------------------------------------------------
+    // C. CHỐNG FAKE CAPTCHA: Kiểm tra Chữ ký Server (HMAC Verification)
+    // ----------------------------------------------------
+    if (!input.captchaToken || !input.captchaAnswer) {
+      return { error: "Vui lòng nhập kết quả xác minh CAPTCHA." };
     }
 
-    const content = input.content?.trim();
-    if (!content || content.length < 10) {
+    const parts = input.captchaToken.split(":");
+    if (parts.length !== 4) {
+      return { error: "Mã xác minh CAPTCHA không hợp lệ. Vui lòng thử lại!" };
+    }
+
+    const [num1Str, num2Str, timestampStr, signature] = parts;
+    const num1 = parseInt(num1Str, 10);
+    const num2 = parseInt(num2Str, 10);
+    const timestamp = parseInt(timestampStr, 10);
+
+    // 1. Kiểm tra chữ ký HMAC
+    const expectedData = `${num1Str}:${num2Str}:${timestampStr}`;
+    const expectedHmac = crypto.createHmac("sha256", CAPTCHA_SECRET).update(expectedData).digest("hex");
+
+    if (signature !== expectedHmac) {
+      return { error: "Mã xác minh CAPTCHA đã bị can thiệp. Vui lòng lấy phép tính mới!" };
+    }
+
+    // 2. Kiểm tra thời hạn CAPTCHA (Hết hạn sau 10 phút)
+    if (isNaN(timestamp) || now - timestamp > 10 * 60 * 1000) {
+      return { error: "Phép tính CAPTCHA đã hết hạn. Vui lòng bấm làm mới phép tính!" };
+    }
+
+    // 3. Kiểm tra đáp án
+    const userAnswer = parseInt(input.captchaAnswer.trim(), 10);
+    if (isNaN(userAnswer) || userAnswer !== num1 + num2) {
+      return { error: "Kết quả phép tính CAPTCHA không chính xác!" };
+    }
+
+    // ----------------------------------------------------
+    // D. CHỐNG XSS & GIỚI HẠN ĐỘ DÀI (Input Sanitization & Bounds)
+    // ----------------------------------------------------
+    const rawName = input.name?.trim() || "";
+    if (!rawName || rawName.length < 2) {
+      return { error: "Họ và tên phải có tối thiểu 2 ký tự." };
+    }
+    if (rawName.length > 100) {
+      return { error: "Họ và tên không được vượt quá 100 ký tự." };
+    }
+
+    const rawContent = input.content?.trim() || "";
+    if (!rawContent || rawContent.length < 10) {
       return { error: "Nội dung nhận xét quá ngắn (tối thiểu 10 ký tự)." };
     }
+    if (rawContent.length > 2000) {
+      return { error: "Nội dung nhận xét quá dài (tối đa 2000 ký tự)." };
+    }
 
-    const rating = Math.min(5, Math.max(1, Number(input.rating) || 5));
-    const role = input.role?.trim() || null;
-    const image = input.image?.trim() || null;
+    const rawRole = input.role?.trim() || "";
+    if (rawRole.length > 100) {
+      return { error: "Chức danh / Công ty không được vượt quá 100 ký tự." };
+    }
 
-    // 4. Lưu vào cơ sở dữ liệu với isActive = false (Chờ Admin duyệt)
+    // URL validation cho ảnh đại diện (Chống javascript: XSS vector)
+    let safeImage: string | null = null;
+    if (input.image?.trim()) {
+      const imgUrl = input.image.trim();
+      if (imgUrl.startsWith("http://") || imgUrl.startsWith("https://") || imgUrl.startsWith("/")) {
+        safeImage = imgUrl;
+      } else {
+        return { error: "Link ảnh đại diện không hợp lệ (phải bắt đầu bằng http:// hoặc https://)." };
+      }
+    }
+
+    const safeRating = Math.min(5, Math.max(1, Math.floor(Number(input.rating) || 5)));
+    const cleanName = sanitizeText(rawName);
+    const cleanRole = rawRole ? sanitizeText(rawRole) : null;
+    const cleanContent = sanitizeText(rawContent);
+
+    // ----------------------------------------------------
+    // E. LƯU AN TOÀN VÀO DB BẰNG PRISMA (Chống SQL Injection)
+    // ----------------------------------------------------
     const testimonial = await prisma.testimonial.create({
       data: {
-        name,
-        role,
-        content,
-        rating,
-        image,
-        isActive: false, // Luôn để false cho tới khi Admin duyệt
+        name: cleanName,
+        role: cleanRole,
+        content: cleanContent,
+        rating: safeRating,
+        image: safeImage,
+        isActive: false, // Luôn mặc định false - Chờ Admin duyệt
       },
+    });
+
+    // Cài đặt cookie rate-limiting cho trình duyệt
+    cookieStore.set("mvpx_last_testimonial_submit", now.toString(), {
+      maxAge: COOLDOWN_SECONDS,
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
     });
 
     revalidatePath("/");
@@ -64,10 +172,10 @@ export async function submitPublicTestimonial(input: PublicTestimonialSubmitInpu
     return {
       success: true,
       data: testimonial,
-      message: "Cảm ơn bạn đã gửi đánh giá! Nhận xét của bạn đã được gửi thành công và sẽ hiển thị sau khi được Admin phê duyệt.",
+      message: "Cảm ơn bạn đã gửi đánh giá! Nhận xét của bạn đã được gửi thành công và sẽ hiển thị sau khi Admin duyệt.",
     };
   } catch (error: any) {
     console.error("Error submitting public testimonial:", error);
-    return { error: error.message || "Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại sau." };
+    return { error: "Đã có lỗi xảy ra trong quá trình xử lý. Vui lòng thử lại sau." };
   }
 }
