@@ -112,25 +112,32 @@ export default function CartPage() {
                     <span>Tạm tính</span>
                     <span className="font-medium">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(subtotal)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-600">
+                  <div className="flex justify-between text-gray-600 items-center">
                     <span>Phí vận chuyển</span>
-                    <span className="font-medium">{shipping === 0 ? 'Miễn phí' : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(shipping)}</span>
+                    <span className="font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-sm border border-amber-200/60">
+                      Báo phí khi xác nhận
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center text-lg mb-8">
-                  <span className="font-bold text-gray-900">Tổng cộng</span>
+                <div className="flex justify-between items-baseline text-lg mb-6">
+                  <div>
+                    <span className="font-bold text-gray-900 block">Tổng cộng</span>
+                    <span className="text-xs text-gray-500 font-normal">(Chưa gồm phí vận chuyển)</span>
+                  </div>
                   <span className="text-2xl font-bold text-primary">
-                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}
+                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(subtotal)}
                   </span>
                 </div>
 
-                {shipping === 0 && (
-                  <p className="text-sm text-green-700 font-medium mb-6 p-3.5 bg-green-50 border border-green-100 rounded-lg flex items-center justify-center gap-2">
-                    <span className="w-5 h-5 bg-green-500 text-white rounded-full flex items-center justify-center text-xs">✓</span>
-                    Đơn hàng được miễn phí giao hàng
+                <div className="text-xs text-amber-800 bg-amber-50/80 border border-amber-200/80 rounded-lg p-3 mb-6 space-y-1">
+                  <p className="font-semibold flex items-center gap-1.5 text-amber-900">
+                    <span>🚚</span> Lưu ý phí giao hàng (COD / Chuyển khoản):
                   </p>
-                )}
+                  <p className="text-amber-700 leading-relaxed">
+                    Phí vận chuyển phụ thuộc khu vực & đơn vị vận chuyển. Nhân viên Máy Văn Phòng Xanh sẽ gọi điện/Zalo tư vấn cước phí tiết kiệm nhất cho Quý khách trước khi giao.
+                  </p>
+                </div>
 
                 <Link href="/thanh-toan" className="w-full block px-6 py-4 bg-primary text-white rounded-lg font-bold text-lg hover:bg-primary/90 transition-all text-center mb-4 shadow-md hover:shadow-lg">
                   Tiến hành thanh toán

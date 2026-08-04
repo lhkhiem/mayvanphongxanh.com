@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Header } from '@/components/common/Header';
 import { Footer } from '@/components/common/Footer';
 import { useCart } from '@/context/CartContext';
+import { useSettings } from '@/context/SettingsContext';
 import Image from 'next/image';
-import { ShieldCheck, Truck, ArrowLeft, AlertCircle, CheckCircle2, User, Phone, Mail, MapPin, FileText, CreditCard, ShoppingBag } from 'lucide-react';
+import { ShieldCheck, Truck, ArrowLeft, AlertCircle, CheckCircle2, User, Phone, Mail, MapPin, FileText, CreditCard, ShoppingBag, Copy, Check, QrCode, Building2, Info } from 'lucide-react';
 import Link from 'next/link';
 import {
   Dialog,
@@ -31,6 +32,7 @@ interface PendingOrderData {
 
 export default function CheckoutPage() {
   const { items, cartTotal, clearCart } = useCart();
+  const { getSetting } = useSettings();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderError, setOrderError] = useState('');
@@ -38,6 +40,20 @@ export default function CheckoutPage() {
   const [emailError, setEmailError] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<PendingOrderData | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'transfer'>('cod');
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const bankAccount = getSetting('bank_account', '113 665 389');
+  const bankOwner = getSetting('bank_owner', 'CÔNG TY TNHH MÁY VĂN PHÒNG XANH');
+  const bankName = getSetting('bank_name', 'Ngân hàng TMCP Á Châu (ACB)');
+
+  const handleCopy = (text: string, fieldName: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedField(fieldName);
+      setTimeout(() => setCopiedField(null), 2000);
+    }
+  };
 
   const validatePhone = (phoneStr: string) => {
     const cleaned = phoneStr.replace(/[\s\-\.]/g, '');
@@ -287,21 +303,131 @@ export default function CheckoutPage() {
                 </h2>
                 
                 <div className="space-y-4">
-                  <label className="flex items-center gap-4 p-4 border border-border rounded-lg cursor-pointer hover:border-primary transition-colors bg-secondary/30">
-                    <input type="radio" name="payment" value="cod" defaultChecked className="w-5 h-5 text-primary focus:ring-primary border-border" />
+                  <label className={`flex items-start gap-4 p-4 border rounded-lg cursor-pointer transition-all ${
+                    paymentMethod === 'cod' ? 'border-primary bg-primary/5 shadow-sm' : 'border-border hover:border-primary/50'
+                  }`}>
+                    <input 
+                      type="radio" 
+                      name="payment" 
+                      value="cod" 
+                      checked={paymentMethod === 'cod'}
+                      onChange={() => setPaymentMethod('cod')}
+                      className="w-5 h-5 text-primary focus:ring-primary border-border mt-0.5" 
+                    />
                     <div>
                       <h4 className="font-semibold text-foreground">Thanh toán khi nhận hàng (COD)</h4>
-                      <p className="text-sm text-muted-foreground">Kiểm tra hàng trước khi thanh toán</p>
+                      <p className="text-sm text-muted-foreground">Kiểm tra hàng trước khi thanh toán cho nhân viên giao hàng</p>
                     </div>
                   </label>
 
-                  <label className="flex items-center gap-4 p-4 border border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
-                    <input type="radio" name="payment" value="transfer" className="w-5 h-5 text-primary focus:ring-primary border-border" />
-                    <div>
-                      <h4 className="font-semibold text-foreground">Chuyển khoản ngân hàng</h4>
-                      <p className="text-sm text-muted-foreground">Chuyển khoản qua mã QR / STK sau khi đặt hàng</p>
+                  <label className={`flex items-start gap-4 p-4 border rounded-lg cursor-pointer transition-all ${
+                    paymentMethod === 'transfer' ? 'border-primary bg-primary/5 shadow-sm' : 'border-border hover:border-primary/50'
+                  }`}>
+                    <input 
+                      type="radio" 
+                      name="payment" 
+                      value="transfer" 
+                      checked={paymentMethod === 'transfer'}
+                      onChange={() => setPaymentMethod('transfer')}
+                      className="w-5 h-5 text-primary focus:ring-primary border-border mt-0.5" 
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-semibold text-foreground">Chuyển khoản ngân hàng (VietQR / Internet Banking)</h4>
+                        <span className="text-[11px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded-full">
+                          Quét mã QR tự động
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-0.5">Chuyển khoản nhanh qua mã VietQR hoặc Số tài khoản công ty</p>
                     </div>
                   </label>
+
+                  {/* Thông tin chuyển khoản chi tiết khi chọn Chuyển khoản */}
+                  {paymentMethod === 'transfer' && (
+                    <div className="mt-4 p-5 bg-gradient-to-br from-amber-50/80 to-orange-50/40 dark:from-amber-950/30 dark:to-background border border-amber-200/80 dark:border-amber-900/50 rounded-xl space-y-5 animate-in fade-in slide-in-from-top-2 duration-200">
+                      
+                      <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start border-b border-amber-200/60 dark:border-amber-900/40 pb-5">
+                        {/* Mã QR VietQR */}
+                        <div className="flex flex-col items-center shrink-0 bg-white p-3 rounded-xl border border-amber-200/80 shadow-sm">
+                          <div className="relative w-36 h-36 sm:w-40 sm:h-40">
+                            <img 
+                              src={`https://img.vietqr.io/image/acb-${bankAccount.replace(/\s+/g, '')}-compact2.png?amount=${cartTotal}&addInfo=${encodeURIComponent('Thanh toan don hang MPX')}`}
+                              alt="Mã VietQR thanh toán"
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                          <span className="text-[11px] font-semibold text-amber-800 mt-1 flex items-center gap-1">
+                            <QrCode className="w-3.5 h-3.5 text-primary" /> Quét mã để thanh toán
+                          </span>
+                        </div>
+
+                        {/* Chi tiết tài khoản */}
+                        <div className="flex-1 space-y-2.5 text-sm w-full">
+                          <h4 className="font-bold text-sm sm:text-base text-amber-950 dark:text-amber-300 flex items-center gap-2">
+                            <Building2 className="w-4 h-4 text-primary" />
+                            Thông tin tài khoản ngân hàng
+                          </h4>
+
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center bg-white/90 dark:bg-card p-2.5 rounded-lg border border-amber-200/60 dark:border-border">
+                              <span className="text-muted-foreground text-xs">Ngân hàng:</span>
+                              <strong className="text-foreground text-xs sm:text-sm font-semibold">{bankName}</strong>
+                            </div>
+
+                            <div className="flex justify-between items-center bg-white/90 dark:bg-card p-2.5 rounded-lg border border-amber-200/60 dark:border-border">
+                              <div>
+                                <span className="text-muted-foreground text-xs block">Số tài khoản:</span>
+                                <strong className="text-primary text-base sm:text-lg font-extrabold tracking-wider">{bankAccount}</strong>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleCopy(bankAccount.replace(/\s+/g, ''), 'stk')}
+                                className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-semibold shadow-sm transition-all cursor-pointer"
+                              >
+                                {copiedField === 'stk' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                {copiedField === 'stk' ? 'Đã sao chép' : 'Sao chép'}
+                              </button>
+                            </div>
+
+                            <div className="flex justify-between items-center bg-white/90 dark:bg-card p-2.5 rounded-lg border border-amber-200/60 dark:border-border">
+                              <span className="text-muted-foreground text-xs">Chủ tài khoản:</span>
+                              <strong className="text-foreground text-xs font-bold uppercase">{bankOwner}</strong>
+                            </div>
+
+                            <div className="flex justify-between items-center bg-white/90 dark:bg-card p-2.5 rounded-lg border border-amber-200/60 dark:border-border">
+                              <div>
+                                <span className="text-muted-foreground text-xs block">Nội dung chuyển khoản:</span>
+                                <span className="text-amber-900 dark:text-amber-300 text-xs font-bold">[Tên khách hàng] + [SĐT mua hàng]</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Hướng dẫn các bước thanh toán */}
+                      <div className="space-y-2">
+                        <h5 className="font-bold text-xs text-amber-950 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                          <Info className="w-4 h-4 text-primary" />
+                          Hướng dẫn 3 bước thanh toán:
+                        </h5>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                          <div className="bg-white/80 dark:bg-card p-2.5 rounded-lg border border-amber-200/60 dark:border-border">
+                            <span className="font-bold text-primary block mb-0.5">1. Quét mã / Nhập STK</span>
+                            <span className="text-muted-foreground leading-tight">Mở App ngân hàng quét mã QR hoặc chuyển khoản theo STK trên.</span>
+                          </div>
+                          <div className="bg-white/80 dark:bg-card p-2.5 rounded-lg border border-amber-200/60 dark:border-border">
+                            <span className="font-bold text-primary block mb-0.5">2. Ghi nội dung</span>
+                            <span className="text-muted-foreground leading-tight">Nhập nội dung chuyển khoản gồm Họ tên + SĐT người mua.</span>
+                          </div>
+                          <div className="bg-white/80 dark:bg-card p-2.5 rounded-lg border border-amber-200/60 dark:border-border">
+                            <span className="font-bold text-primary block mb-0.5">3. Bấm Xác nhận</span>
+                            <span className="text-muted-foreground leading-tight">Nhấn button "Xác Nhận Đặt Hàng" bên dưới để hoàn tất đơn hàng.</span>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  )}
                 </div>
               </div>
             </form>
@@ -341,14 +467,28 @@ export default function CheckoutPage() {
                   <span>Tạm tính</span>
                   <span>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(cartTotal)}</span>
                 </div>
-                <div className="flex justify-between text-muted-foreground">
+                <div className="flex justify-between text-muted-foreground items-center">
                   <span>Phí giao hàng</span>
-                  <span className="text-green-600 font-medium">Miễn phí</span>
+                  <span className="text-amber-700 font-medium text-xs bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60">
+                    Báo phí khi xác nhận
+                  </span>
                 </div>
-                <div className="flex justify-between font-bold text-lg pt-3 border-t border-border">
-                  <span className="text-foreground">Tổng cộng</span>
+                <div className="flex justify-between items-baseline font-bold text-lg pt-3 border-t border-border">
+                  <div>
+                    <span className="text-foreground block">Tổng cộng</span>
+                    <span className="text-xs text-muted-foreground font-normal">(Chưa gồm phí vận chuyển)</span>
+                  </div>
                   <span className="text-primary">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(cartTotal)}</span>
                 </div>
+              </div>
+
+              <div className="text-xs text-amber-800 bg-amber-50/80 border border-amber-200/80 rounded-lg p-3 mb-6 space-y-1">
+                <p className="font-semibold flex items-center gap-1.5 text-amber-900">
+                  <span>🚚</span> Lưu ý phí vận chuyển (COD / Chuyển khoản):
+                </p>
+                <p className="text-amber-700 leading-relaxed">
+                  Cước vận chuyển áp dụng theo cước thực tế của ĐVVC. Nhân viên Máy Văn Phòng Xanh sẽ liên hệ xác nhận & báo phí chính xác trước khi gửi hàng.
+                </p>
               </div>
 
               <button 
@@ -433,11 +573,25 @@ export default function CheckoutPage() {
 
                   <div className="flex items-start gap-2">
                     <CreditCard className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                    <div>
+                    <div className="flex-1">
                       <span className="text-muted-foreground">Phương thức thanh toán: </span>
                       <strong className="text-foreground">
                         {pendingOrder.payment === 'transfer' ? 'Chuyển khoản ngân hàng' : 'Thanh toán khi nhận hàng (COD)'}
                       </strong>
+
+                      {pendingOrder.payment === 'transfer' && (
+                        <div className="mt-2.5 p-3 bg-amber-50/90 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900/60 rounded-lg text-xs space-y-1.5">
+                          <p className="font-bold text-amber-950 dark:text-amber-300 flex items-center gap-1.5">
+                            <Building2 className="w-3.5 h-3.5 text-primary" /> Thông tin tài khoản nhận tiền:
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-muted-foreground">
+                            <p>• Ngân hàng: <strong className="text-foreground">{bankName}</strong></p>
+                            <p>• Số tài khoản: <strong className="text-primary font-bold">{bankAccount}</strong></p>
+                            <p className="sm:col-span-2">• Chủ tài khoản: <strong className="text-foreground uppercase">{bankOwner}</strong></p>
+                            <p className="sm:col-span-2">• Nội dung CK: <strong className="text-amber-900 dark:text-amber-300 font-semibold">{pendingOrder.customerName} {pendingOrder.customerPhone}</strong></p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -476,11 +630,17 @@ export default function CheckoutPage() {
                   ))}
                 </div>
 
-                <div className="border-t border-border pt-3 flex justify-between items-center text-base font-bold">
-                  <span className="text-foreground">Tổng tiền thanh toán:</span>
-                  <span className="text-primary text-lg">
-                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(cartTotal)}
-                  </span>
+                <div className="border-t border-border pt-3 space-y-1.5">
+                  <div className="flex justify-between items-center text-base font-bold">
+                    <span className="text-foreground">Tổng tiền hàng:</span>
+                    <span className="text-primary text-lg">
+                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(cartTotal)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-amber-700 font-medium pt-0.5">
+                    <span>Phí giao hàng (COD / Chuyển khoản):</span>
+                    <span>Báo cước khi nhân viên gọi chốt đơn</span>
+                  </div>
                 </div>
               </div>
             </div>
