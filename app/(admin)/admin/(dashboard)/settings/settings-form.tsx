@@ -111,11 +111,58 @@ export function SettingsForm({ initialData }: { initialData: Record<string, stri
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Slogan</label>
-                <Input name="company_tagline" defaultValue={initialData['company_tagline']} placeholder="Giải pháp in ấn toàn diện" className="shadow-sm" />
+                <Input name="company_tagline" defaultValue={initialData['company_tagline']} placeholder="Thiết bị Văn phòng & Dịch vụ Kỹ thuật Chuyên nghiệp" className="shadow-sm" />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Mô tả ngắn</label>
-                <Textarea name="company_description" defaultValue={initialData['company_description']} rows={4} className="shadow-sm resize-none" />
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Nội dung giới thiệu / Sứ mệnh (Section "Về chúng tôi" ở Trang chủ)</label>
+                <Textarea name="company_mission" defaultValue={initialData['company_mission'] || initialData['company_description'] || 'Trao quyền cho doanh nghiệp bằng các giải pháp thiết bị văn phòng chất lượng, dịch vụ tận tâm và giá cả cạnh tranh.'} rows={3} className="shadow-sm resize-none" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Các tiêu chí nổi bật (Mỗi dòng 1 ý có dấu tích v)</label>
+                <Textarea name="company_features" defaultValue={initialData['company_features'] || `Thiết bị cấp doanh nghiệp, chính hãng 100%
+Hỗ trợ kỹ thuật tận nơi trong vòng 2 giờ
+Vật tư có chứng nhận, bảo hành chính thức
+Giá sỉ cạnh tranh, chiết khấu đại lý hấp dẫn
+Hợp đồng bảo trì định kỳ toàn diện`} rows={5} className="shadow-sm resize-none" />
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">4 Con số thống kê (Hiển thị ở section "Về chúng tôi")</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <span className="text-xs font-medium text-gray-500">Thống kê 1 (Số / Nhãn)</span>
+                    <div className="flex gap-2 mt-1">
+                      <Input name="stat1_val" defaultValue={initialData['stat1_val'] || '8.000+'} placeholder="8.000+" className="w-1/3" />
+                      <Input name="stat1_label" defaultValue={initialData['stat1_label'] || 'Máy in đã lắp đặt'} placeholder="Máy in đã lắp đặt" className="w-2/3" />
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-gray-500">Thống kê 2 (Số / Nhãn)</span>
+                    <div className="flex gap-2 mt-1">
+                      <Input name="stat2_val" defaultValue={initialData['stat2_val'] || '2.500+'} placeholder="2.500+" className="w-1/3" />
+                      <Input name="stat2_label" defaultValue={initialData['stat2_label'] || 'Khách hàng Doanh nghiệp'} placeholder="Khách hàng..." className="w-2/3" />
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-gray-500">Thống kê 3 (Số / Nhãn)</span>
+                    <div className="flex gap-2 mt-1">
+                      <Input name="stat3_val" defaultValue={initialData['stat3_val'] || '15+'} placeholder="15+" className="w-1/3" />
+                      <Input name="stat3_label" defaultValue={initialData['stat3_label'] || 'Tỉnh thành phục vụ'} placeholder="Tỉnh thành..." className="w-2/3" />
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-gray-500">Thống kê 4 (Số / Nhãn)</span>
+                    <div className="flex gap-2 mt-1">
+                      <Input name="stat4_val" defaultValue={initialData['stat4_val'] || '14'} placeholder="14" className="w-1/3" />
+                      <Input name="stat4_label" defaultValue={initialData['stat4_label'] || 'Năm kinh nghiệm'} placeholder="Năm kinh nghiệm" className="w-2/3" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Mô tả ngắn công ty</label>
+                <Textarea name="company_description" defaultValue={initialData['company_description']} rows={3} className="shadow-sm resize-none" />
               </div>
               <MediaPickerInput
                 name="company_logo"
@@ -133,7 +180,7 @@ export function SettingsForm({ initialData }: { initialData: Record<string, stri
               />
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Giờ làm việc</label>
-                <Input name="work_time" defaultValue={initialData['work_time']} placeholder="Thứ 2 - Thứ 7: 8h00 - 17h30" className="shadow-sm" />
+                <Input name="work_time" defaultValue={initialData['work_time'] || initialData['work_hours']} placeholder="Thứ 2 - Thứ 7: 08:00 - 17:30" className="shadow-sm" />
               </div>
             </TabsContent>
 

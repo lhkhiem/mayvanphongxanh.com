@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { CheckCircle2, Award, Users, MapPin, Clock } from 'lucide-react';
+import { CheckCircle2, Award, MapPin, Clock } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 
-const features = [
+const DEFAULT_FEATURES = [
   'Thiết bị cấp doanh nghiệp, chính hãng 100%',
   'Hỗ trợ kỹ thuật tận nơi trong vòng 2 giờ',
   'Vật tư có chứng nhận, bảo hành chính thức',
@@ -14,20 +14,49 @@ const features = [
 
 export function CompanyIntro() {
   const { getSetting } = useSettings();
-  const companyName = getSetting('company_name', 'Công ty TNHH Máy Văn Phòng Xanh');
-  const companyTagline = getSetting('company_tagline', 'Giải pháp toàn diện cho doanh nghiệp hiện đại');
-  const companyMission = getSetting('company_mission', 'Cung cấp thiết bị văn phòng chính hãng, giải pháp chuyển đổi số và dịch vụ IT chuyên nghiệp...');
-  const statsString = getSetting('company_stats');
+  const companyName = getSetting('company_name', 'CÔNG TY TNHH MÁY VĂN PHÒNG XANH');
+  const companyTagline = getSetting('company_tagline', 'Thiết bị Văn phòng & Dịch vụ Kỹ thuật Chuyên nghiệp');
+  const companyMission = getSetting(
+    'company_mission',
+    getSetting('company_description', 'Trao quyền cho doanh nghiệp bằng các giải pháp thiết bị văn phòng chất lượng, dịch vụ tận tâm và giá cả cạnh tranh.')
+  );
+  
+  const address = getSetting('contact_address', '123 Đường Chính, Quận 1, TP. Hồ Chí Minh');
+  const workTime = getSetting('work_time', getSetting('work_hours', 'Thứ 2 – Thứ 7: 08:00 – 17:30'));
+
+  const rawFeatures = getSetting('company_features');
+  let features = DEFAULT_FEATURES;
+  if (rawFeatures && rawFeatures.trim()) {
+    features = rawFeatures.split('\n').map((s) => s.trim()).filter(Boolean);
+  }
+
+  // Stats: support stat1_val..stat4_val or fallback JSON company_stats or DEFAULT_STATS
   let stats = [
-    { value: '15+', label: 'Năm kinh nghiệm' },
-    { value: '5000+', label: 'Khách hàng' },
-    { value: '50+', label: 'Chuyên gia IT' },
-    { value: '24/7', label: 'Hỗ trợ kỹ thuật' },
-  ];
-  if (statsString) {
-    try {
-      stats = JSON.parse(statsString);
-    } catch(e){}
+    { value: getSetting('stat1_val', ''), label: getSetting('stat1_label', '') },
+    { value: getSetting('stat2_val', ''), label: getSetting('stat2_label', '') },
+    { value: getSetting('stat3_val', ''), label: getSetting('stat3_label', '') },
+    { value: getSetting('stat4_val', ''), label: getSetting('stat4_label', '') },
+  ].filter(s => s.value && s.label);
+
+  if (stats.length === 0) {
+    const statsString = getSetting('company_stats');
+    if (statsString) {
+      try {
+        const parsed = JSON.parse(statsString);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          stats = parsed;
+        }
+      } catch(e){}
+    }
+  }
+
+  if (stats.length === 0) {
+    stats = [
+      { value: '8.000+', label: 'Máy in đã lắp đặt' },
+      { value: '2.500+', label: 'Khách hàng Doanh nghiệp' },
+      { value: '15+', label: 'Tỉnh thành phục vụ' },
+      { value: '14', label: 'Năm kinh nghiệm' },
+    ];
   }
 
   return (
@@ -45,7 +74,7 @@ export function CompanyIntro() {
               {companyName}
             </h2>
             <p className="text-gray-500 text-sm mb-1">{companyTagline}</p>
-            <p className="text-gray-600 mb-6 leading-relaxed">{companyMission}</p>
+            <p className="text-gray-600 mb-6 leading-relaxed whitespace-pre-line">{companyMission}</p>
 
             <div className="space-y-2.5 mb-6">
               {features.map((f, i) => (
@@ -91,10 +120,10 @@ export function CompanyIntro() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-800 mb-0.5">Văn phòng giao dịch</p>
-                <p className="text-xs text-gray-500">123 Đường Chính, Quận 1, TP. Hồ Chí Minh</p>
+                <p className="text-xs text-gray-500">{address}</p>
                 <div className="flex items-center gap-1 mt-1.5">
                   <Clock className="w-3 h-3 text-primary" />
-                  <span className="text-xs text-gray-500">Thứ 2 – Thứ 7: 08:00 – 17:30</span>
+                  <span className="text-xs text-gray-500">{workTime}</span>
                 </div>
               </div>
             </div>
@@ -104,3 +133,4 @@ export function CompanyIntro() {
     </section>
   );
 }
+
