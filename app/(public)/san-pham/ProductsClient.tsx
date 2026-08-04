@@ -31,6 +31,9 @@ export default function ProductsClient({
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   
+  // Pagination state: number of products shown (default 20)
+  const [visibleCount, setVisibleCount] = useState(20);
+
   // Multiple selections for Category and Brand
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategory ? [initialCategory] : []);
 
@@ -142,7 +145,7 @@ export default function ProductsClient({
       const toExpand: Record<string, boolean> = {};
       categoryTree.forEach(parent => {
         if (parent.children && parent.children.length > 0) {
-          const hasSelectedChild = parent.children.some(child => selectedCategories.includes(child.name));
+          const hasSelectedChild = parent.children.some((child: any) => selectedCategories.includes(child.name));
           const isParentSelected = selectedCategories.includes(parent.name);
           if (hasSelectedChild || isParentSelected) {
             toExpand[parent.name] = true;
@@ -331,20 +334,37 @@ export default function ProductsClient({
     return matchesSearch && matchesCategory && matchesBrand && matchesPrice && matchesAttributes;
   });
 
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (sortBy) {
-      case 'price-asc':
-        return a.price - b.price;
-      case 'price-desc':
-        return b.price - a.price;
-      case 'newest':
-        return b.id - a.id;
-      case 'best-sellers':
-        return b.reviews - a.reviews;
-      default:
-        return 0;
-    }
-  });
+  // Reset pagination state when filters or sort change
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [searchQuery, selectedCategories, selectedBrands, minPrice, maxPrice, selectedAttributes, sortBy]);
+
+  const sortedProducts = useMemo(() => {
+    return [...filteredProducts].sort((a, b) => {
+      switch (sortBy) {
+        case 'price-asc':
+          return a.price - b.price;
+        case 'price-desc':
+          return b.price - a.price;
+        case 'newest':
+          return b.id - a.id;
+        case 'best-sellers':
+          return b.reviews - a.reviews;
+        default:
+          if (a.categoryOrder !== b.categoryOrder) {
+            return (a.categoryOrder ?? 0) - (b.categoryOrder ?? 0);
+          }
+          if (a.order !== b.order) {
+            return (a.order ?? 0) - (b.order ?? 0);
+          }
+          return a.id - b.id;
+      }
+    });
+  }, [filteredProducts, sortBy]);
+
+  const visibleProducts = useMemo(() => {
+    return sortedProducts.slice(0, visibleCount);
+  }, [sortedProducts, visibleCount]);
 
   return (
     <main className="min-h-screen bg-[#F4F7F6]">
@@ -646,10 +666,36 @@ export default function ProductsClient({
 
             {/* Products Grid */}
             {sortedProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                {sortedProducts.map((product) => (
-                  <ProductCard key={product.id} {...product} productType={product.productType} />
-                ))}
+              <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {visibleProducts.map((product) => (
+                    <ProductCard key={product.id} {...product} productType={product.productType} />
+                  ))}
+                </div>
+
+                {/* Load More Button */}
+                {visibleCount < sortedProducts.length ? (
+                  <div className="mt-10 mb-4 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setVisibleCount((prev) => prev + 20)}
+                      className="inline-flex items-center gap-2.5 px-8 py-3.5 bg-primary text-white hover:bg-primary/90 font-semibold rounded-full shadow-md hover:shadow-lg transition-all text-sm group"
+                    >
+                      <span>Xem thêm sản phẩm</span>
+                      <span className="bg-white/20 text-white text-xs px-2.5 py-0.5 rounded-full font-medium">
+                        (Còn {sortedProducts.length - visibleCount} sản phẩm)
+                      </span>
+                      <ChevronDown className="w-4 h-4 transition-transform group-hover:translate-y-0.5" />
+                    </button>
+                    <p className="mt-3 text-xs text-gray-500">
+                      Hiển thị {Math.min(visibleCount, sortedProducts.length)} / {sortedProducts.length} sản phẩm
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-10 mb-4 text-center text-xs text-gray-400">
+                    Đã hiển thị tất cả {sortedProducts.length} sản phẩm
+                  </div>
+                )}
               </div>
             ) : (
               <div className="bg-white border border-gray-200 rounded-lg text-center py-16 flex flex-col items-center">

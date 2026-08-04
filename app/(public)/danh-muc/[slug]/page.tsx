@@ -95,8 +95,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const [dbProducts, dbCategories] = await Promise.all([
     prisma.product.findMany({
       where: { isActive: true, deletedAt: null },
-      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
-      include: { category: true, brandRef: true, variants: true }
+      orderBy: [{ category: { order: 'asc' } }, { order: 'asc' }, { createdAt: 'desc' }],
+      include: { category: { include: { parent: true } }, brandRef: true, variants: true }
     }),
     prisma.category.findMany({
       where: { isActive: true, parentId: null },
@@ -119,7 +119,13 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
       id: p.id,
       name: p.name,
       slug: p.slug,
+      categoryId: p.categoryId,
       category: p.category?.name || 'Chưa phân loại',
+      categorySlug: p.category?.slug,
+      categoryParentId: p.category?.parentId,
+      categoryParentName: p.category?.parent?.name,
+      categoryOrder: p.category?.order ?? 0,
+      order: p.order ?? 0,
       brand: p.brand || p.brandRef?.name || '',
       price: defaultVariant?.price || 0,
       originalPrice: defaultVariant?.originalPrice,
