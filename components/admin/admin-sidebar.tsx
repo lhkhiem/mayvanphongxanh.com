@@ -24,6 +24,7 @@ import {
   FileText,
   HelpCircle,
   Handshake,
+  Star,
 } from "lucide-react";
 
 const sidebarNavItems = [
@@ -143,6 +144,11 @@ const sidebarNavItems = [
     title: "Câu hỏi thường gặp",
     href: "/admin/faqs",
     icon: HelpCircle,
+  },
+  {
+    title: "Đánh giá khách hàng",
+    href: "/admin/testimonials",
+    icon: Star,
   },
   {
     title: "Sliders & Banners",
