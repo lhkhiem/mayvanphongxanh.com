@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- UPS Main Tower Cabinet -->
+  <rect x="12" y="8" width="24" height="32" rx="4" fill="#2E7D32" fill-opacity="0.12" stroke="#2E7D32" stroke-width="2.5"/>
+  <!-- LCD Display Screen -->
+  <rect x="16" y="13" width="16" height="8" rx="1.5" fill="#FFFFFF" stroke="#43A047" stroke-width="1.5"/>
+  <!-- LCD Battery Bar Status Line -->
+  <rect x="18" y="16" width="4" height="2" fill="#43A047"/>
+  <rect x="23" y="16" width="4" height="2" fill="#43A047"/>
+  <!-- Lightning Bolt Power Symbol -->
+  <path d="M25 24L20 31H24L23 37L28 30H24L25 24Z" fill="#2E7D32" stroke="#2E7D32" stroke-width="1" stroke-linejoin="round"/>
+</svg>

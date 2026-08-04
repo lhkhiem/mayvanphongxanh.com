@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Executive Ergonomic Office Chair Backrest -->
+  <rect x="18" y="6" width="12" height="16" rx="4" fill="#2E7D32" fill-opacity="0.15" stroke="#2E7D32" stroke-width="2.5"/>
+  <!-- Seat Cushion -->
+  <path d="M14 22H34C35.1046 22 36 22.8954 36 24V26C36 27.1046 35.1046 28 34 28H14C12.8954 28 12 27.1046 12 26V24C12 22.8954 12.8954 22 14 22Z" fill="#2E7D32" stroke="#2E7D32" stroke-width="2"/>
+  <!-- Gas Lift Center Column Stem -->
+  <line x1="24" y1="28" x2="24" y2="38" stroke="#2E7D32" stroke-width="3"/>
+  <!-- 5-Star Wheel Base -->
+  <path d="M12 42L24 38L36 42" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Base Casters / Wheels -->
+  <circle cx="12" cy="42" r="1.5" fill="#43A047"/>
+  <circle cx="24" cy="40" r="1.5" fill="#43A047"/>
+  <circle cx="36" cy="42" r="1.5" fill="#43A047"/>
+</svg>

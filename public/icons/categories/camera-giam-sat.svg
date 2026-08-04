@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Wall Mount Bracket Base -->
+  <path d="M8 8V24H12V14L20 20V26" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Camera Main Housing Dome/Cylinder -->
+  <path d="M16 16L38 10C39.5 9.5 41 10.5 41.5 12L43.5 19.5C44 21 43 22.5 41.5 23L19.5 29C18 29.5 16.5 28.5 16 27L14 19.5C13.5 18 14.5 16.5 16 16Z" fill="#2E7D32" fill-opacity="0.15" stroke="#2E7D32" stroke-width="2.5"/>
+  <!-- Front Camera Lens -->
+  <ellipse cx="39" cy="16" rx="3" ry="5" fill="#FFFFFF" stroke="#43A047" stroke-width="2"/>
+  <circle cx="39" cy="16" r="1.5" fill="#2E7D32"/>
+  <!-- IR LED Red / Green Indicator Signal Dot -->
+  <circle cx="10" cy="12" r="2" fill="#43A047"/>
+</svg>

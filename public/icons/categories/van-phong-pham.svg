@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Notebook Cover -->
+  <rect x="8" y="10" width="22" height="30" rx="3" fill="#2E7D32" fill-opacity="0.12" stroke="#2E7D32" stroke-width="2.5"/>
+  <!-- Notebook Spiral Rings -->
+  <line x1="8" y1="15" x2="12" y2="15" stroke="#43A047" stroke-width="2" stroke-linecap="round"/>
+  <line x1="8" y1="21" x2="12" y2="21" stroke="#43A047" stroke-width="2" stroke-linecap="round"/>
+  <line x1="8" y1="27" x2="12" y2="27" stroke="#43A047" stroke-width="2" stroke-linecap="round"/>
+  <line x1="8" y1="33" x2="12" y2="33" stroke="#43A047" stroke-width="2" stroke-linecap="round"/>
+  <!-- Pen Crossing Diagonal -->
+  <path d="M38 8L42 12L24 38L18 40L20 34L38 8Z" fill="#2E7D32" stroke="#2E7D32" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Pen Nib Fill Accent -->
+  <path d="M18 40L21 38.5L19.5 37L18 40Z" fill="#FFFFFF"/>
+</svg>

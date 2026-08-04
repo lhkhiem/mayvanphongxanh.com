@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Headband Arc -->
+  <path d="M10 24C10 16.268 16.268 10 24 10C31.732 10 38 16.268 38 24" fill="none" stroke="#2E7D32" stroke-width="3" stroke-linecap="round"/>
+  <!-- Left Ear Cup -->
+  <rect x="6" y="22" width="7" height="14" rx="3.5" fill="#2E7D32" stroke="#2E7D32" stroke-width="2.5"/>
+  <rect x="11" y="24" width="2" height="10" rx="1" fill="#43A047"/>
+  <!-- Right Ear Cup -->
+  <rect x="35" y="22" width="7" height="14" rx="3.5" fill="#2E7D32" stroke="#2E7D32" stroke-width="2.5"/>
+  <rect x="35" y="24" width="2" height="10" rx="1" fill="#43A047"/>
+  <!-- Microphone Arm Accent -->
+  <path d="M12 33C12 38 16 40 21 40" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="23" cy="40" r="2" fill="#43A047"/>
+</svg>

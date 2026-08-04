@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Main Tower Casing Body -->
+  <rect x="12" y="6" width="24" height="36" rx="4" fill="#2E7D32" fill-opacity="0.12" stroke="#2E7D32" stroke-width="2.5"/>
+  <!-- Power Button -->
+  <circle cx="24" cy="12" r="2.5" stroke="#2E7D32" stroke-width="2"/>
+  <line x1="24" y1="10.5" x2="24" y2="13" stroke="#43A047" stroke-width="2" stroke-linecap="round"/>
+  <!-- DVD Drive Slot / Front Bay -->
+  <rect x="17" y="18" width="14" height="3" rx="1" stroke="#2E7D32" stroke-width="1.5" fill="#FFFFFF"/>
+  <!-- USB Ports -->
+  <rect x="17" y="24" width="4" height="2" fill="#2E7D32"/>
+  <rect x="23" y="24" width="4" height="2" fill="#2E7D32"/>
+  <!-- RGB Mesh Grill / Fan Vent Air Intake -->
+  <circle cx="24" cy="34" r="5" fill="#2E7D32" fill-opacity="0.15" stroke="#43A047" stroke-width="2"/>
+  <circle cx="24" cy="34" r="2" fill="#2E7D32"/>
+</svg>
