@@ -116,21 +116,51 @@ model ProductPolicy {
 
 // 3. Biến thể Sản phẩm
 model ProductVariant {
-  id            String  @id @default(cuid())
-  productId     Int
-  sku           String  @unique
-  name          String?
-  price         Float
-  originalPrice Float?
-  stockQuantity Int     @default(0)
-  images        Json?
-  attributes    Json?
+  id                String  @id @default(cuid())
+  productId         Int
+  sku               String  @unique
+  name              String?
+  price             Float
+  originalPrice     Float?
+  stockQuantity     Int     @default(0)
+  lowStockThreshold Int     @default(5)
+  images            Json?
+  attributes        Json?
 
-  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  orderItems OrderItem[]
+  product       Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems    OrderItem[]
+  inventoryLogs InventoryLog[]
 
   @@index([productId])
   @@index([sku])
+}
+
+// 3.5 Nhật ký tồn kho (Lịch sử Xuất / Nhập / Kiểm kê / Trừ kho)
+enum InventoryLogType {
+  IMPORT      // Nhập kho
+  EXPORT      // Xuất kho
+  SALE        // Trừ kho bán hàng
+  RETURN      // Hoàn kho trả hàng
+  ADJUSTMENT  // Điều chỉnh kiểm kê
+}
+
+model InventoryLog {
+  id            String           @id @default(cuid())
+  variantId     String
+  type          InventoryLogType
+  quantity      Int              // Số lượng thay đổi (dương hoặc âm)
+  previousStock Int              // Tồn kho trước khi thay đổi
+  newStock      Int              // Tồn kho sau khi thay đổi
+  reason        String?          @db.Text
+  referenceId   String?          // Mã đơn hàng hoặc mã chứng từ
+  createdById   String?
+  createdAt     DateTime         @default(now())
+
+  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([variantId])
+  @@index([createdAt])
+  @@index([type])
 }
 
 // 4. Đơn hàng
@@ -171,9 +201,10 @@ model Order {
   discount    Float @default(0)
   totalAmount Float
 
-  status        OrderStatus   @default(PENDING)
-  paymentMethod PaymentMethod @default(COD)
-  paymentStatus PaymentStatus @default(UNPAID)
+  status          OrderStatus   @default(PENDING)
+  paymentMethod   PaymentMethod @default(COD)
+  paymentStatus   PaymentStatus @default(UNPAID)
+  isStockDeducted Boolean       @default(false)
 
   notes     String?
   createdAt DateTime @default(now())

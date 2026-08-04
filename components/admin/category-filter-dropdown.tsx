@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check, Tag, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import CategoryIcon from "@/components/common/CategoryIcon";
 
 type Category = {
   id: number;
@@ -38,9 +39,10 @@ export function CategoryFilterDropdown({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const parents = categories.filter((c) => c.parentId === null);
+  const allIds = new Set(categories.map((c) => c.id));
+  const parents = categories.filter((c) => !c.parentId || !allIds.has(c.parentId));
   const getChildren = (parentId: number) =>
-    categories.filter((c) => c.parentId === parentId);
+    categories.filter((c) => c.parentId === parentId && c.id !== parentId);
 
   const selected = categories.find((c) => c.id === value);
 
@@ -59,12 +61,12 @@ export function CategoryFilterDropdown({
       >
         {selected ? (
           <>
-            <span
-              className="w-4 h-4 rounded-full shrink-0 flex items-center justify-center text-white text-[9px] font-bold"
-              style={{ backgroundColor: selected.color || "#6366f1" }}
-            >
-              {selected.icon || selected.name.charAt(0)}
-            </span>
+            <CategoryIcon
+              icon={selected.icon}
+              name={selected.name}
+              color={selected.color}
+              className="w-4 h-4 rounded-full"
+            />
             <span className="flex-1 text-left text-gray-800 dark:text-gray-100 truncate">
               {selected.name}
             </span>
@@ -135,12 +137,12 @@ export function CategoryFilterDropdown({
                       : "text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                   )}
                 >
-                  <div
-                    className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-white text-[9px] font-bold shadow-sm"
-                    style={{ backgroundColor: parent.color || "#6366f1" }}
-                  >
-                    {parent.icon || parent.name.charAt(0).toUpperCase()}
-                  </div>
+                  <CategoryIcon
+                    icon={parent.icon}
+                    name={parent.name}
+                    color={parent.color}
+                    className="w-5 h-5 rounded-full"
+                  />
                   <span className="flex-1 font-medium">{parent.name}</span>
                   {parent._count?.products !== undefined && (
                     <span className="text-[10px] text-gray-400 shrink-0 mr-1">
@@ -168,12 +170,12 @@ export function CategoryFilterDropdown({
                       {/* Tree line */}
                       <div className="flex items-center gap-1.5 shrink-0">
                         <span className="w-3 h-px bg-gray-300 dark:bg-gray-600 inline-block" />
-                        <div
-                          className="w-4 h-4 rounded-full shrink-0 flex items-center justify-center text-white text-[8px] font-bold"
-                          style={{ backgroundColor: child.color || parent.color || "#6366f1", opacity: 0.85 }}
-                        >
-                          {child.icon || child.name.charAt(0).toUpperCase()}
-                        </div>
+                        <CategoryIcon
+                          icon={child.icon}
+                          name={child.name}
+                          color={child.color || parent.color}
+                          className="w-4 h-4 rounded-full"
+                        />
                       </div>
                       <span className="flex-1 truncate">{child.name}</span>
                       {child._count?.products !== undefined && (

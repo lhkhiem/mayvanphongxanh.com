@@ -142,6 +142,88 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
       }
     })
 
+    // Khi đơn hàng giao thành công (DELIVERED) -> tự động trừ kho nếu chưa trừ
+    if (status === "DELIVERED" && !updatedOrder.isStockDeducted) {
+      await prisma.$transaction(async (tx) => {
+        for (const item of updatedOrder.items) {
+          if (item.variantId) {
+            const currentVariant = await tx.productVariant.findUnique({
+              where: { id: item.variantId },
+              select: { stockQuantity: true }
+            })
+
+            if (currentVariant) {
+              const previousStock = currentVariant.stockQuantity
+              const newStock = Math.max(0, previousStock - item.quantity)
+
+              await tx.productVariant.update({
+                where: { id: item.variantId },
+                data: { stockQuantity: newStock }
+              })
+
+              await tx.inventoryLog.create({
+                data: {
+                  variantId: item.variantId,
+                  type: "SALE",
+                  quantity: -item.quantity,
+                  previousStock,
+                  newStock,
+                  reason: `Tự động trừ kho do đơn hàng #${updatedOrder.id.slice(0, 8)} giao thành công`,
+                  referenceId: updatedOrder.id,
+                }
+              })
+            }
+          }
+        }
+
+        await tx.order.update({
+          where: { id: updatedOrder.id },
+          data: { isStockDeducted: true }
+        })
+      })
+    }
+
+    // Nếu đơn hàng bị HỦY (CANCELLED) mà trước đó đã trừ kho -> Hoàn lại stock
+    if (status === "CANCELLED" && updatedOrder.isStockDeducted) {
+      await prisma.$transaction(async (tx) => {
+        for (const item of updatedOrder.items) {
+          if (item.variantId) {
+            const currentVariant = await tx.productVariant.findUnique({
+              where: { id: item.variantId },
+              select: { stockQuantity: true }
+            })
+
+            if (currentVariant) {
+              const previousStock = currentVariant.stockQuantity
+              const newStock = previousStock + item.quantity
+
+              await tx.productVariant.update({
+                where: { id: item.variantId },
+                data: { stockQuantity: newStock }
+              })
+
+              await tx.inventoryLog.create({
+                data: {
+                  variantId: item.variantId,
+                  type: "RETURN",
+                  quantity: item.quantity,
+                  previousStock,
+                  newStock,
+                  reason: `Hoàn kho tự động do đơn hàng #${updatedOrder.id.slice(0, 8)} bị hủy`,
+                  referenceId: updatedOrder.id,
+                }
+              })
+            }
+          }
+        }
+
+        await tx.order.update({
+          where: { id: updatedOrder.id },
+          data: { isStockDeducted: false }
+        })
+      })
+    }
+
     // Nếu đơn hàng chuyển sang trạng thái đã giao, kiểm tra và tạo record Máy Thuê
     if (status === "DELIVERED") {
       const rentalItems = updatedOrder.items.filter(
@@ -178,6 +260,7 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
 
     revalidatePath("/admin/orders")
     revalidatePath("/admin/rentals")
+    revalidatePath("/admin/inventory")
     return { success: true }
   } catch (error) {
     console.error("updateOrderStatus error:", error)

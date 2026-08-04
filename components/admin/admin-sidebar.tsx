@@ -75,7 +75,6 @@ const sidebarNavItems = [
     title: "Sửa chữa & Bảo hành",
     href: "/admin/maintenance",
     icon: Wrench,
-    badge: "3",
   },
   {
     title: "Dịch vụ trọn gói",
