@@ -8,6 +8,7 @@ import { useCart } from '@/context/CartContext';
 import { useCompare } from '@/context/CompareContext';
 import { productSlug } from '@/lib/utils';
 import { WatermarkedImage } from './WatermarkedImage';
+import { toast } from 'sonner';
 
 export interface ProductCardProps {
   id: number;
@@ -75,13 +76,17 @@ export function ProductCard({
     if (!isCompared) {
       const result = addCompareItem({ id, name, category, image });
       if (!result.success) {
-        setShowCompareErrorToast(result.message || 'Không thể so sánh');
+        const errorMsg = result.message || 'Không thể so sánh';
+        setShowCompareErrorToast(errorMsg);
+        toast.error(errorMsg);
         return;
       }
       setShowCompareToast(true);
+      toast.success(`Đã thêm "${name}" vào so sánh`);
     } else {
       removeCompareItem(id);
       setShowCompareToast(true);
+      toast.info(`Đã bỏ "${name}" khỏi so sánh`);
     }
   };
 
@@ -232,12 +237,12 @@ export function ProductCard({
 
       {/* Local Toasts */}
       {showCompareToast && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs px-3 py-1.5 rounded-full whitespace-nowrap animate-in fade-in duration-200 z-10">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900/90 text-white text-xs px-3.5 py-2 rounded-lg text-center font-medium shadow-xl backdrop-blur-xs w-[90%] max-w-[220px] animate-in fade-in zoom-in-95 duration-200 z-30 pointer-events-none">
           {isCompared ? 'Đã thêm so sánh' : 'Bỏ so sánh'}
         </div>
       )}
       {showCompareErrorToast && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-500/90 text-white text-xs px-3 py-1.5 rounded-full whitespace-nowrap animate-in fade-in duration-200 shadow-md z-10">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-red-600/95 text-white text-xs px-3.5 py-2 rounded-lg text-center font-medium shadow-xl shadow-red-500/20 backdrop-blur-xs w-[90%] max-w-[240px] whitespace-normal break-words animate-in fade-in zoom-in-95 duration-200 z-30 pointer-events-none">
           {showCompareErrorToast}
         </div>
       )}
