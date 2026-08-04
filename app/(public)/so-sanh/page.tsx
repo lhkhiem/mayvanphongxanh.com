@@ -202,7 +202,7 @@ export default function ComparePage() {
                   {Array.from({ length: 3 - compareProducts.length }).map((_, i) => (
                     <th key={`empty-${i}`} className="p-6 border-b border-border/50 bg-muted/10 text-center w-1/3 min-w-[280px]">
                       <Link 
-                        href={items.length > 0 ? `/danh-muc/${slugify(items[0].category)}` : '/san-pham'} 
+                        href={items.length > 0 && items[0]?.category ? `/san-pham?category=${encodeURIComponent(items[0].category)}` : '/san-pham'} 
                         className="w-full h-full min-h-[220px] flex flex-col items-center justify-center text-muted-foreground/60 border-2 border-dashed border-border/60 rounded-2xl hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-300 cursor-pointer group p-4"
                       >
                         <span className="text-4xl mb-2 group-hover:scale-125 transition-transform duration-300 font-light">+</span>
@@ -225,7 +225,7 @@ export default function ComparePage() {
                 <tr className="hover:bg-muted/10 transition-colors">
                   <td className="p-4 px-6 border-b border-border/50 bg-secondary/10 font-medium text-foreground whitespace-nowrap">Giá bán</td>
                   {compareProducts.map((product) => (
-                    <td key={`price-${product?.id}`} className="p-4 border-b border-border/50 text-center">
+                    <td key={`price-${product?.id}`} className="p-4 px-6 border-b border-border/50 text-left">
                       <div className="font-bold text-xl text-primary">{formatPrice(product)}</div>
                       {product?.originalPrice && !product?.isContactPrice && (
                         <div className="text-xs font-medium text-muted-foreground/70 line-through mt-0.5">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.originalPrice)}</div>
@@ -241,7 +241,7 @@ export default function ComparePage() {
                 <tr className="hover:bg-muted/10 transition-colors">
                   <td className="p-4 px-6 border-b border-border/50 bg-secondary/10 font-medium text-foreground whitespace-nowrap">Thương hiệu</td>
                   {compareProducts.map((product) => (
-                    <td key={`brand-${product?.id}`} className="p-4 border-b border-border/50 text-center font-semibold text-foreground">
+                    <td key={`brand-${product?.id}`} className="p-4 px-6 border-b border-border/50 text-left font-semibold text-foreground">
                       {product?.brand || 'Chính hãng'}
                     </td>
                   ))}
@@ -254,7 +254,7 @@ export default function ComparePage() {
                 <tr className="hover:bg-muted/10 transition-colors">
                   <td className="p-4 px-6 border-b border-border/50 bg-secondary/10 font-medium text-foreground whitespace-nowrap">Danh mục</td>
                   {compareProducts.map((product) => (
-                    <td key={`category-${product?.id}`} className="p-4 border-b border-border/50 text-center text-foreground">
+                    <td key={`category-${product?.id}`} className="p-4 px-6 border-b border-border/50 text-left text-foreground">
                       {product?.category || 'Chưa phân loại'}
                     </td>
                   ))}
@@ -267,7 +267,7 @@ export default function ComparePage() {
                 <tr className="hover:bg-muted/10 transition-colors">
                   <td className="p-4 px-6 border-b border-border/50 bg-secondary/10 font-medium text-foreground whitespace-nowrap">Mã sản phẩm (SKU)</td>
                   {compareProducts.map((product) => (
-                    <td key={`sku-${product?.id}`} className="p-4 border-b border-border/50 text-center text-muted-foreground font-mono text-xs">
+                    <td key={`sku-${product?.id}`} className="p-4 px-6 border-b border-border/50 text-left text-muted-foreground font-mono text-xs">
                       {product?.sku || 'Đang cập nhật'}
                     </td>
                   ))}
@@ -280,7 +280,7 @@ export default function ComparePage() {
                 <tr className="hover:bg-muted/10 transition-colors">
                   <td className="p-4 px-6 border-b border-border/50 bg-secondary/10 font-medium text-foreground whitespace-nowrap">Tình trạng kho</td>
                   {compareProducts.map((product) => (
-                    <td key={`stock-${product?.id}`} className="p-4 border-b border-border/50 text-center">
+                    <td key={`stock-${product?.id}`} className="p-4 px-6 border-b border-border/50 text-left">
                       {product!.stock > 0 ? (
                         <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full text-xs font-semibold border border-emerald-200">
                           <Check className="w-3.5 h-3.5" /> Còn hàng
@@ -311,7 +311,7 @@ export default function ComparePage() {
                         {compareProducts.map((product, pIdx) => {
                           const val = parsedQuickSpecsList[pIdx]?.[key] || '—';
                           return (
-                            <td key={`quick-spec-val-${product?.id}-${key}`} className="p-4 border-b border-border/50 text-center text-foreground font-medium">
+                            <td key={`quick-spec-val-${product?.id}-${key}`} className="p-4 px-6 border-b border-border/50 text-left text-foreground font-medium leading-relaxed">
                               {val}
                             </td>
                           );
@@ -338,7 +338,7 @@ export default function ComparePage() {
                         {compareProducts.map((product, pIdx) => {
                           const val = parsedDetailSpecsList[pIdx]?.[key] || '—';
                           return (
-                            <td key={`detail-spec-val-${product?.id}-${key}`} className="p-4 border-b border-border/50 text-center text-foreground">
+                            <td key={`detail-spec-val-${product?.id}-${key}`} className="p-4 px-6 border-b border-border/50 text-left text-foreground leading-relaxed">
                               {val}
                             </td>
                           );
@@ -355,7 +355,7 @@ export default function ComparePage() {
                 <tr className="hover:bg-muted/10 transition-colors">
                   <td className="p-4 px-6 border-b border-border/50 bg-secondary/10 font-medium text-foreground align-top whitespace-nowrap">Mô tả tóm tắt</td>
                   {compareProducts.map((product) => (
-                    <td key={`desc-${product?.id}`} className="p-4 border-b border-border/50 align-top text-muted-foreground text-xs leading-relaxed max-w-xs">
+                    <td key={`desc-${product?.id}`} className="p-4 px-6 border-b border-border/50 align-top text-muted-foreground text-xs leading-relaxed max-w-xs text-left">
                       {product?.description ? (
                         <div className="line-clamp-4" dangerouslySetInnerHTML={{ __html: product.description }} />
                       ) : (

@@ -51,7 +51,7 @@ export function CompareBar() {
                   </>
                 ) : (
                   <Link 
-                    href={items.length > 0 ? `/danh-muc/${slugify(items[0].category)}` : '/san-pham'} 
+                    href={items.length > 0 && items[0]?.category ? `/san-pham?category=${encodeURIComponent(items[0].category)}` : '/san-pham'} 
                     className="w-full h-full flex flex-col items-center justify-center gap-2 text-muted-foreground border-2 border-dashed border-border/50 rounded-lg hover:border-primary hover:text-primary transition-colors cursor-pointer"
                   >
                     <span className="text-2xl font-light">+</span>
