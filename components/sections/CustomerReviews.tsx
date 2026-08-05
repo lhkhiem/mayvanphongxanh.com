@@ -397,9 +397,6 @@ export function CustomerReviews({ testimonials = [] }: { testimonials?: any[] })
                     </div>
                   </div>
 
-                  <p className="text-[11px] text-gray-500 italic">
-                    * Nhận xét sẽ được kiểm duyệt bởi quản trị viên trước khi hiển thị công khai trên website.
-                  </p>
 
                   <div className="flex justify-end gap-2.5 pt-2 border-t border-gray-100">
                     <button

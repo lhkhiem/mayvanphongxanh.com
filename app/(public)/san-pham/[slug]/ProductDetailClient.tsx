@@ -743,8 +743,12 @@ export default function ProductDetailClient({
                       <h3 className="text-lg font-bold text-foreground mb-4">Hướng dẫn sử dụng</h3>
                       {product.manuals.content && (
                         <div
-                          className="prose prose-sm max-w-none text-muted-foreground mb-6"
-                          dangerouslySetInnerHTML={{ __html: product.manuals.content }}
+                          className="prose prose-sm max-w-none text-muted-foreground mb-6 break-words prose-a:text-primary prose-a:font-medium hover:prose-a:underline"
+                          dangerouslySetInnerHTML={{
+                            __html: product.manuals.content
+                              .replace(/(?<!href=["'])(?<!src=["'])(?<!">)(https?:\/\/[^\s<"']+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary font-medium underline">$1</a>')
+                              .replace(/<a\s+(?![^>]*target=)/gi, '<a target="_blank" rel="noopener noreferrer" ')
+                          }}
                         />
                       )}
                       {product.manuals.files && product.manuals.files.length > 0 && (
@@ -770,8 +774,12 @@ export default function ProductDetailClient({
                       <h3 className="text-lg font-bold text-foreground mb-4">Driver & Phần mềm</h3>
                       {product.drivers.content && (
                         <div
-                          className="prose prose-sm max-w-none text-muted-foreground mb-6"
-                          dangerouslySetInnerHTML={{ __html: product.drivers.content }}
+                          className="prose prose-sm max-w-none text-muted-foreground mb-6 break-words prose-a:text-primary prose-a:font-medium hover:prose-a:underline"
+                          dangerouslySetInnerHTML={{
+                            __html: product.drivers.content
+                              .replace(/(?<!href=["'])(?<!src=["'])(?<!">)(https?:\/\/[^\s<"']+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary font-medium underline">$1</a>')
+                              .replace(/<a\s+(?![^>]*target=)/gi, '<a target="_blank" rel="noopener noreferrer" ')
+                          }}
                         />
                       )}
                       {product.drivers.files && product.drivers.files.length > 0 && (

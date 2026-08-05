@@ -128,9 +128,10 @@ export function ProductForm({
 
   // Media picker state
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerTarget, setPickerTarget] = useState<'product' | 'manuals' | 'drivers' | 'description' | 'manuals-editor' | number>('product');
+  const [pickerTarget, setPickerTarget] = useState<'product' | 'manuals' | 'drivers' | 'description' | 'manuals-editor' | 'drivers-editor' | number>('product');
   const editorRef = useRef<RichTextEditorRef>(null);
   const manualsEditorRef = useRef<RichTextEditorRef>(null);
+  const driversEditorRef = useRef<RichTextEditorRef>(null);
 
   // Dynamic Tabs Logic
   const isStandard = form.productType === 'standard';
@@ -207,7 +208,7 @@ export function ProductForm({
   }, [form.name]);
 
   // Handlers
-  const openPicker = (target: 'product' | 'description' | 'manuals-editor' | number) => {
+  const openPicker = (target: 'product' | 'description' | 'manuals-editor' | 'drivers-editor' | number) => {
     setPickerTarget(target);
     setPickerOpen(true);
   };
@@ -229,6 +230,8 @@ export function ProductForm({
       editorRef.current?.insertImages(urls);
     } else if (pickerTarget === 'manuals-editor') {
       manualsEditorRef.current?.insertImages(urls);
+    } else if (pickerTarget === 'drivers-editor') {
+      driversEditorRef.current?.insertImages(urls);
     } else {
       setVariants((prev) => prev.map((v, i) => i === pickerTarget ? { ...v, images: [...v.images, ...urls] } : v));
     }
@@ -886,8 +889,14 @@ export function ProductForm({
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Nội dung / Link Download ngoài</label>
-                  <textarea rows={5} value={form.drivers?.content || ''} onChange={(e) => setForm({ ...form, drivers: { ...form.drivers!, content: e.target.value } })} placeholder="Nhập link driver hoặc hướng dẫn cài đặt..." className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm resize-none"></textarea>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Nội dung driver (Text/HTML)</label>
+                  <RichTextEditor
+                    ref={driversEditorRef}
+                    value={form.drivers?.content || ''}
+                    onChange={(val) => setForm({ ...form, drivers: { ...form.drivers!, content: val } })}
+                    onImagePickerRequest={() => openPicker('drivers-editor')}
+                    placeholder="Nhập nội dung driver, link download hoặc hướng dẫn cài đặt..."
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">File Driver upload trực tiếp</label>

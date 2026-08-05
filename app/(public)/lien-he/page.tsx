@@ -6,20 +6,35 @@ import { Footer } from '@/components/common/Footer';
 import { 
   PhoneCall, 
   Mail, 
-  MapPin, 
   Building2, 
   Send,
   ExternalLink,
   ChevronRight,
   Clock,
   HeadphonesIcon,
-  MessageCircle,
   Wrench,
-  Loader2
+  Loader2,
+  RefreshCw,
+  AlertCircle,
+  CheckCircle2
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSettings } from '@/context/SettingsContext';
 import { toast } from 'sonner';
+
+interface CaptchaChallenge {
+  num1: number;
+  num2: number;
+  token: string;
+}
+
+interface FormErrors {
+  name?: string;
+  phone?: string;
+  email?: string;
+  message?: string;
+  captcha?: string;
+}
 
 export default function ContactPage() {
   const { getSetting } = useSettings();
@@ -41,15 +56,11 @@ export default function ContactPage() {
 
   if (rawMapUrl) {
     if (rawMapUrl.includes('<iframe')) {
-      // User pasted the whole iframe HTML, extract src
       const match = rawMapUrl.match(/src="([^"]+)"/);
       if (match) iframeSrc = match[1];
     } else if (rawMapUrl.includes('embed')) {
-      // User pasted the embed URL
       iframeSrc = rawMapUrl;
     } else {
-      // User pasted a standard map link, it cannot be embedded.
-      // We keep the default embed map but update the direction link.
       directionLink = rawMapUrl;
     }
   }
@@ -60,27 +71,190 @@ export default function ContactPage() {
     email: '',
     service: 'Báo giá sản phẩm',
     message: '',
+    honeypot: '',
   });
+
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
+  
+  // CAPTCHA State
+  const [captchaChallenge, setCaptchaChallenge] = useState<CaptchaChallenge | null>(null);
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [loadingCaptcha, setLoadingCaptcha] = useState(false);
+
+  const loadCaptcha = useCallback(async () => {
+    setLoadingCaptcha(true);
+    try {
+      const res = await fetch('/api/captcha', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        setCaptchaChallenge(data);
+        setCaptchaInput('');
+      } else {
+        toast.error('Không thể tải mã CAPTCHA. Vui lòng làm mới trang.');
+      }
+    } catch (err) {
+      console.error('Lỗi lấy captcha:', err);
+    } finally {
+      setLoadingCaptcha(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCaptcha();
+  }, [loadCaptcha]);
+
+  // Validation Rules
+  const validateField = (field: string, value: string): string | undefined => {
+    const trimmed = value.trim();
+
+    if (field === 'name') {
+      if (!trimmed) return 'Vui lòng nhập họ và tên.';
+      if (trimmed.length < 2) return 'Họ và tên phải có ít nhất 2 ký tự.';
+    }
+
+    if (field === 'phone') {
+      if (!trimmed) return 'Vui lòng nhập số điện thoại.';
+      const cleanPhone = trimmed.replace(/\s+|-|\./g, '');
+      const phoneRegex = /^(0[35789])\d{8}$|^0\d{9}$/;
+      if (!phoneRegex.test(cleanPhone)) {
+        return 'Số điện thoại không đúng định dạng (10 chữ số, bắt đầu bằng 0, VD: 0987654321).';
+      }
+    }
+
+    if (field === 'email') {
+      if (trimmed !== '') {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(trimmed)) {
+          return 'Email không đúng định dạng (Ví dụ: name@example.com).';
+        }
+      }
+    }
+
+    if (field === 'message') {
+      if (!trimmed) return 'Vui lòng nhập nội dung yêu cầu.';
+      if (trimmed.length < 10) return 'Nội dung phải có ít nhất 10 ký tự.';
+    }
+
+    if (field === 'captcha') {
+      if (!trimmed) return 'Vui lòng nhập kết quả xác minh CAPTCHA.';
+      if (captchaChallenge) {
+        const userAnswer = parseInt(trimmed, 10);
+        if (isNaN(userAnswer) || userAnswer !== captchaChallenge.num1 + captchaChallenge.num2) {
+          return 'Kết quả phép tính không chính xác. Vui lòng tính lại!';
+        }
+      }
+    }
+
+    return undefined;
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    const val = field === 'captcha' ? captchaInput : formData[field as keyof typeof formData];
+    const err = validateField(field, val);
+    setErrors(prev => ({ ...prev, [field]: err }));
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Standardize phone input: allow only numbers, spaces, dots, hyphens
+    const val = e.target.value.replace(/[^0-9\s.-]/g, '');
+    setFormData(prev => ({ ...prev, phone: val }));
+    if (touched.phone) {
+      setErrors(prev => ({ ...prev, phone: validateField('phone', val) }));
+    }
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.trim();
+    setFormData(prev => ({ ...prev, email: val }));
+    if (touched.email) {
+      setErrors(prev => ({ ...prev, email: validateField('email', val) }));
+    }
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setFormData(prev => ({ ...prev, name: val }));
+    if (touched.name) {
+      setErrors(prev => ({ ...prev, name: validateField('name', val) }));
+    }
+  };
+
+  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setFormData(prev => ({ ...prev, message: val }));
+    if (touched.message) {
+      setErrors(prev => ({ ...prev, message: validateField('message', val) }));
+    }
+  };
+
+  const validateAll = (): boolean => {
+    const nameErr = validateField('name', formData.name);
+    const phoneErr = validateField('phone', formData.phone);
+    const emailErr = validateField('email', formData.email);
+    const messageErr = validateField('message', formData.message);
+    const captchaErr = validateField('captcha', captchaInput);
+
+    const newErrors: FormErrors = {
+      name: nameErr,
+      phone: phoneErr,
+      email: emailErr,
+      message: messageErr,
+      captcha: captchaErr,
+    };
+
+    setErrors(newErrors);
+    setTouched({ name: true, phone: true, email: true, message: true, captcha: true });
+
+    return !nameErr && !phoneErr && !emailErr && !messageErr && !captchaErr;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateAll()) {
+      toast.error('Vui lòng kiểm tra lại thông tin nhập liệu!');
+      return;
+    }
+
+    if (!captchaChallenge) {
+      toast.error('Chưa tải được mã CAPTCHA. Vui lòng thử lại!');
+      loadCaptcha();
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          phone: formData.phone.replace(/\s+|-|\./g, ''),
+          captchaToken: captchaChallenge.token,
+          captchaAnswer: captchaInput.trim(),
+        }),
       });
+
       const data = await res.json();
+
       if (res.ok) {
         toast.success(data.message || 'Cảm ơn bạn đã liên hệ. Chúng tôi sẽ phản hồi sớm nhất có thể!');
-        setFormData({ name: '', phone: '', email: '', service: 'Báo giá sản phẩm', message: '' });
+        setFormData({ name: '', phone: '', email: '', service: 'Báo giá sản phẩm', message: '', honeypot: '' });
+        setCaptchaInput('');
+        setTouched({});
+        setErrors({});
+        loadCaptcha();
       } else {
         toast.error(data.error || 'Đã có lỗi xảy ra.');
+        // Refresh captcha on error
+        loadCaptcha();
       }
     } catch (error) {
       toast.error('Lỗi kết nối. Vui lòng thử lại sau.');
+      loadCaptcha();
     } finally {
       setLoading(false);
     }
@@ -105,44 +279,115 @@ export default function ContactPage() {
           <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
             
             {/* Form */}
-            <form onSubmit={handleSubmit} className="rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
+            <form onSubmit={handleSubmit} className="rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8" noValidate>
               <h2 className="text-2xl font-bold text-foreground mb-6">Gửi yêu cầu tư vấn</h2>
               
+              {/* Honeypot anti-spam trap (hidden from real users) */}
+              <input
+                type="text"
+                name="honeypot"
+                value={formData.honeypot}
+                onChange={(e) => setFormData({ ...formData, honeypot: e.target.value })}
+                className="hidden"
+                tabIndex={-1}
+                autoComplete="off"
+              />
+
               <div className="grid gap-5 sm:grid-cols-2 mb-5">
+                {/* Họ và tên */}
                 <div className="grid gap-2">
-                  <label className="text-sm font-semibold text-foreground">Họ tên *</label>
+                  <label className="text-sm font-semibold text-foreground flex items-center justify-between">
+                    <span>Họ tên *</span>
+                    {touched.name && !errors.name && (
+                      <span className="text-xs text-emerald-600 flex items-center gap-1 font-normal">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Hợp lệ
+                      </span>
+                    )}
+                  </label>
                   <input 
                     required 
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="h-12 rounded-md border border-input px-4 font-normal outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-background" 
+                    onChange={handleNameChange}
+                    onBlur={() => handleBlur('name')}
+                    className={`h-12 rounded-md border px-4 font-normal outline-none transition-all bg-background ${
+                      touched.name && errors.name 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 bg-red-50/10' 
+                        : 'border-input focus:border-primary focus:ring-1 focus:ring-primary'
+                    }`} 
                     placeholder="Nhập họ tên" 
                   />
+                  {touched.name && errors.name && (
+                    <p className="text-xs font-medium text-red-500 flex items-center gap-1 mt-0.5">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      {errors.name}
+                    </p>
+                  )}
                 </div>
+
+                {/* Số điện thoại */}
                 <div className="grid gap-2">
-                  <label className="text-sm font-semibold text-foreground">Số điện thoại *</label>
+                  <label className="text-sm font-semibold text-foreground flex items-center justify-between">
+                    <span>Số điện thoại *</span>
+                    {touched.phone && !errors.phone && (
+                      <span className="text-xs text-emerald-600 flex items-center gap-1 font-normal">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Hợp lệ
+                      </span>
+                    )}
+                  </label>
                   <input 
                     required 
                     type="tel" 
                     value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="h-12 rounded-md border border-input px-4 font-normal outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-background" 
+                    onChange={handlePhoneChange}
+                    onBlur={() => handleBlur('phone')}
+                    className={`h-12 rounded-md border px-4 font-normal outline-none transition-all bg-background ${
+                      touched.phone && errors.phone 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 bg-red-50/10' 
+                        : 'border-input focus:border-primary focus:ring-1 focus:ring-primary'
+                    }`} 
                     placeholder="0987..." 
                   />
+                  {touched.phone && errors.phone && (
+                    <p className="text-xs font-medium text-red-500 flex items-center gap-1 mt-0.5">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      {errors.phone}
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2 mb-5">
+                {/* Email (Tùy chọn) */}
                 <div className="grid gap-2">
-                  <label className="text-sm font-semibold text-foreground">Email (Tùy chọn)</label>
+                  <label className="text-sm font-semibold text-foreground flex items-center justify-between">
+                    <span>Email (Tùy chọn)</span>
+                    {touched.email && !errors.email && formData.email && (
+                      <span className="text-xs text-emerald-600 flex items-center gap-1 font-normal">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Hợp lệ
+                      </span>
+                    )}
+                  </label>
                   <input 
                     type="email" 
                     value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="h-12 rounded-md border border-input px-4 font-normal outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-background" 
+                    onChange={handleEmailChange}
+                    onBlur={() => handleBlur('email')}
+                    className={`h-12 rounded-md border px-4 font-normal outline-none transition-all bg-background ${
+                      touched.email && errors.email 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 bg-red-50/10' 
+                        : 'border-input focus:border-primary focus:ring-1 focus:ring-primary'
+                    }`} 
                     placeholder="name@example.com" 
                   />
+                  {touched.email && errors.email && (
+                    <p className="text-xs font-medium text-red-500 flex items-center gap-1 mt-0.5">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      {errors.email}
+                    </p>
+                  )}
                 </div>
+
+                {/* Nhu cầu */}
                 <div className="grid gap-2">
                   <label className="text-sm font-semibold text-foreground">Nhu cầu</label>
                   <select 
@@ -158,22 +403,98 @@ export default function ContactPage() {
                 </div>
               </div>
 
-
-              <div className="grid gap-2 mb-6">
-                <label className="text-sm font-semibold text-foreground">Nội dung *</label>
+              {/* Nội dung */}
+              <div className="grid gap-2 mb-5">
+                <label className="text-sm font-semibold text-foreground flex items-center justify-between">
+                  <span>Nội dung *</span>
+                  {touched.message && !errors.message && (
+                    <span className="text-xs text-emerald-600 flex items-center gap-1 font-normal">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Hợp lệ
+                    </span>
+                  )}
+                </label>
                 <textarea 
                   required 
                   value={formData.message}
-                  onChange={(e) => setFormData({...formData, message: e.target.value})}
-                  className="min-h-[140px] rounded-md border border-input p-4 font-normal outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-background resize-y" 
+                  onChange={handleMessageChange}
+                  onBlur={() => handleBlur('message')}
+                  className={`min-h-[130px] rounded-md border p-4 font-normal outline-none transition-all bg-background resize-y ${
+                    touched.message && errors.message 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 bg-red-50/10' 
+                      : 'border-input focus:border-primary focus:ring-1 focus:ring-primary'
+                  }`} 
                   placeholder="Mô tả sản phẩm, số lượng, khu vực triển khai..."
                 ></textarea>
+                {touched.message && errors.message && (
+                  <p className="text-xs font-medium text-red-500 flex items-center gap-1 mt-0.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    {errors.message}
+                  </p>
+                )}
               </div>
 
+              {/* CAPTCHA Challenge */}
+              <div className="grid gap-2 mb-6 p-4 rounded-lg bg-slate-50 border border-slate-200/80">
+                <label className="text-sm font-semibold text-foreground flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    Xác minh CAPTCHA <span className="text-red-500">*</span>
+                  </span>
+                </label>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <div className="flex items-center justify-between gap-3 bg-white border border-slate-300 rounded-md px-4 h-12 min-w-[150px] select-none shadow-xs">
+                    {loadingCaptcha ? (
+                      <span className="text-xs text-muted-foreground animate-pulse font-medium">Đang tải...</span>
+                    ) : captchaChallenge ? (
+                      <span className="font-mono font-bold text-lg text-slate-800 tracking-wider">
+                        {captchaChallenge.num1} + {captchaChallenge.num2} = ?
+                      </span>
+                    ) : (
+                      <span className="text-xs text-red-500 font-medium">Lỗi tải mã</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={loadCaptcha}
+                      disabled={loadingCaptcha}
+                      className="text-slate-400 hover:text-primary transition-colors p-1.5 rounded-md hover:bg-slate-100 cursor-pointer"
+                      title="Tải lại phép tính khác"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${loadingCaptcha ? 'animate-spin text-primary' : ''}`} />
+                    </button>
+                  </div>
+
+                  <input
+                    required
+                    type="number"
+                    value={captchaInput}
+                    onChange={(e) => {
+                      setCaptchaInput(e.target.value);
+                      if (errors.captcha) {
+                        setErrors(prev => ({ ...prev, captcha: undefined }));
+                      }
+                    }}
+                    onBlur={() => handleBlur('captcha')}
+                    placeholder="Nhập kết quả"
+                    className={`h-12 flex-1 rounded-md border px-4 font-semibold outline-none transition-all bg-white ${
+                      errors.captcha 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 bg-red-50/10' 
+                        : 'border-slate-300 focus:border-primary focus:ring-1 focus:ring-primary'
+                    }`}
+                  />
+                </div>
+                {errors.captcha && (
+                  <p className="text-xs font-medium text-red-500 flex items-center gap-1 mt-1">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    {errors.captcha}
+                  </p>
+                )}
+              </div>
+
+              {/* Submit Button */}
               <button 
-                className="inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-primary px-8 text-sm font-bold text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                className="inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-primary px-8 text-sm font-bold text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" 
                 type="submit"
-                disabled={loading}
+                disabled={loading || loadingCaptcha}
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 {loading ? 'Đang gửi...' : 'Gửi yêu cầu'}
@@ -193,7 +514,7 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              <a href="tel:0987654321" className="block group">
+              <a href={`tel:${hotline.replace(/[^0-9]/g, '')}`} className="block group">
                 <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-5 shadow-sm transition-all group-hover:border-primary/40 group-hover:shadow-md">
                   <span className="grid h-12 w-12 place-items-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                     <PhoneCall className="w-6 h-6" />
@@ -205,7 +526,7 @@ export default function ContactPage() {
                 </div>
               </a>
 
-              <a href="tel:19001234" className="block group">
+              <a href={`tel:${cskh.replace(/[^0-9]/g, '')}`} className="block group">
                 <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-5 shadow-sm transition-all group-hover:border-primary/40 group-hover:shadow-md">
                   <span className="grid h-12 w-12 place-items-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                     <HeadphonesIcon className="w-6 h-6" />
@@ -217,7 +538,7 @@ export default function ContactPage() {
                 </div>
               </a>
 
-              <a href="tel:19001234" className="block group">
+              <a href={`tel:${techSupport.replace(/[^0-9]/g, '')}`} className="block group">
                 <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-5 shadow-sm transition-all group-hover:border-primary/40 group-hover:shadow-md">
                   <span className="grid h-12 w-12 place-items-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                     <Wrench className="w-6 h-6" />
@@ -262,7 +583,6 @@ export default function ContactPage() {
                 </div>
                 
                 <div className="flex items-center justify-center gap-6 border-t border-border bg-slate-50 px-6 py-4">
-                  {/* Bank Logos Placeholders */}
                   <div className="h-8 flex items-center justify-center font-black text-slate-400 italic text-xl tracking-tighter">
                     Vietcombank
                   </div>

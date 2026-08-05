@@ -3,22 +3,13 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
-import crypto from "crypto";
+import { generateCaptchaChallenge, verifyCaptchaToken } from "@/lib/captcha";
 
-const CAPTCHA_SECRET = process.env.CAPTCHA_SECRET || "mvpx-security-captcha-secret-key-2026";
 const COOLDOWN_SECONDS = 120; // 2 phút server-side rate limit
 
 // 1. Tạo CAPTCHA Challenge ký bằng Server HMAC (Không thể fake từ Client)
 export async function getCaptchaChallenge() {
-  const num1 = Math.floor(Math.random() * 9) + 1; // 1-9
-  const num2 = Math.floor(Math.random() * 9) + 1; // 1-9
-  const timestamp = Date.now();
-
-  const dataToSign = `${num1}:${num2}:${timestamp}`;
-  const hmac = crypto.createHmac("sha256", CAPTCHA_SECRET).update(dataToSign).digest("hex");
-  const token = `${dataToSign}:${hmac}`;
-
-  return { num1, num2, token };
+  return generateCaptchaChallenge();
 }
 
 export type PublicTestimonialSubmitInput = {
@@ -71,37 +62,9 @@ export async function submitPublicTestimonial(input: PublicTestimonialSubmitInpu
     // ----------------------------------------------------
     // C. CHỐNG FAKE CAPTCHA: Kiểm tra Chữ ký Server (HMAC Verification)
     // ----------------------------------------------------
-    if (!input.captchaToken || !input.captchaAnswer) {
-      return { error: "Vui lòng nhập kết quả xác minh CAPTCHA." };
-    }
-
-    const parts = input.captchaToken.split(":");
-    if (parts.length !== 4) {
-      return { error: "Mã xác minh CAPTCHA không hợp lệ. Vui lòng thử lại!" };
-    }
-
-    const [num1Str, num2Str, timestampStr, signature] = parts;
-    const num1 = parseInt(num1Str, 10);
-    const num2 = parseInt(num2Str, 10);
-    const timestamp = parseInt(timestampStr, 10);
-
-    // 1. Kiểm tra chữ ký HMAC
-    const expectedData = `${num1Str}:${num2Str}:${timestampStr}`;
-    const expectedHmac = crypto.createHmac("sha256", CAPTCHA_SECRET).update(expectedData).digest("hex");
-
-    if (signature !== expectedHmac) {
-      return { error: "Mã xác minh CAPTCHA đã bị can thiệp. Vui lòng lấy phép tính mới!" };
-    }
-
-    // 2. Kiểm tra thời hạn CAPTCHA (Hết hạn sau 10 phút)
-    if (isNaN(timestamp) || now - timestamp > 10 * 60 * 1000) {
-      return { error: "Phép tính CAPTCHA đã hết hạn. Vui lòng bấm làm mới phép tính!" };
-    }
-
-    // 3. Kiểm tra đáp án
-    const userAnswer = parseInt(input.captchaAnswer.trim(), 10);
-    if (isNaN(userAnswer) || userAnswer !== num1 + num2) {
-      return { error: "Kết quả phép tính CAPTCHA không chính xác!" };
+    const captchaCheck = verifyCaptchaToken(input.captchaToken, input.captchaAnswer);
+    if (!captchaCheck.valid) {
+      return { error: captchaCheck.error || "Xác minh CAPTCHA thất bại. Vui lòng thử lại!" };
     }
 
     // ----------------------------------------------------

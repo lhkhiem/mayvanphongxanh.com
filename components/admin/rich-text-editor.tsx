@@ -99,6 +99,20 @@ const EditorWrapper = forwardRef<any, any>(({ value, onChange, onImagePickerRequ
             'tableColumn', 'tableRow', 'mergeTableCells', 'tableProperties', 'tableCellProperties'
         ]
     },
+    link: {
+        addTargetToExternalLinks: true,
+        defaultProtocol: 'https://',
+        decorators: {
+            openInNewTab: {
+                mode: 'manual',
+                label: 'Mở trong tab mới (target="_blank")',
+                attributes: {
+                    target: '_blank',
+                    rel: 'noopener noreferrer'
+                }
+            }
+        }
+    },
     placeholder: placeholder || 'Nhập nội dung...',
     openMediaPicker: onImagePickerRequest,
     licenseKey: 'GPL'
