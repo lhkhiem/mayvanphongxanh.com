@@ -85,6 +85,7 @@ export type CategoryFormData = {
   promoTargetUrl?: string
   promoImageUrl?: string
   showInFooter?: boolean
+  isSeoCustom?: boolean
   metaTitle?: string
   metaDescription?: string
   metaKeywords?: string
@@ -122,6 +123,7 @@ export async function createCategory(data: CategoryFormData) {
         promoTargetUrl: data.promoTargetUrl || null,
         promoImageUrl: data.promoImageUrl || null,
         showInFooter: data.showInFooter || false,
+        isSeoCustom: data.isSeoCustom ?? false,
         metaTitle: data.metaTitle || null,
         metaDescription: data.metaDescription || null,
         metaKeywords: data.metaKeywords || null,
@@ -165,6 +167,7 @@ export async function updateCategory(id: number, data: CategoryFormData) {
         promoTargetUrl: data.promoTargetUrl || null,
         promoImageUrl: data.promoImageUrl || null,
         showInFooter: data.showInFooter ?? false,
+        isSeoCustom: data.isSeoCustom ?? false,
         metaTitle: data.metaTitle || null,
         metaDescription: data.metaDescription || null,
         metaKeywords: data.metaKeywords || null,

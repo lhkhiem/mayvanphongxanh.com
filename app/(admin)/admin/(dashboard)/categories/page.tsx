@@ -54,6 +54,7 @@ type Category = {
   promoBadgeColor: string | null;
   promoTargetUrl: string | null;
   promoImageUrl: string | null;
+  isSeoCustom: boolean;
   metaTitle: string | null;
   metaDescription: string | null;
   metaKeywords: string | null;
@@ -92,6 +93,7 @@ const DEFAULT_FORM: CategoryFormData = {
   promoBadgeColor: "",
   promoTargetUrl: "",
   promoImageUrl: "",
+  isSeoCustom: false,
   metaTitle: "",
   metaDescription: "",
   metaKeywords: "",
@@ -356,6 +358,7 @@ export default function CategoriesPage() {
                         promoBadgeColor: parent.promoBadgeColor || "",
                         promoTargetUrl: parent.promoTargetUrl || "",
                         promoImageUrl: parent.promoImageUrl || "",
+                        isSeoCustom: parent.isSeoCustom ?? false,
                         metaTitle: parent.metaTitle || "",
                         metaDescription: parent.metaDescription || "",
                         metaKeywords: parent.metaKeywords || "",
@@ -414,6 +417,7 @@ export default function CategoriesPage() {
                                 promoBadgeColor: child.promoBadgeColor || "",
                                 promoTargetUrl: child.promoTargetUrl || "",
                                 promoImageUrl: child.promoImageUrl || "",
+                                isSeoCustom: child.isSeoCustom ?? false,
                                 metaTitle: child.metaTitle || "",
                                 metaDescription: child.metaDescription || "",
                                 metaKeywords: child.metaKeywords || "",
@@ -883,75 +887,129 @@ function CategoryForm({
 
         {/* SEO Metadata Settings */}
         <div className="pt-4 mt-2 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
             <div>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
                 <Tag className="h-4 w-4 text-emerald-500" />
                 Cấu hình SEO Metadata & Chia sẻ MXH
               </h3>
               <p className="text-xs text-gray-500 mt-0.5">
-                Tùy chỉnh thông tin tiêu đề, mô tả và hình ảnh hiển thị khi xuất hiện trên Google, Zalo, Facebook, v.v.
+                Quản lý thông tin hiển thị trên Google, Zalo, Facebook khi chia sẻ link danh mục.
               </p>
+            </div>
+
+            {/* Switch Toggle for Custom SEO (Option 2) */}
+            <div className="flex items-center gap-2.5 bg-gray-100 dark:bg-gray-800/80 p-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-700 shrink-0">
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                SEO Tùy chỉnh (Option 2)
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={form.isSeoCustom || false}
+                onClick={() => setForm({ ...form, isSeoCustom: !form.isSeoCustom })}
+                className={cn(
+                  "relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                  form.isSeoCustom ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-600"
+                )}
+              >
+                <span
+                  className={cn(
+                    "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                    form.isSeoCustom ? "translate-x-4" : "translate-x-0"
+                  )}
+                />
+              </button>
             </div>
           </div>
 
-          <div className="space-y-3 bg-emerald-50/50 dark:bg-emerald-950/20 p-4 rounded-lg border border-emerald-100 dark:border-emerald-900/30">
-            <div>
-              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
-                SEO Title (Tiêu đề SEO)
-              </label>
-              <input
-                type="text"
-                value={form.metaTitle || ""}
-                onChange={(e) => setForm({ ...form, metaTitle: e.target.value })}
-                placeholder={`Để trống sẽ dùng: "${form.name || 'Tên danh mục'} | Máy Văn Phòng Xanh"`}
-                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
-                SEO Description (Mô tả SEO)
-              </label>
-              <textarea
-                value={form.metaDescription || ""}
-                onChange={(e) => setForm({ ...form, metaDescription: e.target.value })}
-                placeholder="Mô tả ngắn gọn thu hút người dùng khi xem trên thẻ xem trước đường dẫn..."
-                rows={2}
-                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
-                SEO Keywords (Từ khóa SEO)
-              </label>
-              <input
-                type="text"
-                value={form.metaKeywords || ""}
-                onChange={(e) => setForm({ ...form, metaKeywords: e.target.value })}
-                placeholder="Phân cách bởi dấu phẩy, VD: máy photocopy ricoh, máy in chính hãng..."
-                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
-              />
-            </div>
-
-            <div>
-              <MediaPickerInput
-                label="Ảnh đại diện SEO (Ảnh preview khi chia sẻ link Zalo/FB)"
-                value={form.metaImage || ""}
-                onChange={(url) => setForm({ ...form, metaImage: url })}
-                placeholder="Chọn hoặc tải lên ảnh đại diện SEO (tỷ lệ 1.91:1 hoặc 1200x630px)..."
-              />
-              <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
-                Nếu không chọn, hệ thống sẽ tự động dùng ảnh Promo Banner hoặc ảnh sản phẩm đầu tiên thuộc danh mục.
+          {/* Option 1: Default Mode Notice (when isSeoCustom is OFF) */}
+          {!form.isSeoCustom ? (
+            <div className="bg-emerald-50/60 dark:bg-emerald-950/20 p-4 rounded-xl border border-emerald-200/70 dark:border-emerald-900/40 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
+                  Option 1: SEO Mặc định
+                </span>
+                <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+                  Đang bật tự động theo quy tắc hệ thống
+                </span>
+              </div>
+              <ul className="text-xs text-gray-600 dark:text-gray-300 space-y-1.5 pl-4 list-disc">
+                <li><strong>Ảnh đại diện SEO:</strong> Tự động dùng ảnh đại diện của <em>sản phẩm xếp đầu tiên</em> thuộc danh mục. Nếu là danh mục cha không có sản phẩm, hệ thống tự động lấy sản phẩm đầu tiên từ danh mục con đầu tiên.</li>
+                <li><strong>SEO Title (Tiêu đề SEO):</strong> Tự động tạo: <code>{form.name || "Tên danh mục"} | Máy Văn Phòng Xanh</code>.</li>
+                <li><strong>SEO Description (Mô tả SEO):</strong> Tự động đề xuất từ thông tin mô tả danh mục.</li>
+                <li><strong>SEO Keywords (Từ khóa SEO):</strong> Tự động đề xuất từ tên danh mục & các danh mục con.</li>
+              </ul>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 pt-1 italic border-t border-emerald-100 dark:border-emerald-900/30 mt-2">
+                💡 Bạn có thể bật switch "SEO Tùy chỉnh (Option 2)" phía trên bất kỳ lúc nào để nhập riêng Tiêu đề, Mô tả hoặc Ảnh SEO cho danh mục này.
               </p>
-              {form.metaImage && (
-                <div className="mt-2.5 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 max-w-xs">
-                  <img src={form.metaImage} alt="SEO Preview" className="w-full h-auto object-cover max-h-36" />
-                </div>
-              )}
             </div>
-          </div>
+          ) : (
+            /* Option 2: Custom SEO Input Fields (when isSeoCustom is ON) */
+            <div className="space-y-3 bg-emerald-50/50 dark:bg-emerald-950/20 p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/40">
+              <div className="flex items-center justify-between pb-1 border-b border-emerald-100 dark:border-emerald-900/30 mb-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-600 text-white">
+                  Option 2: Đang dùng SEO Cấu hình Tùy chỉnh
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  SEO Title (Tiêu đề SEO)
+                </label>
+                <input
+                  type="text"
+                  value={form.metaTitle || ""}
+                  onChange={(e) => setForm({ ...form, metaTitle: e.target.value })}
+                  placeholder={`Để trống sẽ dùng mặc định: "${form.name || 'Tên danh mục'} | Máy Văn Phòng Xanh"`}
+                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  SEO Description (Mô tả SEO)
+                </label>
+                <textarea
+                  value={form.metaDescription || ""}
+                  onChange={(e) => setForm({ ...form, metaDescription: e.target.value })}
+                  placeholder="Mô tả ngắn gọn thu hút người dùng khi xem trên thẻ xem trước đường dẫn..."
+                  rows={2}
+                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  SEO Keywords (Từ khóa SEO)
+                </label>
+                <input
+                  type="text"
+                  value={form.metaKeywords || ""}
+                  onChange={(e) => setForm({ ...form, metaKeywords: e.target.value })}
+                  placeholder="Phân cách bởi dấu phẩy, VD: máy photocopy ricoh, máy in chính hãng..."
+                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
+                />
+              </div>
+
+              <div>
+                <MediaPickerInput
+                  label="Ảnh đại diện SEO (Ảnh preview khi chia sẻ link Zalo/FB)"
+                  value={form.metaImage || ""}
+                  onChange={(url) => setForm({ ...form, metaImage: url })}
+                  placeholder="Chọn hoặc tải lên ảnh đại diện SEO (tỷ lệ 1.91:1 hoặc 1200x630px)..."
+                />
+                <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                  Nếu không chọn ảnh riêng, hệ thống sẽ tự động dùng hình ảnh sản phẩm đầu tiên thuộc danh mục (quy tắc Option 1).
+                </p>
+                {form.metaImage && (
+                  <div className="mt-2.5 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 max-w-xs">
+                    <img src={form.metaImage} alt="SEO Preview" className="w-full h-auto object-cover max-h-36" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Toggles */}

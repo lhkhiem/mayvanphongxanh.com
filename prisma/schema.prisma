@@ -33,6 +33,7 @@ model Category {
   promoImageUrl    String?
 
   // SEO Metadata
+  isSeoCustom     Boolean @default(false)
   metaTitle       String?
   metaDescription String?
   metaKeywords    String?
