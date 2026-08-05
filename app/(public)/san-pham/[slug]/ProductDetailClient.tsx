@@ -245,7 +245,7 @@ export default function ProductDetailClient({
               </div>
 
               {/* Thumbnails */}
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
                 {gallery.map((img: string, idx: number) => (
                   <button
                     key={idx}
@@ -518,11 +518,11 @@ export default function ProductDetailClient({
                 const displaySpecs = showAllQuickSpecs ? allSpecs : allSpecs.slice(0, INITIAL_LIMIT);
 
                 return (
-                  <div className="mb-2.5">
-                    <h3 className="text-xs sm:text-sm font-bold text-foreground mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+                  <div className="mb-2.5 flex-1 flex flex-col">
+                    <h3 className="text-xs sm:text-sm font-bold text-foreground mb-1.5 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
                       <Info className="w-4 h-4 text-primary" /> Thông số nổi bật
                     </h3>
-                    <div className="bg-secondary/20 rounded-xl p-3 sm:px-4 sm:py-3 border border-border">
+                    <div className="bg-secondary/20 rounded-xl p-3 sm:px-4 sm:py-3 border border-border flex-1 flex flex-col justify-between">
                       <ul className="space-y-1.5 text-xs sm:text-sm text-foreground">
                         {displaySpecs.length > 0 ? (
                           displaySpecs.map((spec: any, idx: number) => {
@@ -571,7 +571,7 @@ export default function ProductDetailClient({
               })()}
 
               {/* Actions */}
-              <div className="mb-2.5">
+              <div className="mb-2.5 mt-auto">
                 {!showContactPrice ? (
                   <div className="flex flex-row items-center gap-1.5 sm:gap-3">
                     <div className="flex items-center border-2 border-primary/20 bg-background rounded-xl h-12 w-24 sm:w-28 lg:w-32 flex-shrink-0">
