@@ -498,7 +498,7 @@ export function Header({ categories: initialCategories = [] }: { categories?: an
 
       {/* Mobile menu */}
       {isMenuOpen && (
-        <MobileMenu onClose={() => setIsMenuOpen(false)} />
+        <MobileMenu categories={categories} onClose={() => setIsMenuOpen(false)} />
       )}
 
       <CartDrawer />

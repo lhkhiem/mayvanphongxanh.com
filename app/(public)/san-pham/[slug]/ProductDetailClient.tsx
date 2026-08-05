@@ -215,11 +215,10 @@ export default function ProductDetailClient({
             </span>
           </nav>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8">
-            {/* Image Gallery */}
-            <div className="md:col-span-5 lg:col-span-5 flex flex-col gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 items-stretch mb-5">
+            <div className="md:col-span-5 lg:col-span-5 flex flex-col">
               <div
-                className="relative aspect-square rounded-2xl overflow-hidden bg-white border border-border cursor-crosshair w-full"
+                className="relative aspect-square rounded-2xl overflow-hidden bg-white border border-border cursor-crosshair w-full h-full"
                 onMouseMove={(e) => {
                   const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
                   const x = ((e.clientX - left) / width) * 100;
@@ -243,64 +242,17 @@ export default function ProductDetailClient({
                   </div>
                 )}
               </div>
-
-              {/* Thumbnails */}
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                {gallery.map((img: string, idx: number) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveImage(img)}
-                    className={`relative w-14 h-14 sm:w-16 sm:h-16 aspect-square rounded-xl overflow-hidden bg-white border-2 transition-all ${activeImage === img ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
-                  >
-                    <Image src={img} alt={`${product.name} thumbnail ${idx + 1}`} fill className="object-cover" />
-                  </button>
-                ))}
-              </div>
-
-              {/* Consumables (Vật tư mua kèm) - Left Column */}
-              {consumables && consumables.length > 0 && (
-                <div className="mt-auto p-3 bg-emerald-50/50 border border-emerald-100 rounded-2xl shadow-sm">
-                  <h3 className="text-sm font-bold text-emerald-800 mb-2 uppercase tracking-wider flex items-center gap-2">
-                    <Package className="w-4 h-4 text-emerald-600" /> Vật tư tiêu hao khuyên dùng
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {consumables.map((item: any) => (
-                      <div key={item.id} className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-emerald-100 hover:border-emerald-300 transition-colors shadow-sm group">
-                        <Link href={`/san-pham/${item.slug}`} className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-50 flex-shrink-0 border border-border block">
-                          <Image src={item.image} alt={item.name} fill className="object-cover group-hover:scale-105 transition-transform" />
-                        </Link>
-                        <div className="flex-1 min-w-0">
-                          <Link href={`/san-pham/${item.slug}`} className="font-semibold text-[13px] text-foreground hover:text-primary truncate block leading-tight mb-0.5">
-                            {item.name}
-                          </Link>
-                          <div className="text-primary font-bold text-sm">
-                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
-                          </div>
-                        </div>
-                        <Link
-                          href={`/san-pham/${item.slug}`}
-                          className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all flex-shrink-0"
-                          title="Xem chi tiết"
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </Link>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Product Info */}
-            <div className="md:col-span-7 lg:col-span-7 flex flex-col">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+            <div className="md:col-span-7 lg:col-span-7 flex flex-col min-h-0">
+              <div className="flex-shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
                 <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-tight">
                   {product.name}
                 </h1>
                 <ShareButtons title={product.name} excerpt={product.name} />
               </div>
 
-              <div className="mb-2.5 bg-secondary/20 rounded-xl p-3 sm:px-4 sm:py-2.5 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex-shrink-0 mb-2.5 bg-secondary/20 rounded-xl p-3 sm:px-4 sm:py-2.5 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   {!showContactPrice ? (
                     <>
@@ -346,54 +298,43 @@ export default function ProductDetailClient({
                 </div>
               </div>
 
-              {/* Variants Selection UI */}
               {product.variants && product.variants.length > 1 && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-bold text-foreground mb-3 uppercase tracking-wider">Chọn cấu hình:</h3>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="flex-shrink-0 mb-2.5">
+                  <h3 className="text-xs font-bold text-foreground mb-1.5 uppercase tracking-wider">Chọn cấu hình:</h3>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                     {product.variants.map((variant: any) => (
                       <button
                         key={variant.id}
                         onClick={() => setSelectedVariantId(variant.id)}
-                        className={`relative text-left p-3 rounded-xl border-2 transition-all overflow-hidden flex flex-col justify-between min-h-[90px] ${selectedVariantId === variant.id
-                            ? 'border-primary ring-1 ring-primary shadow-sm bg-primary/5'
-                            : 'border-border hover:border-primary/40 bg-card hover:bg-secondary/20'
+                        className={`relative text-left p-2 rounded-xl border-2 transition-all overflow-hidden flex flex-col justify-between min-h-[65px] ${selectedVariantId === variant.id
+                          ? 'border-primary ring-1 ring-primary shadow-sm bg-primary/5'
+                          : 'border-border hover:border-primary/40 bg-card hover:bg-secondary/20'
                           }`}
                       >
                         {selectedVariantId === variant.id && (
-                          <div className="absolute top-0 right-0 bg-primary text-primary-foreground p-1 rounded-bl-lg">
+                          <div className="absolute top-0 right-0 bg-primary text-primary-foreground p-0.5 rounded-bl-lg">
                             <CheckCircle2 className="w-3 h-3" />
                           </div>
                         )}
-                        <div className="text-sm font-bold text-foreground mb-1 pr-4 line-clamp-2">
-                          {variant.name ? variant.name.replace(`${product.name} - `, '') : 'Mặc định'} {variant.sku && <span className="text-muted-foreground font-normal text-[11px] ml-1">({variant.sku})</span>}
+                        <div className="text-xs font-bold text-foreground mb-0.5 pr-3 line-clamp-1">
+                          {variant.name ? variant.name.replace(`${product.name} - `, '') : 'Mặc định'}
                         </div>
-                        <div className="text-primary font-bold text-sm">
+                        <div className="text-primary font-bold text-xs">
                           {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(variant.price)}
-                          {isRental && <span className="font-normal text-xs text-muted-foreground ml-1">/ tháng</span>}
+                          {isRental && <span className="font-normal text-[10px] text-muted-foreground ml-1">/ tháng</span>}
                         </div>
-                        {variant.attributes && Object.keys(variant.attributes).length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-border/50">
-                            {Object.entries(variant.attributes).map(([k, v]) => (
-                              <span key={k} className="text-[10px] px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded font-medium">
-                                {k}: {v as string}
-                              </span>
-                            ))}
-                          </div>
-                        )}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Custom Build Selection UI */}
               {product.productType === 'custom-build' && product.customOptions && (
-                <div className="mb-6 space-y-4">
+                <div className="flex-shrink-0 mb-2.5 space-y-2">
                   {product.customOptions.map((group: any) => (
-                    <div key={group.name} className="bg-secondary/30 p-4 rounded-xl border border-border">
-                      <h3 className="text-sm font-semibold text-foreground mb-3">{group.name}:</h3>
-                      <div className="space-y-2">
+                    <div key={group.name} className="bg-secondary/30 p-2.5 rounded-xl border border-border">
+                      <h3 className="text-xs font-semibold text-foreground mb-1.5">{group.name}:</h3>
+                      <div className="space-y-1">
                         {group.choices.map((choice: any) => (
                           <label key={choice.id} className="flex items-center gap-3 cursor-pointer group/label">
                             <input
@@ -402,9 +343,9 @@ export default function ProductDetailClient({
                               value={choice.id}
                               checked={selectedCustomOptions[group.name] === choice.id}
                               onChange={() => setSelectedCustomOptions(prev => ({ ...prev, [group.name]: choice.id }))}
-                              className="w-4 h-4 text-primary focus:ring-primary border-border mt-0.5 cursor-pointer"
+                              className="w-3.5 h-3.5 text-primary focus:ring-primary border-border cursor-pointer"
                             />
-                            <div className="flex-1 flex justify-between items-center text-sm">
+                            <div className="flex-1 flex justify-between items-center text-xs">
                               <span className="text-foreground group-hover/label:text-primary transition-colors">{choice.name}</span>
                               {choice.priceModifier > 0 && (
                                 <span className="text-muted-foreground">+ {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(choice.priceModifier)}</span>
@@ -417,161 +358,120 @@ export default function ProductDetailClient({
                   ))}
                 </div>
               )}
-              {/* Included Items for Service Packages */}
-              {product.includedItems && product.includedItems.length > 0 && (
-                <div className="mb-8 p-6 bg-primary/5 border border-primary/20 rounded-xl">
-                  <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-primary" />
-                    Trọn gói bao gồm:
-                  </h3>
-                  <ul className="space-y-3">
-                    {product.includedItems.map((item: any, idx: number) => (
-                      <li key={idx} className="flex gap-3 text-muted-foreground">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
 
-              {/* Rental Terms */}
-              {isRental && product.rentalTerms && (() => {
-                const terms = product.rentalTerms;
-                const notesText = terms.notes || terms.additionalInfo || terms.note;
-                const hasDeposit = Boolean(terms.deposit && Number(terms.deposit) > 0);
-                const hasMinMonths = Boolean(terms.minMonths && Number(terms.minMonths) > 0);
-                const hasFreeBw = Boolean(terms.freeBw && Number(terms.freeBw) > 0);
-                const hasOverageBw = Boolean(terms.overageBw && Number(terms.overageBw) > 0);
-                const hasFreeColor = Boolean(terms.freeColor && Number(terms.freeColor) > 0);
-                const hasOverageColor = Boolean(terms.overageColor && Number(terms.overageColor) > 0);
-                const hasNotes = Boolean(notesText && String(notesText).trim());
-
-                const hasAnySpec = hasDeposit || hasMinMonths || hasFreeBw || hasOverageBw || hasFreeColor || hasOverageColor || hasNotes;
-
-                if (!hasAnySpec) return null;
-
-                return (
-                  <div className="mb-6 p-5 bg-blue-50/50 border border-blue-100 rounded-2xl">
-                    <h3 className="text-sm font-bold text-blue-900 mb-4 uppercase tracking-wider flex items-center gap-2">
-                      <Info className="w-5 h-5 text-blue-600" /> Cấu hình thuê máy
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                      {hasDeposit && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-muted-foreground text-xs">Phí đặt cọc</span>
-                          <span className="font-semibold text-foreground">
-                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(terms.deposit))}
-                          </span>
-                        </div>
-                      )}
-                      {hasMinMonths && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-muted-foreground text-xs">Kì hạn thuê tối thiểu</span>
-                          <span className="font-semibold text-foreground">{terms.minMonths} tháng</span>
-                        </div>
-                      )}
-                      {hasFreeBw && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-muted-foreground text-xs">Định mức in Đen trắng</span>
-                          <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN').format(Number(terms.freeBw))} trang/tháng</span>
-                        </div>
-                      )}
-                      {hasOverageBw && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-muted-foreground text-xs">Phí vượt mức Đen trắng</span>
-                          <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(terms.overageBw))} / trang</span>
-                        </div>
-                      )}
-                      {hasFreeColor && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-muted-foreground text-xs">Định mức in Màu</span>
-                          <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN').format(Number(terms.freeColor))} trang/tháng</span>
-                        </div>
-                      )}
-                      {hasOverageColor && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-muted-foreground text-xs">Phí vượt mức Màu</span>
-                          <span className="font-semibold text-foreground">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(terms.overageColor))} / trang</span>
-                        </div>
-                      )}
-                      {hasNotes && (
-                        <div className="sm:col-span-2 pt-3 border-t border-blue-200/60 mt-1">
-                          <p className="text-foreground text-xs sm:text-sm leading-relaxed whitespace-pre-line">{notesText}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Quick Specs */}
               {(() => {
                 const hasQuickSpecs = Array.isArray(product.quickSpecs) && product.quickSpecs.length > 0;
                 const specifications = Array.isArray(product.specifications) ? product.specifications : [];
-                const allSpecs = hasQuickSpecs 
-                  ? product.quickSpecs 
+                const allSpecs = hasQuickSpecs
+                  ? product.quickSpecs
                   : (specifications.length > 0 ? specifications : []);
-                
+
                 const INITIAL_LIMIT = 11;
                 const hasMore = allSpecs.length > INITIAL_LIMIT;
                 const displaySpecs = showAllQuickSpecs ? allSpecs : allSpecs.slice(0, INITIAL_LIMIT);
 
                 return (
-                  <div className="mb-2.5 flex-1 flex flex-col">
-                    <h3 className="text-xs sm:text-sm font-bold text-foreground mb-1.5 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
-                      <Info className="w-4 h-4 text-primary" /> Thông số nổi bật
+                  <div className="flex-1 min-h-0 bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100/80 dark:border-emerald-900/40 rounded-2xl p-4 sm:p-4.5 shadow-xs flex flex-col justify-between overflow-hidden">
+                    <h3 className="flex-shrink-0 text-xs sm:text-sm font-bold text-emerald-900 dark:text-emerald-300 pb-2 border-b border-emerald-200/60 dark:border-emerald-800/40 mb-2 uppercase tracking-wider flex items-center gap-2">
+                      <Info className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Thông số nổi bật
                     </h3>
-                    <div className="bg-secondary/20 rounded-xl p-3 sm:px-4 sm:py-3 border border-border flex-1 flex flex-col justify-between">
-                      <ul className="space-y-1.5 text-xs sm:text-sm text-foreground">
-                        {displaySpecs.length > 0 ? (
-                          displaySpecs.map((spec: any, idx: number) => {
-                            if (typeof spec === 'string') {
-                              return (
-                                <li key={idx} className="flex gap-2 items-start">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                                  <span className="leading-normal">{spec}</span>
-                                </li>
-                              );
-                            }
-                            const label = spec?.label || spec?.name;
-                            const value = spec?.value || spec?.val;
+                    <ul className="flex-1 flex flex-col justify-around text-xs sm:text-sm text-foreground space-y-1.5 overflow-y-auto pr-1 py-1">
+                      {displaySpecs.length > 0 ? (
+                        displaySpecs.map((spec: any, idx: number) => {
+                          if (typeof spec === 'string') {
                             return (
-                              <li key={idx} className="flex gap-2 items-start">
-                                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                                <span className="leading-normal">
-                                  {label ? <><span className="text-muted-foreground font-medium">{label}:</span> {value}</> : value}
-                                </span>
+                              <li key={idx} className="flex gap-2.5 items-start">
+                                <span className="w-2 h-2 rounded-full bg-emerald-600 dark:bg-emerald-400 mt-1 shrink-0" />
+                                <span className="leading-snug">{spec}</span>
                               </li>
                             );
-                          })
-                        ) : (
-                          <li className="flex gap-2 items-center text-muted-foreground text-xs italic py-0.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
-                            <span>Thông tin nổi bật đang được cập nhật...</span>
-                          </li>
-                        )}
-                      </ul>
-                      {hasMore && (
-                        <button
-                          type="button"
-                          onClick={() => setShowAllQuickSpecs(!showAllQuickSpecs)}
-                          className="mt-2 pt-2 border-t border-border/60 text-xs font-semibold text-primary hover:text-primary/80 flex items-center justify-center gap-1 w-full transition-colors cursor-pointer"
-                        >
-                          {showAllQuickSpecs ? (
-                            <>Thu gọn <ChevronUp className="w-3.5 h-3.5" /></>
-                          ) : (
-                            <>Xem thêm ({allSpecs.length - INITIAL_LIMIT} thông số khác) <ChevronDown className="w-3.5 h-3.5" /></>
-                          )}
-                        </button>
+                          }
+                          const label = spec?.label || spec?.name;
+                          const value = spec?.value || spec?.val;
+                          return (
+                            <li key={idx} className="flex gap-2.5 items-start">
+                              <span className="w-2 h-2 rounded-full bg-emerald-600 dark:bg-emerald-400 mt-1 shrink-0" />
+                              <span className="leading-snug">
+                                {label ? <><span className="text-muted-foreground font-semibold">{label}:</span> {value}</> : value}
+                              </span>
+                            </li>
+                          );
+                        })
+                      ) : (
+                        <li className="flex gap-2 items-center text-muted-foreground text-xs italic py-0.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
+                          <span>Thông tin nổi bật đang được cập nhật...</span>
+                        </li>
                       )}
-                    </div>
+                    </ul>
+                    {hasMore && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllQuickSpecs(!showAllQuickSpecs)}
+                        className="flex-shrink-0 mt-2 pt-1.5 border-t border-emerald-100 dark:border-emerald-900/40 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 flex items-center justify-center gap-1 w-full transition-colors cursor-pointer"
+                      >
+                        {showAllQuickSpecs ? (
+                          <>Thu gọn <ChevronUp className="w-3.5 h-3.5" /></>
+                        ) : (
+                          <>Xem thêm ({allSpecs.length - INITIAL_LIMIT} thông số khác) <ChevronDown className="w-3.5 h-3.5" /></>
+                        )}
+                      </button>
+                    )}
                   </div>
                 );
               })()}
+            </div>
+          </div>
 
-              {/* Actions */}
-              <div className="mb-2.5 mt-auto">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 mb-8">
+            <div className="md:col-span-5 lg:col-span-5 flex flex-col gap-3">
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {gallery.map((img: string, idx: number) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImage(img)}
+                    className={`relative w-14 h-14 sm:w-16 sm:h-16 aspect-square rounded-xl overflow-hidden bg-white border-2 transition-all ${activeImage === img ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
+                  >
+                    <Image src={img} alt={`${product.name} thumbnail ${idx + 1}`} fill className="object-cover" />
+                  </button>
+                ))}
+              </div>
+
+              {consumables && consumables.length > 0 && (
+                <div className="p-3 bg-emerald-50/50 border border-emerald-100 rounded-2xl shadow-sm">
+                  <h3 className="text-sm font-bold text-emerald-800 mb-2 uppercase tracking-wider flex items-center gap-2">
+                    <Package className="w-4 h-4 text-emerald-600" /> Vật tư tiêu hao khuyên dùng
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {consumables.map((item: any) => (
+                      <div key={item.id} className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-emerald-100 hover:border-emerald-300 transition-colors shadow-sm group">
+                        <Link href={`/san-pham/${item.slug}`} className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-50 flex-shrink-0 border border-border block">
+                          <Image src={item.image} alt={item.name} fill className="object-cover group-hover:scale-105 transition-transform" />
+                        </Link>
+                        <div className="flex-1 min-w-0">
+                          <Link href={`/san-pham/${item.slug}`} className="font-semibold text-[13px] text-foreground hover:text-primary block leading-snug mb-0.5 break-words">
+                            {item.name}
+                          </Link>
+                          <div className="text-primary font-bold text-sm">
+                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
+                          </div>
+                        </div>
+                        <Link
+                          href={`/san-pham/${item.slug}`}
+                          className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all flex-shrink-0"
+                          title="Xem chi tiết"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="md:col-span-7 lg:col-span-7 flex flex-col gap-3">
+              <div>
                 {!showContactPrice ? (
                   <div className="flex flex-row items-center gap-1.5 sm:gap-3">
                     <div className="flex items-center border-2 border-primary/20 bg-background rounded-xl h-12 w-24 sm:w-28 lg:w-32 flex-shrink-0">
@@ -640,7 +540,6 @@ export default function ProductDetailClient({
                 )}
               </div>
 
-              {/* Features / Policies */}
               {product.policies && product.policies.length > 0 && (
                 <div className="grid grid-cols-2 gap-2 mt-1 mb-0">
                   {product.policies.map((policy: any) => {
@@ -661,11 +560,9 @@ export default function ProductDetailClient({
                   })}
                 </div>
               )}
-
             </div>
           </div>
 
-          {/* Detailed Description with Tabs */}
           <div className="mt-16 pt-8 border-t border-border">
             {/* Tabs Navigation */}
             <div className="flex items-center overflow-x-auto scrollbar-hide border-b border-border mb-6 gap-1 sm:gap-4 -mx-4 px-4 sm:mx-0 sm:px-0">
