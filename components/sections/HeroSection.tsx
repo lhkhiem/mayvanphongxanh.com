@@ -89,86 +89,111 @@ export function HeroSection({ categories = [], sliders = [], banners = [] }: { c
             )}
 
             {/* Sub-Categories Mega Menu Flyout */}
-            {activeSide !== null && (categories && categories.length > 0) && (
-              <div className="absolute top-0 left-full ml-1 w-[550px] min-h-[420px] bg-white border border-gray-200 shadow-2xl rounded-lg z-40 p-6 pointer-events-auto flex">
-                {/* Left: subcategories */}
-                <div className={`flex-1 ${categories[activeSide].hasPromo ? 'pr-6 border-r border-gray-100' : ''}`}>
-                  <div className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-5 flex items-center gap-2">
-                    <CategoryIcon
-                      icon={categories[activeSide].icon}
-                      name={categories[activeSide].name}
-                      color={categories[activeSide].color}
-                      className="w-5 h-5 text-primary shrink-0"
-                      fallbackSize="sm"
-                    /> {categories[activeSide].name}
-                  </div>
-                  <div className="grid grid-cols-2 gap-y-4 gap-x-6">
-                    {categories[activeSide].children && categories[activeSide].children.length > 0 ? (
-                      categories[activeSide].children.map((sub: any) => (
-                        <Link
-                          key={sub.slug}
-                          href={`/danh-muc/${sub.slug}`}
-                          className="text-[14px] text-gray-600 hover:text-primary transition-colors flex items-center gap-2 group/link"
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover/link:bg-primary transition-colors shrink-0" />
-                          {sub.name}
-                        </Link>
-                      ))
-                    ) : (
-                      <span className="text-[13px] text-gray-500 italic">Đang cập nhật danh mục con...</span>
-                    )}
-                  </div>
-                  <div className="mt-8">
-                    <Link href={`/danh-muc/${categories[activeSide].slug}`} className="inline-flex items-center gap-1.5 text-[13px] text-white bg-primary font-semibold px-5 py-2.5 rounded-md hover:bg-primary/90 transition-colors shadow-sm hover:shadow-md">
-                      Xem tất cả <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                </div>
-                {/* Right: promo block */}
-                {categories[activeSide].hasPromo && (
-                  <div className="w-[220px] pl-6 flex flex-col">
-                    <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-5 flex-1 flex flex-col relative overflow-hidden group/promo border border-primary/20 hover:border-primary/40 transition-colors shadow-sm">
-                      {categories[activeSide].promoImageUrl ? (
-                        <div className="mb-4 -mx-2 -mt-2 rounded-lg overflow-hidden shrink-0">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img 
-                            src={categories[activeSide].promoImageUrl} 
-                            alt={categories[activeSide].promoTitle || ''}
-                            className="w-full h-28 object-cover group-hover/promo:scale-105 transition-transform duration-500 bg-white"
-                          />
-                        </div>
-                      ) : (
-                        <div className="absolute -top-6 -right-6 p-2 opacity-10 group-hover/promo:scale-110 group-hover/promo:rotate-12 transition-all duration-700 pointer-events-none">
-                          <CategoryIcon
-                            icon={categories[activeSide].icon}
-                            name={categories[activeSide].name}
-                            color={categories[activeSide].color}
-                            className="w-32 h-32 text-primary"
-                            fallbackSize="xl"
-                          />
-                        </div>
-                      )}
-                      <div className="relative z-10 flex-1 flex flex-col justify-end">
-                        <span 
-                          className="inline-block text-[11px] font-bold text-white px-2 py-0.5 rounded w-fit mb-3 uppercase tracking-wide shadow-sm"
-                          style={{ backgroundColor: categories[activeSide].promoBadgeColor || '#ef4444' }}
-                        >
-                          {categories[activeSide].promoBadgeText || 'Ưu đãi đặc biệt'}
-                        </span>
-                        <h4 className="text-[15px] font-bold text-gray-900 mt-1 leading-snug">
-                          {categories[activeSide].promoTitle || `Sắm ${categories[activeSide].name.toLowerCase()}`}
-                        </h4>
-                        <p className="text-[13px] text-gray-600 mt-2 mb-4 leading-relaxed line-clamp-3">
-                          {categories[activeSide].promoDescription || 'Đang cập nhật ưu đãi...'}
-                        </p>
-                        <Link href={categories[activeSide].promoTargetUrl || `/danh-muc/${categories[activeSide].slug}`} className="text-[13px] font-bold text-primary hover:text-primary/80 flex items-center gap-1 group-hover/promo:gap-2 transition-all">
-                          Xem chi tiết <ArrowRight className="w-4 h-4" />
+            {activeSide !== null && categories && categories[activeSide] && (
+              (() => {
+                const activeCat = categories[activeSide];
+                const subCats = activeCat.children || [];
+                const subCount = subCats.length;
+                const hasPromo = activeCat.hasPromo;
+
+                let gridColsClass = 'grid-cols-1';
+                let flyoutWidthClass = 'w-[280px]';
+
+                if (subCount <= 5) {
+                  gridColsClass = 'grid-cols-1';
+                  flyoutWidthClass = hasPromo ? 'w-[480px]' : 'w-[280px]';
+                } else if (subCount <= 14) {
+                  gridColsClass = 'grid-cols-2';
+                  flyoutWidthClass = hasPromo ? 'w-[680px]' : 'w-[480px]';
+                } else {
+                  gridColsClass = 'grid-cols-3';
+                  flyoutWidthClass = hasPromo ? 'w-[860px]' : 'w-[660px]';
+                }
+
+                return (
+                  <div className={`absolute top-0 left-full ml-1 ${flyoutWidthClass} max-w-[calc(100vw-260px)] bg-white border border-gray-200 shadow-2xl rounded-lg z-40 p-5 pointer-events-auto flex transition-all duration-200`}>
+                    {/* Left: subcategories */}
+                    <div className={`flex-1 min-w-0 ${hasPromo ? 'pr-5 border-r border-gray-100' : ''}`}>
+                      <div className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <CategoryIcon
+                          icon={activeCat.icon}
+                          name={activeCat.name}
+                          color={activeCat.color}
+                          className="w-5 h-5 text-primary shrink-0"
+                          fallbackSize="sm"
+                        />
+                        <span className="truncate">{activeCat.name}</span>
+                      </div>
+                      <div className={`grid ${gridColsClass} gap-y-3 gap-x-5`}>
+                        {subCount > 0 ? (
+                          subCats.map((sub: any) => (
+                            <Link
+                              key={sub.slug ?? sub.name}
+                              href={`/danh-muc/${sub.slug ?? encodeURIComponent(sub.name)}`}
+                              className="text-[14px] text-gray-600 hover:text-primary transition-colors flex items-center gap-2 group/link truncate"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover/link:bg-primary transition-colors shrink-0" />
+                              <span className="truncate">{sub.name}</span>
+                            </Link>
+                          ))
+                        ) : (
+                          <span className="text-[13px] text-gray-500 italic">Đang cập nhật danh mục con...</span>
+                        )}
+                      </div>
+                      <div className="mt-5">
+                        <Link href={`/danh-muc/${activeCat.slug ?? ''}`} className="inline-flex items-center gap-1.5 text-[13px] text-white bg-primary font-semibold px-4 py-2 rounded-md hover:bg-primary/90 transition-colors shadow-sm hover:shadow-md">
+                          Xem tất cả <ArrowRight className="w-3.5 h-3.5" />
                         </Link>
                       </div>
                     </div>
+
+                    {/* Right: promo block */}
+                    {hasPromo && (
+                      <div className="w-[210px] pl-5 flex flex-col shrink-0">
+                        <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-4 flex-1 flex flex-col relative overflow-hidden group/promo border border-primary/20 hover:border-primary/40 transition-colors shadow-sm">
+                          {activeCat.promoImageUrl ? (
+                            <div className="mb-3 -mx-1 -mt-1 rounded-lg overflow-hidden shrink-0">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img 
+                                src={activeCat.promoImageUrl} 
+                                alt={activeCat.promoTitle || ''}
+                                className="w-full h-24 object-cover group-hover/promo:scale-105 transition-transform duration-500 bg-white"
+                              />
+                            </div>
+                          ) : (
+                            <div className="absolute -top-6 -right-6 p-2 opacity-10 group-hover/promo:scale-110 group-hover/promo:rotate-12 transition-all duration-700 pointer-events-none">
+                              <CategoryIcon
+                                icon={activeCat.icon}
+                                name={activeCat.name}
+                                color={activeCat.color}
+                                className="w-32 h-32 text-primary"
+                                fallbackSize="xl"
+                              />
+                            </div>
+                          )}
+                          <div className="relative z-10 flex-1 flex flex-col justify-end">
+                            <span 
+                              className="inline-block text-[11px] font-bold text-white px-2 py-0.5 rounded w-fit mb-2 uppercase tracking-wide shadow-sm"
+                              style={{ backgroundColor: activeCat.promoBadgeColor || '#ef4444' }}
+                            >
+                              {activeCat.promoBadgeText || 'Ưu đãi đặc biệt'}
+                            </span>
+                            <h4 className="text-[14px] font-bold text-gray-900 mt-1 leading-snug">
+                              {activeCat.promoTitle || `Sắm ${activeCat.name.toLowerCase()}`}
+                            </h4>
+                            <p className="text-[12px] text-gray-600 mt-1.5 mb-3 leading-relaxed line-clamp-2">
+                              {activeCat.promoDescription || 'Đang cập nhật ưu đãi...'}
+                            </p>
+                            <Link href={activeCat.promoTargetUrl || `/danh-muc/${activeCat.slug}`} className="text-[13px] font-bold text-primary hover:text-primary/80 flex items-center gap-1 group-hover/promo:gap-2 transition-all">
+                              Xem chi tiết <ArrowRight className="w-4 h-4" />
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                );
+              })()
             )}
           </div>
 

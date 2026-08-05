@@ -255,31 +255,39 @@ function CompactCategoryMenu({ categories = [] }: { categories?: any[] }) {
 
           {/* Flyout submenu */}
           {activeSide !== null && categories[activeSide]?.children?.length > 0 && (
-            <div className="ml-1 w-[280px] bg-white border border-gray-200 shadow-xl rounded-lg p-4 max-h-[80vh] overflow-y-auto">
-              <div className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2 pb-2 border-b border-gray-100">
-                <CategoryIcon
-                  icon={categories[activeSide].icon}
-                  name={categories[activeSide].name}
-                  color={categories[activeSide].color}
-                  className="w-5 h-5 text-primary shrink-0"
-                  fallbackSize="sm"
-                />
-                {categories[activeSide].name}
-              </div>
-              <div className="grid grid-cols-1 gap-1">
-                {categories[activeSide].children.map((sub: any) => (
-                  <Link
-                    key={sub.slug ?? sub.name}
-                    href={`/danh-muc/${sub.slug ?? encodeURIComponent(sub.name)}`}
-                    onClick={() => setOpen(false)}
-                    className="flex items-center gap-2 py-1.5 px-2 text-[13px] text-gray-600 hover:text-primary hover:bg-primary/5 rounded-md transition-colors group"
-                  >
-                    <span className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-primary transition-colors shrink-0" />
-                    {sub.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
+            (() => {
+              const subCount = categories[activeSide].children.length;
+              const flyoutWidth = subCount > 14 ? 'w-[660px]' : subCount > 5 ? 'w-[480px]' : 'w-[280px]';
+              const gridCols = subCount > 14 ? 'grid-cols-3' : subCount > 5 ? 'grid-cols-2' : 'grid-cols-1';
+
+              return (
+                <div className={`ml-1 ${flyoutWidth} max-w-[calc(100vw-280px)] bg-white border border-gray-200 shadow-xl rounded-lg p-4 max-h-[80vh] overflow-y-auto`}>
+                  <div className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2 pb-2 border-b border-gray-100">
+                    <CategoryIcon
+                      icon={categories[activeSide].icon}
+                      name={categories[activeSide].name}
+                      color={categories[activeSide].color}
+                      className="w-5 h-5 text-primary shrink-0"
+                      fallbackSize="sm"
+                    />
+                    <span className="truncate">{categories[activeSide].name}</span>
+                  </div>
+                  <div className={`grid ${gridCols} gap-1`}>
+                    {categories[activeSide].children.map((sub: any) => (
+                      <Link
+                        key={sub.slug ?? sub.name}
+                        href={`/danh-muc/${sub.slug ?? encodeURIComponent(sub.name)}`}
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-2 py-1.5 px-2 text-[13px] text-gray-600 hover:text-primary hover:bg-primary/5 rounded-md transition-colors group truncate"
+                      >
+                        <span className="w-1 h-1 rounded-full bg-gray-300 group-hover:bg-primary transition-colors shrink-0" />
+                        <span className="truncate">{sub.name}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()
           )}
         </div>
       )}
