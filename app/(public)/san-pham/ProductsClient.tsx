@@ -10,8 +10,8 @@ import { cn } from '@/lib/utils';
 
 const SORT_OPTIONS = [
   { label: 'Phù hợp nhất', value: 'featured' },
-  { label: 'Giá: Thấp đến Cao', value: 'price-asc' },
-  { label: 'Giá: Cao đến Thấp', value: 'price-desc' },
+  { label: 'Giá thấp đến cao', value: 'price-asc' },
+  { label: 'Giá cao đến thấp', value: 'price-desc' },
   { label: 'Mới nhất', value: 'newest' },
   { label: 'Bán chạy', value: 'best-sellers' },
 ];
@@ -655,7 +655,7 @@ export default function ProductsClient({
                   >
                   {SORT_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
-                      Sắp xếp: {option.label}
+                      {option.label}
                     </option>
                   ))}
                   </select>
