@@ -215,10 +215,11 @@ export default function ProductDetailClient({
             </span>
           </nav>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 items-stretch mb-5">
-            <div className="md:col-span-5 lg:col-span-5 flex flex-col">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 items-start mb-8">
+            {/* Left Column: Main Image + Gallery + Consumables */}
+            <div className="md:col-span-5 lg:col-span-5 flex flex-col gap-3.5">
               <div
-                className="relative aspect-square rounded-2xl overflow-hidden bg-white border border-border cursor-crosshair w-full h-full"
+                className="relative aspect-square rounded-2xl overflow-hidden bg-white border border-border cursor-crosshair w-full"
                 onMouseMove={(e) => {
                   const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
                   const x = ((e.clientX - left) / width) * 100;
@@ -242,17 +243,30 @@ export default function ProductDetailClient({
                   </div>
                 )}
               </div>
+
+              {/* Thumbnails Row */}
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {gallery.map((img: string, idx: number) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImage(img)}
+                    className={`relative w-14 h-14 sm:w-16 sm:h-16 aspect-square rounded-xl overflow-hidden bg-white border-2 transition-all ${activeImage === img ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
+                  >
+                    <Image src={img} alt={`${product.name} thumbnail ${idx + 1}`} fill className="object-cover" />
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="md:col-span-7 lg:col-span-7 flex flex-col min-h-0">
-              <div className="flex-shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+            {/* Right Column: Title, Price, Variants, Specs, Buy Button, Policies */}
+            <div className="md:col-span-7 lg:col-span-7 flex flex-col gap-3.5 min-w-0">
+              <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-tight">
                   {product.name}
                 </h1>
-                <ShareButtons title={product.name} excerpt={product.name} />
               </div>
 
-              <div className="flex-shrink-0 mb-2.5 bg-secondary/20 rounded-xl p-3 sm:px-4 sm:py-2.5 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="bg-secondary/20 rounded-xl p-3 sm:px-4 sm:py-2.5 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   {!showContactPrice ? (
                     <>
@@ -299,7 +313,7 @@ export default function ProductDetailClient({
               </div>
 
               {product.variants && product.variants.length > 1 && (
-                <div className="flex-shrink-0 mb-2.5">
+                <div>
                   <h3 className="text-xs font-bold text-foreground mb-1.5 uppercase tracking-wider">Chọn cấu hình:</h3>
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                     {product.variants.map((variant: any) => (
@@ -330,7 +344,7 @@ export default function ProductDetailClient({
               )}
 
               {product.productType === 'custom-build' && product.customOptions && (
-                <div className="flex-shrink-0 mb-2.5 space-y-2">
+                <div className="space-y-2">
                   {product.customOptions.map((group: any) => (
                     <div key={group.name} className="bg-secondary/30 p-2.5 rounded-xl border border-border">
                       <h3 className="text-xs font-semibold text-foreground mb-1.5">{group.name}:</h3>
@@ -359,6 +373,7 @@ export default function ProductDetailClient({
                 </div>
               )}
 
+              {/* Quick Specs - Natural Auto-height */}
               {(() => {
                 const hasQuickSpecs = Array.isArray(product.quickSpecs) && product.quickSpecs.length > 0;
                 const specifications = Array.isArray(product.specifications) ? product.specifications : [];
@@ -371,11 +386,11 @@ export default function ProductDetailClient({
                 const displaySpecs = showAllQuickSpecs ? allSpecs : allSpecs.slice(0, INITIAL_LIMIT);
 
                 return (
-                  <div className="flex-1 min-h-0 bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100/80 dark:border-emerald-900/40 rounded-2xl p-4 sm:p-4.5 shadow-xs flex flex-col justify-between overflow-hidden">
-                    <h3 className="flex-shrink-0 text-xs sm:text-sm font-bold text-emerald-900 dark:text-emerald-300 pb-2 border-b border-emerald-200/60 dark:border-emerald-800/40 mb-2 uppercase tracking-wider flex items-center gap-2">
+                  <div className="bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100/80 dark:border-emerald-900/40 rounded-2xl p-3.5 sm:p-4 shadow-xs">
+                    <h3 className="text-xs sm:text-sm font-bold text-emerald-900 dark:text-emerald-300 pb-2 border-b border-emerald-200/60 dark:border-emerald-800/40 mb-2 uppercase tracking-wider flex items-center gap-2">
                       <Info className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Thông số nổi bật
                     </h3>
-                    <ul className="flex-1 flex flex-col justify-around text-xs sm:text-sm text-foreground space-y-1.5 overflow-y-auto pr-1 py-1">
+                    <ul className="text-xs sm:text-sm text-foreground space-y-2 py-0.5">
                       {displaySpecs.length > 0 ? (
                         displaySpecs.map((spec: any, idx: number) => {
                           if (typeof spec === 'string') {
@@ -408,7 +423,7 @@ export default function ProductDetailClient({
                       <button
                         type="button"
                         onClick={() => setShowAllQuickSpecs(!showAllQuickSpecs)}
-                        className="flex-shrink-0 mt-2 pt-1.5 border-t border-emerald-100 dark:border-emerald-900/40 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 flex items-center justify-center gap-1 w-full transition-colors cursor-pointer"
+                        className="mt-2 pt-1.5 border-t border-emerald-100 dark:border-emerald-900/40 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 flex items-center justify-center gap-1 w-full transition-colors cursor-pointer"
                       >
                         {showAllQuickSpecs ? (
                           <>Thu gọn <ChevronUp className="w-3.5 h-3.5" /></>
@@ -420,26 +435,87 @@ export default function ProductDetailClient({
                   </div>
                 );
               })()}
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 mb-8">
-            <div className="md:col-span-5 lg:col-span-5 flex flex-col gap-3">
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                {gallery.map((img: string, idx: number) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveImage(img)}
-                    className={`relative w-14 h-14 sm:w-16 sm:h-16 aspect-square rounded-xl overflow-hidden bg-white border-2 transition-all ${activeImage === img ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
-                  >
-                    <Image src={img} alt={`${product.name} thumbnail ${idx + 1}`} fill className="object-cover" />
-                  </button>
-                ))}
+              {/* Quantity Selector, Action Buttons & Share */}
+              <div>
+                {!showContactPrice ? (
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <div className="flex items-center border-2 border-primary/20 bg-background rounded-xl h-11 w-24 sm:w-28 flex-shrink-0">
+                      <button
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        className="w-7 sm:w-8 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-l-xl"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="flex-1 text-center font-bold text-sm sm:text-base">{quantity}</span>
+                      <button
+                        onClick={() => setQuantity(Math.min(stock, quantity + 1))}
+                        className="w-7 sm:w-8 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-r-xl"
+                        disabled={quantity >= stock}
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={handleAddToCart}
+                      disabled={stock === 0}
+                      className="w-11 h-11 bg-primary/10 text-primary border-2 border-primary/20 rounded-xl hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
+                      title={isRental ? "Thêm vào giỏ (Thuê)" : "Thêm vào giỏ"}
+                    >
+                      <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
+
+                    <button
+                      onClick={handleAddToCart}
+                      disabled={stock === 0}
+                      className="px-5 sm:px-6 h-11 bg-primary text-primary-foreground rounded-xl font-bold text-xs sm:text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shadow-md shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 whitespace-nowrap flex-shrink-0"
+                    >
+                      {isRental ? 'ĐĂNG KÝ THUÊ' : 'MUA NGAY'}
+                    </button>
+
+                    <button
+                      onClick={() => window.print()}
+                      className="h-11 px-3.5 sm:px-4 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-bold text-xs sm:text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-1.5 flex-shrink-0"
+                      title="Yêu cầu báo giá"
+                    >
+                      <Printer className="w-4 h-4" />
+                      <span>BÁO GIÁ</span>
+                    </button>
+
+                    <div className="flex-shrink-0 ml-auto sm:ml-2">
+                      <ShareButtons title={product.name} excerpt={product.name} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <a
+                      href="/lien-he"
+                      className="px-5 sm:px-6 h-11 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-md shadow-amber-600/25 hover:shadow-amber-600/40 hover:-translate-y-0.5 whitespace-nowrap flex-shrink-0"
+                    >
+                      <PhoneCall className="w-4 h-4 flex-shrink-0" />
+                      LIÊN HỆ BÁO GIÁ NGAY
+                    </a>
+                    <button
+                      onClick={() => window.print()}
+                      className="px-3.5 sm:px-4 h-11 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-bold text-xs sm:text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-1.5 flex-shrink-0"
+                      title="In báo giá"
+                    >
+                      <Printer className="w-4 h-4" />
+                      <span>IN BÁO GIÁ</span>
+                    </button>
+
+                    <div className="flex-shrink-0 ml-auto sm:ml-2">
+                      <ShareButtons title={product.name} excerpt={product.name} />
+                    </div>
+                  </div>
+                )}
               </div>
 
+              {/* Recommended Consumables */}
               {consumables && consumables.length > 0 && (
                 <div className="p-3 bg-emerald-50/50 border border-emerald-100 rounded-2xl shadow-sm">
-                  <h3 className="text-sm font-bold text-emerald-800 mb-2 uppercase tracking-wider flex items-center gap-2">
+                  <h3 className="text-xs sm:text-sm font-bold text-emerald-800 mb-2 uppercase tracking-wider flex items-center gap-2">
                     <Package className="w-4 h-4 text-emerald-600" /> Vật tư tiêu hao khuyên dùng
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -468,78 +544,8 @@ export default function ProductDetailClient({
                   </div>
                 </div>
               )}
-            </div>
 
-            <div className="md:col-span-7 lg:col-span-7 flex flex-col gap-3">
-              <div>
-                {!showContactPrice ? (
-                  <div className="flex flex-row items-center gap-1.5 sm:gap-3">
-                    <div className="flex items-center border-2 border-primary/20 bg-background rounded-xl h-12 w-24 sm:w-28 lg:w-32 flex-shrink-0">
-                      <button
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        className="w-7 sm:w-9 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-l-xl"
-                      >
-                        <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      </button>
-                      <span className="flex-1 text-center font-bold text-base sm:text-lg">{quantity}</span>
-                      <button
-                        onClick={() => setQuantity(Math.min(stock, quantity + 1))}
-                        className="w-7 sm:w-9 h-full flex items-center justify-center hover:bg-secondary text-foreground transition-colors rounded-r-xl"
-                        disabled={quantity >= stock}
-                      >
-                        <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      </button>
-                    </div>
-
-                    <div className="flex flex-1 items-center gap-1.5 sm:gap-3 min-w-0">
-                      <button
-                        onClick={handleAddToCart}
-                        disabled={stock === 0}
-                        className="w-10 h-12 sm:w-12 sm:h-12 bg-primary/10 text-primary border-2 border-primary/20 rounded-xl hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
-                        title={isRental ? "Thêm vào giỏ (Thuê)" : "Thêm vào giỏ"}
-                      >
-                        <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
-                      </button>
-
-                      <button
-                        onClick={handleAddToCart}
-                        disabled={stock === 0}
-                        className="flex-1 h-12 bg-primary text-primary-foreground rounded-xl font-bold text-xs sm:text-sm md:text-base hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 sm:gap-2 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 px-1.5 sm:px-3 whitespace-nowrap min-w-0"
-                      >
-                        {isRental ? 'ĐĂNG KÝ THUÊ' : 'MUA NGAY'}
-                      </button>
-
-                      <button
-                        onClick={() => window.print()}
-                        className="w-10 sm:w-12 xl:w-auto h-12 px-0 xl:px-4 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-bold text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 flex-shrink-0"
-                        title="Yêu cầu báo giá"
-                      >
-                        <Printer className="w-4 h-4 sm:w-5 sm:h-5" />
-                        <span className="hidden xl:inline">BÁO GIÁ</span>
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-row items-center gap-2 sm:gap-3">
-                    <a
-                      href="/lien-he"
-                      className="flex-1 h-12 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs sm:text-base transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-600/25 hover:shadow-amber-600/40 hover:-translate-y-0.5 px-3 whitespace-nowrap min-w-0"
-                    >
-                      <PhoneCall className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                      LIÊN HỆ BÁO GIÁ NGAY
-                    </a>
-                    <button
-                      onClick={() => window.print()}
-                      className="w-10 sm:w-auto px-0 sm:px-4 h-12 bg-transparent border-2 border-dashed border-border text-muted-foreground rounded-xl font-bold text-sm hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 flex-shrink-0"
-                      title="In báo giá"
-                    >
-                      <Printer className="w-4 h-4 sm:w-5 sm:h-5" />
-                      <span className="hidden sm:inline">IN BÁO GIÁ</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
+              {/* Policies */}
               {product.policies && product.policies.length > 0 && (
                 <div className="grid grid-cols-2 gap-2 mt-1 mb-0">
                   {product.policies.map((policy: any) => {
@@ -563,12 +569,12 @@ export default function ProductDetailClient({
             </div>
           </div>
 
-          <div className="mt-16 pt-8 border-t border-border">
+          <div className="mt-8 sm:mt-10 pt-6 border-t border-border">
             {/* Tabs Navigation */}
-            <div className="flex items-center overflow-x-auto scrollbar-hide border-b border-border mb-6 gap-1 sm:gap-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="flex items-center overflow-x-auto scrollbar-hide border-b border-border mb-4 gap-1 sm:gap-4 -mx-4 px-4 sm:mx-0 sm:px-0">
               <button
                 onClick={() => setActiveTab('desc')}
-                className={`px-3.5 sm:px-6 py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeTab === 'desc'
+                className={`px-3.5 sm:px-6 py-2.5 sm:py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeTab === 'desc'
                     ? 'border-primary text-primary'
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                   }`}
@@ -577,7 +583,7 @@ export default function ProductDetailClient({
               </button>
               <button
                 onClick={() => setActiveTab('specs')}
-                className={`px-3.5 sm:px-6 py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeTab === 'specs'
+                className={`px-3.5 sm:px-6 py-2.5 sm:py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeTab === 'specs'
                     ? 'border-primary text-primary'
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                   }`}
@@ -586,7 +592,7 @@ export default function ProductDetailClient({
               </button>
               <button
                 onClick={() => setActiveTab('docs')}
-                className={`px-3.5 sm:px-6 py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeTab === 'docs'
+                className={`px-3.5 sm:px-6 py-2.5 sm:py-3 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeTab === 'docs'
                     ? 'border-primary text-primary'
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                   }`}
@@ -596,7 +602,7 @@ export default function ProductDetailClient({
             </div>
 
             {/* Tabs Content */}
-            <div className="min-h-[300px]">
+            <div>
               {activeTab === 'specs' && (
                 <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
                   {product.specifications && product.specifications.length > 0 ? (
@@ -604,10 +610,10 @@ export default function ProductDetailClient({
                       <tbody>
                         {product.specifications.map((spec: any, idx: number) => (
                           <tr key={idx} className="border-b border-border last:border-0 hover:bg-gray-50/50 transition-colors">
-                            <td className="py-3.5 px-6 bg-gray-50/80 font-medium text-gray-600 w-1/3 md:w-1/4 lg:w-1/5 border-r border-border">
+                            <td className="py-3 px-5 bg-gray-50/80 font-medium text-gray-600 w-1/3 md:w-1/4 lg:w-1/5 border-r border-border">
                               {spec.label}
                             </td>
-                            <td className="py-3.5 px-6 text-gray-900 font-medium">
+                            <td className="py-3 px-5 text-gray-900 font-medium">
                               {spec.value}
                             </td>
                           </tr>
@@ -615,7 +621,7 @@ export default function ProductDetailClient({
                       </tbody>
                     </table>
                   ) : (
-                    <div className="p-8 text-center text-muted-foreground italic text-sm">
+                    <div className="p-6 text-center text-muted-foreground italic text-sm">
                       Thông số kỹ thuật đang được cập nhật...
                     </div>
                   )}
@@ -623,8 +629,8 @@ export default function ProductDetailClient({
               )}
 
               {activeTab === 'desc' && (
-                <div className="prose prose-lg text-muted-foreground max-w-none bg-white p-8 rounded-xl border border-border shadow-sm">
-                  <h3 className="text-xl font-bold text-foreground mb-4">Chi tiết sản phẩm: {product.name}</h3>
+                <div className="prose prose-lg text-muted-foreground max-w-none bg-white p-5 sm:p-6 rounded-xl border border-border shadow-sm">
+                  <h3 className="text-lg sm:text-xl font-bold text-foreground mb-3">Chi tiết sản phẩm: {product.name}</h3>
                   {product.description && product.description.trim() !== '' ? (
                     <div dangerouslySetInnerHTML={{ __html: product.description }} />
                   ) : (
@@ -634,13 +640,13 @@ export default function ProductDetailClient({
               )}
 
               {activeTab === 'docs' && (
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {(product.manuals?.content || (product.manuals?.files && product.manuals.files.length > 0)) && (
-                    <div className="bg-white p-8 rounded-xl border border-border shadow-sm">
-                      <h3 className="text-lg font-bold text-foreground mb-4">Hướng dẫn sử dụng</h3>
+                    <div className="bg-white p-5 sm:p-6 rounded-xl border border-border shadow-sm">
+                      <h3 className="text-base sm:text-lg font-bold text-foreground mb-3">Hướng dẫn sử dụng</h3>
                       {product.manuals.content && (
                         <div
-                          className="prose prose-sm max-w-none text-muted-foreground mb-6 break-words prose-a:text-primary prose-a:font-medium hover:prose-a:underline"
+                          className="prose prose-sm max-w-none text-muted-foreground mb-4 break-words prose-a:text-primary prose-a:font-medium hover:prose-a:underline"
                           dangerouslySetInnerHTML={{
                             __html: product.manuals.content
                               .replace(/(?<!href=["'])(?<!src=["'])(?<!">)(https?:\/\/[^\s<"']+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary font-medium underline">$1</a>')
@@ -651,12 +657,12 @@ export default function ProductDetailClient({
                       {product.manuals.files && product.manuals.files.length > 0 && (
                         <div className="space-y-3">
                           {product.manuals.files.map((file: string, idx: number) => (
-                            <div key={idx} className="p-4 bg-primary/5 rounded-lg border border-primary/20 flex items-center justify-between">
+                            <div key={idx} className="p-3 sm:p-4 bg-primary/5 rounded-lg border border-primary/20 flex items-center justify-between">
                               <div className="flex items-center gap-3">
                                 <LucideIcons.FileText className="w-5 h-5 text-primary" />
                                 <h4 className="font-semibold text-foreground text-sm truncate max-w-[200px] sm:max-w-xs">{file.split('/').pop()}</h4>
                               </div>
-                              <a href={file} download target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+                              <a href={file} download target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-primary text-primary-foreground px-3.5 py-1.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
                                 <Download className="w-4 h-4" /> Tải xuống
                               </a>
                             </div>
@@ -667,11 +673,11 @@ export default function ProductDetailClient({
                   )}
 
                   {(product.drivers?.content || (product.drivers?.files && product.drivers.files.length > 0)) && (
-                    <div className="bg-white p-8 rounded-xl border border-border shadow-sm">
-                      <h3 className="text-lg font-bold text-foreground mb-4">Driver & Phần mềm</h3>
+                    <div className="bg-white p-5 sm:p-6 rounded-xl border border-border shadow-sm">
+                      <h3 className="text-base sm:text-lg font-bold text-foreground mb-3">Driver & Phần mềm</h3>
                       {product.drivers.content && (
                         <div
-                          className="prose prose-sm max-w-none text-muted-foreground mb-6 break-words prose-a:text-primary prose-a:font-medium hover:prose-a:underline"
+                          className="prose prose-sm max-w-none text-muted-foreground mb-4 break-words prose-a:text-primary prose-a:font-medium hover:prose-a:underline"
                           dangerouslySetInnerHTML={{
                             __html: product.drivers.content
                               .replace(/(?<!href=["'])(?<!src=["'])(?<!">)(https?:\/\/[^\s<"']+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary font-medium underline">$1</a>')
@@ -680,12 +686,12 @@ export default function ProductDetailClient({
                         />
                       )}
                       {product.drivers.files && product.drivers.files.length > 0 && (
-                        <div className="grid gap-4 md:grid-cols-2">
+                        <div className="grid gap-3 md:grid-cols-2">
                           {product.drivers.files.map((file: string, idx: number) => (
-                            <a key={idx} href={file} download target="_blank" rel="noopener noreferrer" className="border border-border p-4 rounded-lg flex items-center justify-between hover:border-primary transition-colors cursor-pointer group">
+                            <a key={idx} href={file} download target="_blank" rel="noopener noreferrer" className="border border-border p-3.5 rounded-lg flex items-center justify-between hover:border-primary transition-colors cursor-pointer group">
                               <div className="flex items-center gap-3 overflow-hidden">
-                                <div className="w-10 h-10 shrink-0 bg-secondary rounded flex items-center justify-center text-xl font-bold group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                                  <Download className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                                <div className="w-9 h-9 shrink-0 bg-secondary rounded flex items-center justify-center text-xl font-bold group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                  <Download className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                                 </div>
                                 <div className="truncate">
                                   <h4 className="font-semibold text-foreground text-sm truncate">{file.split('/').pop()}</h4>
@@ -700,9 +706,9 @@ export default function ProductDetailClient({
                   )}
 
                   {(!product.manuals?.content && !product.manuals?.files?.length && !product.drivers?.content && !product.drivers?.files?.length) && (
-                    <div className="bg-white p-12 rounded-xl border border-border shadow-sm flex flex-col items-center justify-center text-muted-foreground">
-                      <LucideIcons.FileText className="w-12 h-12 mb-4 opacity-20" />
-                      <p>Sản phẩm này chưa có tài liệu hướng dẫn hay driver nào được đính kèm.</p>
+                    <div className="bg-white p-8 rounded-xl border border-border shadow-sm flex flex-col items-center justify-center text-muted-foreground">
+                      <LucideIcons.FileText className="w-10 h-10 mb-3 opacity-20" />
+                      <p className="text-sm">Sản phẩm này chưa có tài liệu hướng dẫn hay driver nào được đính kèm.</p>
                     </div>
                   )}
                 </div>
@@ -711,12 +717,12 @@ export default function ProductDetailClient({
           </div>
 
           {/* Related Products Section */}
-          <div className="mt-16 bg-white rounded-xl border border-border overflow-hidden shadow-sm">
+          <div className="mt-8 sm:mt-10 bg-white rounded-xl border border-border overflow-hidden shadow-sm">
             <div className="flex items-center overflow-x-auto scrollbar-hide border-b border-border bg-gray-50/50">
               {product.category === 'Máy in' && (
                 <button
                   onClick={() => setActiveRelatedTab('consumables')}
-                  className={`px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeRelatedTab === 'consumables'
+                  className={`px-4 sm:px-6 py-3 sm:py-3.5 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeRelatedTab === 'consumables'
                       ? 'border-primary text-primary bg-white'
                       : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-gray-100/50'
                     }`}
@@ -726,7 +732,7 @@ export default function ProductDetailClient({
               )}
               <button
                 onClick={() => setActiveRelatedTab('similar')}
-                className={`px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeRelatedTab === 'similar'
+                className={`px-4 sm:px-6 py-3 sm:py-3.5 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeRelatedTab === 'similar'
                     ? 'border-primary text-primary bg-white'
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-gray-100/50'
                   }`}
@@ -735,7 +741,7 @@ export default function ProductDetailClient({
               </button>
               <button
                 onClick={() => setActiveRelatedTab('same-brand')}
-                className={`px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeRelatedTab === 'same-brand'
+                className={`px-4 sm:px-6 py-3 sm:py-3.5 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeRelatedTab === 'same-brand'
                     ? 'border-primary text-primary bg-white'
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-gray-100/50'
                   }`}
@@ -744,7 +750,7 @@ export default function ProductDetailClient({
               </button>
               <button
                 onClick={() => setActiveRelatedTab('related')}
-                className={`px-4 sm:px-6 py-3.5 sm:py-4 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeRelatedTab === 'related'
+                className={`px-4 sm:px-6 py-3 sm:py-3.5 font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 transition-colors border-b-2 ${activeRelatedTab === 'related'
                     ? 'border-primary text-primary bg-white'
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-gray-100/50'
                   }`}
@@ -753,7 +759,7 @@ export default function ProductDetailClient({
               </button>
             </div>
 
-            <div className="p-6">
+            <div className="p-4 sm:p-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {activeRelatedTab === 'consumables' && consumables.length > 0 && consumables.map(p => (
                   <div key={p.id}>
