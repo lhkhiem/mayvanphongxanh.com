@@ -16,6 +16,68 @@ const SORT_OPTIONS = [
   { label: 'Bán chạy', value: 'best-sellers' },
 ];
 
+// =========================================================
+// CHUẨN HÓA & GOM NHÓM THUỘC TÍNH (SMART ALIAS MAPPING)
+// =========================================================
+const ATTRIBUTE_NAME_MAP: Record<string, string> = {
+  // In 2 mặt (Chỉ quy đổi nếu admin nhập tên kiểu Duplex hoặc In hai mặt)
+  'In hai mặt': 'In 2 mặt',
+  'Tự động đảo mặt': 'In 2 mặt',
+  'Duplex': 'In 2 mặt',
+  'Tính năng in 2 mặt': 'In 2 mặt',
+  'In 2 mặt (Duplex)': 'In 2 mặt',
+
+  // Kết nối
+  'Cổng kết nối': 'Kết nối',
+  'Chuẩn kết nối': 'Kết nối',
+  'Giao tiếp': 'Kết nối',
+  'Phương thức kết nối': 'Kết nối',
+
+  // Khổ giấy
+  'Khổ giấy in': 'Khổ giấy',
+  'Kích thước giấy': 'Khổ giấy',
+  'Khổ giấy hỗ trợ': 'Khổ giấy',
+
+  // Chức năng
+  'Loại máy': 'Chức năng',
+  'Tính năng chính': 'Chức năng',
+};
+
+const normalizeAttributeName = (key: string): string => {
+  return ATTRIBUTE_NAME_MAP[key] || key;
+};
+
+// Tách các giá trị thuộc tính bị gộp phân cách bởi dấu phẩy (,) hoặc dấu chấm phẩy (;)
+const parseAttrValues = (rawVal: any): string[] => {
+  if (Array.isArray(rawVal)) {
+    return rawVal.flatMap(v => parseAttrValues(v));
+  }
+  if (typeof rawVal !== 'string') return [];
+  return rawVal.split(/[,;]+/).map(v => v.trim()).filter(Boolean);
+};
+
+// Quy đổi giá trị tương đương
+const normalizeValueForAttr = (attrKey: string, val: string): string => {
+  const normKey = normalizeAttributeName(attrKey);
+  const lower = val.toLowerCase().trim();
+
+  if (normKey === 'In 2 mặt') {
+    if (lower.includes('có') || lower.includes('2 mặt') || lower.includes('duplex') || lower.includes('đảo mặt') || lower.includes('tự động')) {
+      return 'Có';
+    }
+    if (lower.includes('không') || lower.includes('1 mặt') || lower.includes('đơn')) {
+      return 'Không';
+    }
+  }
+
+  if (normKey === 'Chức năng') {
+    if (lower.includes('đơn năng') || lower === 'in đơn năng') return 'Đơn năng';
+    if (lower.includes('đa năng') || lower.includes('multifunction') || lower.includes('all-in-one')) return 'Đa năng';
+  }
+
+  return val;
+};
+
 export default function ProductsClient({ 
   products = [], 
   initialCategory,
@@ -170,7 +232,19 @@ export default function ProductsClient({
   // Extract all unique attributes from products matching current category & brand filters
   const availableAttributes = useMemo(() => {
     const attrs: Record<string, Set<string>> = {};
-    
+
+    const addValues = (key: string, rawVal: any) => {
+      const normKey = normalizeAttributeName(key);
+      const parsedValues = parseAttrValues(rawVal);
+      parsedValues.forEach(rawV => {
+        const normVal = normalizeValueForAttr(normKey, rawV);
+        if (normVal) {
+          if (!attrs[normKey]) attrs[normKey] = new Set();
+          attrs[normKey].add(normVal);
+        }
+      });
+    };
+
     products.forEach(p => {
       // Filter by selected category if active
       if (activeCategoryNames && !activeCategoryNames.has(p.category)) return;
@@ -184,10 +258,7 @@ export default function ProductsClient({
       // Extract from base attributes
       if (p.attributes) {
         Object.entries(p.attributes).forEach(([key, value]) => {
-          if (typeof value === 'string' && value.trim()) {
-            if (!attrs[key]) attrs[key] = new Set();
-            attrs[key].add(value);
-          }
+          addValues(key, value);
         });
       }
 
@@ -196,10 +267,7 @@ export default function ProductsClient({
         p.variants.forEach((variant: any) => {
           if (variant.attributes) {
             Object.entries(variant.attributes).forEach(([key, value]) => {
-              if (typeof value === 'string' && value.trim()) {
-                if (!attrs[key]) attrs[key] = new Set();
-                attrs[key].add(value as string);
-              }
+              addValues(key, value);
             });
           }
         });
@@ -208,12 +276,13 @@ export default function ProductsClient({
       // Extract from custom-build options
       if (p.productType === 'custom-build' && p.customOptions) {
         p.customOptions.forEach((group: any) => {
-          if (!attrs[group.name]) attrs[group.name] = new Set();
-          group.choices.forEach((choice: any) => {
-            if (choice.name) {
-              attrs[group.name].add(choice.name);
-            }
-          });
+          if (group.name && group.choices) {
+            group.choices.forEach((choice: any) => {
+              if (choice.name) {
+                addValues(group.name, choice.name);
+              }
+            });
+          }
         });
       }
     });
@@ -306,26 +375,51 @@ export default function ProductsClient({
     
     const matchesPrice = (p.isContactPrice || p.price === 0) ? (minPrice === 0) : (p.price >= minPrice && p.price <= maxPrice);
 
-    // Dynamic Attribute Filtering
+    // Dynamic Attribute Filtering (Smart Alias & Multi-value matching)
     let matchesAttributes = true;
     for (const [attrKey, attrSelectedValues] of Object.entries(selectedAttributes)) {
       if (attrSelectedValues.length === 0) continue; // No filter selected for this attribute
 
-      // A product matches if IT has the attribute, OR ANY of its variants has the attribute
-      let productHasValue = false;
-      
-      if (p.attributes && attrSelectedValues.includes(p.attributes[attrKey])) {
-        productHasValue = true;
-      } else if (p.productType === 'pre-packaged' && p.variants) {
-        productHasValue = p.variants.some((v: any) => v.attributes && attrSelectedValues.includes(v.attributes[attrKey]));
-      } else if (p.productType === 'custom-build' && p.customOptions) {
-        const group = p.customOptions.find((g: any) => g.name === attrKey);
-        if (group && group.choices.some((c: any) => attrSelectedValues.includes(c.name))) {
-          productHasValue = true;
+      const productValues = new Set<string>();
+
+      const extractAndCollect = (rawKey: string, rawValue: any) => {
+        const normKey = normalizeAttributeName(rawKey);
+        if (normKey === attrKey) {
+          parseAttrValues(rawValue).forEach(v => {
+            const normVal = normalizeValueForAttr(normKey, v);
+            if (normVal) productValues.add(normVal);
+          });
         }
+      };
+
+      if (p.attributes) {
+        Object.entries(p.attributes).forEach(([k, v]) => extractAndCollect(k, v));
       }
 
-      if (!productHasValue) {
+      if (p.productType === 'pre-packaged' && p.variants) {
+        p.variants.forEach((v: any) => {
+          if (v.attributes) {
+            Object.entries(v.attributes).forEach(([k, val]) => extractAndCollect(k, val));
+          }
+        });
+      }
+
+      if (p.productType === 'custom-build' && p.customOptions) {
+        p.customOptions.forEach((group: any) => {
+          const normKey = normalizeAttributeName(group.name);
+          if (normKey === attrKey && group.choices) {
+            group.choices.forEach((choice: any) => {
+              if (choice.name) {
+                const normVal = normalizeValueForAttr(normKey, choice.name);
+                if (normVal) productValues.add(normVal);
+              }
+            });
+          }
+        });
+      }
+
+      const hasMatch = attrSelectedValues.some(selectedVal => productValues.has(selectedVal));
+      if (!hasMatch) {
         matchesAttributes = false;
         break; // Fail early if one attribute filter doesn't match
       }

@@ -1131,16 +1131,22 @@ function VariantCard({
             <div className="space-y-2">
               {variant.attributes.map((attr, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <input value={attr.key} onChange={(e) => {
-                    const newAttrs = [...variant.attributes];
-                    newAttrs[i].key = e.target.value;
-                    onUpdate({ attributes: newAttrs });
-                  }} placeholder="Thuộc tính (VD: Màu)" className="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary" />
+                  <input 
+                    list="suggested-attribute-keys"
+                    value={attr.key} 
+                    onChange={(e) => {
+                      const newAttrs = [...variant.attributes];
+                      newAttrs[i].key = e.target.value;
+                      onUpdate({ attributes: newAttrs });
+                    }} 
+                    placeholder="Thuộc tính (VD: Kết nối, Khổ giấy)" 
+                    className="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary" 
+                  />
                   <input value={attr.value} onChange={(e) => {
                     const newAttrs = [...variant.attributes];
                     newAttrs[i].value = e.target.value;
                     onUpdate({ attributes: newAttrs });
-                  }} placeholder="Giá trị (VD: Đen)" className="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary" />
+                  }} placeholder="Giá trị (VD: USB, Wifi, Bluetooth)" className="flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary" />
                   <button type="button" onClick={() => {
                     const newAttrs = variant.attributes.filter((_, idx) => idx !== i);
                     onUpdate({ attributes: newAttrs });
@@ -1150,6 +1156,20 @@ function VariantCard({
               {variant.attributes.length === 0 && (
                 <p className="text-xs text-gray-400 italic mt-2">Chưa có thuộc tính mở rộng.</p>
               )}
+
+              {/* Gợi ý Tên Thuộc tính Chuẩn */}
+              <datalist id="suggested-attribute-keys">
+                <option value="Kết nối" />
+                <option value="Khổ giấy" />
+                <option value="Chức năng in" />
+                <option value="Chức năng" />
+                <option value="In 2 mặt" />
+                <option value="Tốc độ in" />
+                <option value="Công nghệ in" />
+                <option value="Độ phân giải" />
+                <option value="Khay giấy" />
+                <option value="Bộ nhớ" />
+              </datalist>
             </div>
           </div>
 
