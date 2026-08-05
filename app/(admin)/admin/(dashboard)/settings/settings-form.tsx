@@ -13,6 +13,7 @@ import { MediaPickerInput } from "@/components/admin/media-picker-input"
 export function SettingsForm({ initialData }: { initialData: Record<string, string> }) {
   const [isLoading, setIsLoading] = useState(false)
   const [companyLogo, setCompanyLogo] = useState(initialData['company_logo'] || initialData['site_logo'] || '')
+  const [footerLogo, setFooterLogo] = useState(initialData['footer_logo'] || '')
   const [companyFavicon, setCompanyFavicon] = useState(initialData['company_favicon'] || initialData['site_favicon'] || '')
   const [seoImage, setSeoImage] = useState(initialData['seo_image'] || '')
 
@@ -166,10 +167,17 @@ Hợp đồng bảo trì định kỳ toàn diện`} rows={5} className="shadow-
               </div>
               <MediaPickerInput
                 name="company_logo"
-                label="Logo"
+                label="Logo chính (Header)"
                 value={companyLogo}
                 onChange={setCompanyLogo}
-                placeholder="Click để chọn logo"
+                placeholder="Click để chọn logo chính"
+              />
+              <MediaPickerInput
+                name="footer_logo"
+                label="Logo Footer"
+                value={footerLogo}
+                onChange={setFooterLogo}
+                placeholder="Click để chọn logo footer"
               />
               <MediaPickerInput
                 name="company_favicon"

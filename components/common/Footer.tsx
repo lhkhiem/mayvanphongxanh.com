@@ -46,13 +46,18 @@ export function Footer() {
   const [subscriberEmail, setSubscriberEmail] = useState('');
   const [subscriberHoneypot, setSubscriberHoneypot] = useState('');
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<{label: string, href: string}[]>([
-    { label: 'Máy in các loại', href: '/danh-muc/may-in' },
-    { label: 'Vật tư & Mực in', href: '/danh-muc/vat-tu' },
-    { label: 'Hệ thống POS', href: '/danh-muc/he-thong-pos' },
-    { label: 'Thiết bị mạng', href: '/danh-muc/mang-vien-thong' },
-    { label: 'Thiết bị văn phòng', href: '/danh-muc/thiet-bi' },
-    { label: 'Dự án triển khai', href: '/du-an' },
+  const [categories, setCategories] = useState<Array<{
+    label: string;
+    href: string;
+    level?: number;
+    isParent?: boolean;
+  }>>([
+    { label: 'Máy in các loại', href: '/danh-muc/may-in', level: 0 },
+    { label: 'Vật tư & Mực in', href: '/danh-muc/vat-tu', level: 0 },
+    { label: 'Hệ thống POS', href: '/danh-muc/he-thong-pos', level: 0 },
+    { label: 'Thiết bị mạng', href: '/danh-muc/mang-vien-thong', level: 0 },
+    { label: 'Thiết bị văn phòng', href: '/danh-muc/thiet-bi', level: 0 },
+    { label: 'Dự án triển khai', href: '/du-an', level: 0 },
   ]);
 
   useEffect(() => {
@@ -60,7 +65,12 @@ export function Footer() {
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          setCategories(data.map(c => ({ label: c.name, href: `/danh-muc/${c.slug}` })));
+          setCategories(data.map(c => ({
+            label: c.name,
+            href: `/danh-muc/${c.slug}`,
+            level: c.level ?? 0,
+            isParent: c.isParent ?? false,
+          })));
         }
       })
       .catch(err => console.error('Lỗi fetch danh mục footer:', err));
@@ -92,7 +102,7 @@ export function Footer() {
       setLoading(false);
     }
   };
-  
+
   const companyName = getSetting('company_name', 'Công ty TNHH Máy Văn Phòng Xanh');
   const companyDescription = getSetting('company_description', 'Đối tác tin cậy cung cấp thiết bị văn phòng, máy in, giải pháp CNTT...');
   const address = getSetting('contact_address', '123 Đường Văn Phòng, Quận ABC, TP.HCM');
@@ -100,11 +110,11 @@ export function Footer() {
   const email = getSetting('contact_email', 'support@mayvanphongxanh.com');
   const workTime = getSetting('work_time', 'Thứ 2 – Thứ 7 | 08:00 – 17:30');
   const technicalPhone = getSetting('technical_phone', '1900 1234');
-  const siteLogo = getSetting('site_logo', '/logo.png');
+  const footerLogo = getSetting('footer_logo', getSetting('site_logo', '/logo.png'));
 
   const fbLink = getSetting('social_facebook', '');
   const youtubeLink = getSetting('social_youtube', '');
-  
+
   const zaloRaw = getSetting('contact_zalo', '');
   const zaloLink = zaloRaw ? (zaloRaw.startsWith('http') ? zaloRaw : `https://zalo.me/${zaloRaw.replace(/[\.\s]/g, '')}`) : '#';
 
@@ -141,8 +151,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Col 1: Company Info */}
           <div className="lg:col-span-1">
-            <div className="relative w-40 h-[45px] mb-4 overflow-hidden mix-blend-screen">
-              <Image src={siteLogo} alt={companyName} fill className="object-contain object-left invert grayscale brightness-200" />
+            <div className="relative w-48 h-[50px] mb-4">
+              <Image src={footerLogo} alt={companyName} fill className="object-contain object-left" unoptimized priority />
             </div>
             <p className="text-xs text-gray-400 leading-relaxed mb-4">{companyDescription}</p>
 
@@ -194,18 +204,30 @@ export function Footer() {
               <span className="w-4 h-0.5 bg-primary rounded-full" />
               Danh mục sản phẩm
             </h4>
-            <ul className="space-y-2">
-              {categories.map(link => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 group"
+            <ul className="space-y-1.5">
+              {categories.map((link, index) => {
+                const isSub = link.level === 1;
+                return (
+                  <li
+                    key={`${link.href}-${index}`}
+                    className={isSub ? "ml-3.5 pl-2 border-l border-white/15" : "mt-2.5 first:mt-0"}
                   >
-                    <ArrowRight className="w-3 h-3 text-primary/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+                    <Link
+                      href={link.href}
+                      className={`text-xs transition-colors flex items-center gap-1.5 group ${isSub
+                          ? "text-gray-400 hover:text-white"
+                          : "text-white font-semibold hover:text-primary"
+                        }`}
+                    >
+                      <ArrowRight className={`w-3 h-3 transition-all ${isSub
+                          ? "text-gray-500 group-hover:text-primary group-hover:translate-x-0.5"
+                          : "text-primary group-hover:translate-x-0.5"
+                        }`} />
+                      <span>{link.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
@@ -267,7 +289,7 @@ export function Footer() {
                 placeholder="Nhập email của bạn"
                 className="w-full px-3 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-primary/60 transition-colors"
               />
-              <button 
+              <button
                 onClick={handleSubscribe}
                 disabled={loading}
                 className="w-full py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"

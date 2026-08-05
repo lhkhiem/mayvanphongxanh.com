@@ -23,6 +23,7 @@ export function SettingsProvider({
     let val = initialSettings[key];
     if (!val && key === 'site_logo') val = initialSettings['company_logo'];
     if (!val && key === 'company_logo') val = initialSettings['site_logo'];
+    if (!val && key === 'footer_logo') val = initialSettings['site_logo'] || initialSettings['company_logo'];
     if (!val && key === 'site_favicon') val = initialSettings['company_favicon'];
     if (!val && key === 'company_favicon') val = initialSettings['site_favicon'];
     val = val || defaultValue;

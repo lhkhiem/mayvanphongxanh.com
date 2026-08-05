@@ -221,11 +221,10 @@ function CompactCategoryMenu({ categories = [] }: { categories?: any[] }) {
                     <Link
                       href={`/danh-muc/${cat.slug ?? encodeURIComponent(cat.name)}`}
                       onClick={() => setOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-2 text-[13px] font-medium transition-all ${
-                        activeSide === idx
+                      className={`flex items-center gap-3 px-4 py-2 text-[13px] font-medium transition-all ${activeSide === idx
                           ? 'bg-gray-50 text-primary'
                           : 'text-gray-700 hover:bg-gray-50 hover:text-primary'
-                      }`}
+                        }`}
                     >
                       <CategoryIcon
                         icon={cat.icon}
@@ -394,8 +393,8 @@ export function Header({ categories: initialCategories = [] }: { categories?: an
             {/* Compact Category Menu - chỉ hiện khi đã scroll */}
             <div
               className={`hidden md:flex items-center shrink-0 transition-all duration-300 ease-in-out ${isScrolled
-                  ? 'opacity-100 w-auto pointer-events-auto'
-                  : 'opacity-0 w-0 overflow-hidden pointer-events-none'
+                ? 'opacity-100 w-auto pointer-events-auto'
+                : 'opacity-0 w-0 overflow-hidden pointer-events-none'
                 }`}
             >
               <CompactCategoryMenu categories={categories} />
@@ -406,9 +405,8 @@ export function Header({ categories: initialCategories = [] }: { categories?: an
               <button
                 type="button"
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className={`p-2 rounded-lg transition-colors ${
-                  isSearchOpen ? 'bg-primary/10 text-primary' : 'hover:bg-gray-100 text-gray-700'
-                }`}
+                className={`p-2 rounded-lg transition-colors ${isSearchOpen ? 'bg-primary/10 text-primary' : 'hover:bg-gray-100 text-gray-700'
+                  }`}
                 aria-label="Tìm kiếm"
               >
                 <Search className="w-6 h-6" />
