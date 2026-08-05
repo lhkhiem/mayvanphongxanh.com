@@ -30,8 +30,8 @@ export default function ProductsClient({
   const [sortBy, setSortBy] = useState('featured');
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-  
-  // Pagination state: number of products shown (default 20)
+
+  // Pagination state: number of products shown initially (default 20)
   const [visibleCount, setVisibleCount] = useState(20);
 
   // Multiple selections for Category and Brand
@@ -59,7 +59,7 @@ export default function ProductsClient({
   const [expandedParents, setExpandedParents] = useState<Record<string, boolean>>({});
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(100000000);
+  const [maxPrice, setMaxPrice] = useState(1000000000);
 
   // Dynamic attributes state
   const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string[]>>({});
@@ -292,7 +292,7 @@ export default function ProductsClient({
     setSelectedBrands([]);
     setSearchQuery('');
     setMinPrice(0);
-    setMaxPrice(100000000);
+    setMaxPrice(1000000000);
     setSelectedAttributes({});
   };
 
@@ -302,9 +302,9 @@ export default function ProductsClient({
     
     // For brand, we check p.brand, or p.attributes['Thương hiệu']
     const productBrand = p.brand || (p.attributes && p.attributes['Thương hiệu']);
-    const matchesBrand = selectedBrands.length === 0 || selectedBrands.includes(productBrand || 'HP');
+    const matchesBrand = selectedBrands.length === 0 || (productBrand ? selectedBrands.includes(productBrand) : false);
     
-    const matchesPrice = p.price >= minPrice && p.price <= maxPrice;
+    const matchesPrice = (p.isContactPrice || p.price === 0) ? (minPrice === 0) : (p.price >= minPrice && p.price <= maxPrice);
 
     // Dynamic Attribute Filtering
     let matchesAttributes = true;
@@ -527,8 +527,8 @@ export default function ProductsClient({
                     <input
                       type="range"
                       min="0"
-                      max="100000000"
-                      step="500000"
+                      max="1000000000"
+                      step="5000000"
                       value={minPrice}
                       onChange={(e) => {
                         const val = Number(e.target.value);
@@ -546,8 +546,8 @@ export default function ProductsClient({
                     <input
                       type="range"
                       min="0"
-                      max="100000000"
-                      step="500000"
+                      max="1000000000"
+                      step="5000000"
                       value={maxPrice}
                       onChange={(e) => {
                         const val = Number(e.target.value);
@@ -717,3 +717,4 @@ export default function ProductsClient({
     </main>
   );
 }
+
