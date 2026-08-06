@@ -102,7 +102,7 @@ export default async function AboutPage() {
         {/* Stats overlapping Hero */}
         <div className="relative z-20 mx-auto max-w-7xl px-4 -mt-16 mb-16">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-card rounded-xl p-6 shadow-xl border border-border">
-            {stats.map((stat, idx) => {
+            {stats.map((stat: any, idx: number) => {
               const Icon = ICON_MAP[stat.icon] ?? CalendarDays;
               return (
                 <div key={idx} className={`flex items-center gap-4 ${idx < stats.length - 1 ? 'border-r border-border pr-4' : ''} ${idx >= 2 ? 'hidden md:flex' : ''}`}>
@@ -171,7 +171,7 @@ export default async function AboutPage() {
           
           <div className="bg-card rounded-xl shadow-md border border-border p-6 overflow-x-auto">
             <ol className="flex items-start min-w-[800px] justify-between">
-              {processSteps.map((step, idx) => {
+              {processSteps.map((step: any, idx: number) => {
                 const Icon = ICON_MAP[step.icon] ?? Wrench;
                 return (
                   <li key={idx} className="flex items-center flex-1 relative group">
@@ -203,7 +203,7 @@ export default async function AboutPage() {
           
           <div className="bg-card rounded-xl shadow-sm border border-border p-8">
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6 items-center justify-items-center opacity-70">
-              {brands.map((brand, idx) => (
+              {brands.map((brand: any, idx: number) => (
                 <div key={idx} className="font-black text-2xl text-muted-foreground uppercase hover:text-primary transition-colors cursor-pointer text-center">
                   {brand}
                 </div>
@@ -217,7 +217,7 @@ export default async function AboutPage() {
           <h2 className="text-sm font-bold uppercase tracking-widest text-primary mb-6">Năng lực cạnh tranh</h2>
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {values.map((val, idx) => {
+            {values.map((val: any, idx: number) => {
               const Icon = ICON_MAP[val.icon] ?? ShieldCheck;
               return (
                 <div key={idx} className="bg-card rounded-xl p-6 shadow-sm border border-border hover:shadow-md transition-shadow">

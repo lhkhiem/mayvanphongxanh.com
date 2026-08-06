@@ -47,6 +47,10 @@ export async function createProject(data: any) {
         image: data.image,
         category: data.category,
         isActive: data.isActive,
+        isSeoCustom: data.isSeoCustom ?? false,
+        metaTitle: data.metaTitle || null,
+        metaDescription: data.metaDescription || null,
+        metaKeywords: data.metaKeywords || null,
       }
     })
 
@@ -74,6 +78,10 @@ export async function updateProject(id: number, data: any) {
       image: data.image,
       category: data.category,
       isActive: data.isActive,
+      isSeoCustom: data.isSeoCustom ?? false,
+      metaTitle: data.metaTitle || null,
+      metaDescription: data.metaDescription || null,
+      metaKeywords: data.metaKeywords || null,
     }
 
     const project = await prisma.project.update({

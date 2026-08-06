@@ -284,40 +284,62 @@ export async function getSeoDashboardData(): Promise<SeoDashboardData> {
     const [products, posts, categories, pages, services] = await Promise.all([
       prisma.product.findMany({
         where: { deletedAt: null },
-        select: { id: true, name: true, slug: true, metaTitle: true, metaDescription: true },
+        select: { id: true, name: true, slug: true, isSeoCustom: true, metaTitle: true, metaDescription: true },
       }),
       prisma.post.findMany({
-        select: { id: true, title: true, slug: true, metaTitle: true, metaDescription: true },
+        select: { id: true, title: true, slug: true, isSeoCustom: true, metaTitle: true, metaDescription: true },
       }),
       prisma.category.findMany({
-        select: { id: true, name: true, slug: true, metaTitle: true, metaDescription: true },
+        select: { id: true, name: true, slug: true, isSeoCustom: true, metaTitle: true, metaDescription: true },
       }),
       prisma.page.findMany({
         select: { id: true, title: true, slug: true, metaTitle: true, metaDescription: true },
       }),
       prisma.service.findMany({
-        select: { id: true, title: true, slug: true, metaTitle: true, metaDescription: true },
+        select: { id: true, title: true, slug: true, isSeoCustom: true, metaTitle: true, metaDescription: true },
       }),
     ]);
 
     const issuesList: SeoIssueItem[] = [];
 
     const checkEntity = (
-      items: Array<{ id: string | number; name?: string; title?: string; slug: string; metaTitle: string | null; metaDescription: string | null }>,
+      items: Array<{
+        id: string | number;
+        name?: string;
+        title?: string;
+        slug: string;
+        isSeoCustom?: boolean;
+        metaTitle: string | null;
+        metaDescription: string | null;
+      }>,
       type: "Product" | "Post" | "Category" | "Page" | "Service",
       urlPrefix: string
     ) => {
       let optimized = 0;
       items.forEach((item) => {
         const titleText = item.name || item.title || "";
-        const mTitle = item.metaTitle?.trim();
-        const mDesc = item.metaDescription?.trim();
+        const isCustom = item.isSeoCustom === true;
 
-        const missingTitle = !mTitle;
-        const missingDescription = !mDesc;
-        const titleLength = mTitle ? mTitle.length : titleText.length;
+        let missingTitle = false;
+        let missingDescription = false;
+        let titleLength = titleText.length;
 
-        if (missingTitle || missingDescription || titleLength < 25) {
+        if (isCustom) {
+          // SEO Tùy chỉnh (ON): Kiểm tra metaTitle & metaDescription tùy chỉnh
+          const mTitle = item.metaTitle?.trim();
+          const mDesc = item.metaDescription?.trim();
+
+          missingTitle = !mTitle;
+          missingDescription = !mDesc;
+          titleLength = mTitle ? mTitle.length : titleText.length;
+        } else {
+          // SEO Tự động (OFF): Hệ thống tự động sinh SEO metadata từ Tên & Mô tả mặc định
+          missingTitle = !titleText;
+          missingDescription = false;
+          titleLength = titleText.length > 0 ? titleText.length + 22 : 0;
+        }
+
+        if (missingTitle || missingDescription || titleLength < 10) {
           issuesList.push({
             id: item.id,
             title: titleText,

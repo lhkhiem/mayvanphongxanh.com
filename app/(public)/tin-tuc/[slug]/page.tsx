@@ -25,9 +25,24 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mayvanphongxanh.com';
   
-  // Tối ưu SEO Title & SEO Description từ Admin
-  const title = post.metaTitle?.trim() || `${post.title} | Máy Văn Phòng Xanh`;
-  const description = post.metaDescription?.trim() || post.excerpt?.trim() || `Đọc bài viết "${post.title}" tại Máy Văn Phòng Xanh`;
+  const isCustom = post.isSeoCustom;
+
+  const defaultTitle = `${post.title} | Máy Văn Phòng Xanh`;
+  const defaultDesc = post.excerpt?.trim() || `Đọc bài viết "${post.title}" tại Máy Văn Phòng Xanh`;
+  const defaultKeywords = `${post.title}, tin tức máy văn phòng xanh, blog máy văn phòng xanh`;
+
+  const title = (isCustom && post.metaTitle?.trim())
+    ? post.metaTitle.trim()
+    : defaultTitle;
+
+  const description = (isCustom && post.metaDescription?.trim())
+    ? post.metaDescription.trim()
+    : defaultDesc;
+
+  const keywords = (isCustom && post.metaKeywords?.trim())
+    ? post.metaKeywords.trim()
+    : defaultKeywords;
+
   const pageUrl = `${baseUrl}/tin-tuc/${post.slug}`;
 
   // Đảm bảo URL ảnh luôn là tuyệt đối (https://...) cho Facebook/Zalo crawler
@@ -44,6 +59,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     metadataBase: new URL(baseUrl),
     title,
     description,
+    keywords,
     openGraph: {
       title,
       description,

@@ -3,12 +3,13 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Save, ArrowLeft } from "lucide-react";
+import { Save, ArrowLeft, Globe, Share2, Info, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
 import { createProject, updateProject } from "@/app/(admin)/admin/(dashboard)/projects/actions";
 import { MediaPickerInput } from "@/components/admin/media-picker-input";
 import { RichTextEditor, RichTextEditorRef } from "@/components/admin/rich-text-editor";
 import { MediaPickerModal } from "@/components/admin/media-picker-modal";
+import { cn, cleanUrl } from "@/lib/utils";
 
 export function ProjectForm({
   initialData,
@@ -25,6 +26,10 @@ export function ProjectForm({
     description: initialData?.description || "",
     image: initialData?.image || "",
     category: initialData?.category || "",
+    isSeoCustom: initialData?.isSeoCustom ?? false,
+    metaTitle: initialData?.metaTitle || "",
+    metaDescription: initialData?.metaDescription || "",
+    metaKeywords: initialData?.metaKeywords || "",
     isActive: initialData?.isActive ?? true,
   });
 
@@ -179,6 +184,169 @@ export function ProjectForm({
                 <img src={formData.image} alt="Preview" className="w-full h-auto object-cover max-h-48" />
               </div>
             )}
+          </div>
+
+          {/* SEO Metadata Card */}
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100 dark:border-gray-700">
+              <div>
+                <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                  <Globe className="h-4 w-4 text-emerald-500" />
+                  SEO Metadata & Chia sẻ
+                </h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Chuyển đổi giữa chế độ SEO tự động từ dự án hoặc tùy chỉnh.
+                </p>
+              </div>
+
+              {/* Switch Toggle for Custom SEO */}
+              <div className="flex items-center gap-2.5 bg-gray-100 dark:bg-gray-800/80 p-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-700 shrink-0">
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  {formData.isSeoCustom ? "SEO Tùy chỉnh (ON)" : "SEO Tự động (OFF)"}
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={formData.isSeoCustom || false}
+                  onClick={() => setFormData({ ...formData, isSeoCustom: !formData.isSeoCustom })}
+                  className={cn(
+                    "relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                    formData.isSeoCustom ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-600"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                      formData.isSeoCustom ? "translate-x-4" : "translate-x-0"
+                    )}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Option 1: Default Mode Notice (when isSeoCustom is OFF) */}
+            {!formData.isSeoCustom ? (
+              <div className="bg-emerald-50/60 dark:bg-emerald-950/20 p-4 rounded-xl border border-emerald-200/70 dark:border-emerald-900/40 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
+                    OFF: SEO Mặc định dự án
+                  </span>
+                </div>
+                <ul className="text-xs text-gray-600 dark:text-gray-300 space-y-2 pl-4 list-disc">
+                  <li>
+                    <strong>SEO Title:</strong> <code>{formData.title ? `${formData.title} | Máy Văn Phòng Xanh` : 'Tên dự án | Máy Văn Phòng Xanh'}</code>
+                  </li>
+                  <li>
+                    <strong>Meta Description:</strong> Tự động trích xuất từ Mô tả chi tiết dự án ({formData.description ? `${formData.description.replace(/<[^>]+>/g, '').trim().slice(0, 100)}...` : 'Chưa có mô tả'}).
+                  </li>
+                  <li>
+                    <strong>SEO Image:</strong> Tự động lấy <strong>Ảnh đại diện dự án</strong>.
+                  </li>
+                </ul>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 pt-2 italic border-t border-emerald-100 dark:border-emerald-900/30 mt-2">
+                  💡 Bật công tắc <strong>"SEO Tùy chỉnh (ON)"</strong> ở trên để tự nhập Tiêu đề, Mô tả và Từ khóa riêng cho dự án này.
+                </p>
+              </div>
+            ) : (
+              /* Option 2: Custom SEO Input Fields (when isSeoCustom is ON) */
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-1">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-600 text-white">
+                    ON: SEO Tùy chỉnh
+                  </span>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                      SEO Title (Tiêu đề chia sẻ)
+                    </label>
+                    <span className="text-xs text-gray-400">{(formData.metaTitle || '').length}/60</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.metaTitle}
+                    onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })}
+                    maxLength={60}
+                    className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-gray-100 shadow-sm"
+                    placeholder={formData.title ? `${formData.title} | Máy Văn Phòng Xanh` : "Tiêu đề trang chia sẻ..."}
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    Khuyên dùng 50 - 60 ký tự. Để trống sẽ tự động dùng tên dự án.
+                  </p>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                      Meta Description (Mô tả chia sẻ)
+                    </label>
+                    <span className="text-xs text-gray-400">{(formData.metaDescription || '').length}/160</span>
+                  </div>
+                  <textarea
+                    value={formData.metaDescription}
+                    onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
+                    maxLength={160}
+                    rows={3}
+                    className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-gray-100 shadow-sm resize-none"
+                    placeholder="Mô tả tóm tắt hiển thị khi chia sẻ..."
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    Khuyên dùng 120 - 160 ký tự.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                    SEO Keywords (Từ khóa SEO)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.metaKeywords}
+                    onChange={(e) => setFormData({ ...formData, metaKeywords: e.target.value })}
+                    placeholder="Nhập các từ khóa phân cách bằng dấu phẩy..."
+                    className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-gray-100 shadow-sm"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Social Share Live Preview */}
+            <div className="pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span className="font-semibold flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
+                  <Share2 className="w-3.5 h-3.5 text-emerald-500" /> Xem trước hiển thị chia sẻ
+                </span>
+                <span>{formData.isSeoCustom ? "Trạng thái: Tùy chỉnh" : "Trạng thái: Mặc định"}</span>
+              </div>
+
+              <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-800/40 shadow-sm">
+                <div className="relative aspect-video w-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                  {formData.image ? (
+                    <img src={cleanUrl(formData.image) || '/placeholder.jpg'} alt="SEO Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="flex flex-col items-center gap-1 text-gray-400">
+                      <ImageIcon className="w-8 h-8 opacity-40" />
+                      <span className="text-xs">Chưa có ảnh đại diện dự án</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-3.5 space-y-1 bg-white dark:bg-[#2a303d]">
+                  <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">MAYVANPHONGXANH.COM</div>
+                  <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 line-clamp-2 leading-snug">
+                    {formData.isSeoCustom
+                      ? (formData.metaTitle?.trim() || formData.title || 'Tên dự án khi chia sẻ')
+                      : (formData.title ? `${formData.title} | Máy Văn Phòng Xanh` : 'Tên dự án khi chia sẻ')}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                    {formData.isSeoCustom
+                      ? (formData.metaDescription?.trim() || (formData.description ? formData.description.replace(/<[^>]+>/g, '').trim() : '') || 'Mô tả dự án khi chia sẻ...')
+                      : ((formData.description ? formData.description.replace(/<[^>]+>/g, '').trim() : '') || 'Mô tả dự án khi chia sẻ...')}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

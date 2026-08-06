@@ -88,8 +88,10 @@ export async function createService(data: any) {
         originalPrice: data.originalPrice ? parseFloat(data.originalPrice) : null,
         isContactPrice: data.isContactPrice ?? true,
         order: targetOrder,
-        metaTitle: data.metaTitle,
-        metaDescription: data.metaDescription,
+        metaTitle: data.metaTitle || null,
+        metaDescription: data.metaDescription || null,
+        metaKeywords: data.metaKeywords || null,
+        isSeoCustom: data.isSeoCustom ?? false,
         isActive: data.isActive,
       }
     })
@@ -145,8 +147,10 @@ export async function updateService(id: number, data: any) {
       originalPrice: data.originalPrice !== undefined && data.originalPrice !== '' && data.originalPrice !== null ? parseFloat(data.originalPrice) : null,
       isContactPrice: data.isContactPrice ?? true,
       order: targetOrder,
-      metaTitle: data.metaTitle,
-      metaDescription: data.metaDescription,
+      metaTitle: data.metaTitle || null,
+      metaDescription: data.metaDescription || null,
+      metaKeywords: data.metaKeywords || null,
+      isSeoCustom: data.isSeoCustom ?? false,
       isActive: data.isActive,
     }
 

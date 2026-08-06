@@ -29,9 +29,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mayvanphongxanh.com';
-  const title = `${project.title} | Máy Văn Phòng Xanh`;
+  
+  const isCustom = project.isSeoCustom;
+
+  const defaultTitle = `${project.title} | Máy Văn Phòng Xanh`;
   const rawDesc = project.description ? project.description.replace(/<[^>]+>/g, '').trim() : '';
-  const description = rawDesc.slice(0, 160) || `Dự án ${project.title} thực hiện bởi Máy Văn Phòng Xanh`;
+  const defaultDesc = rawDesc.slice(0, 160) || `Dự án ${project.title} thực hiện bởi Máy Văn Phòng Xanh`;
+  const defaultKeywords = `${project.title}, dự án máy văn phòng xanh, công trình máy văn phòng xanh`;
+
+  const title = (isCustom && project.metaTitle?.trim())
+    ? project.metaTitle.trim()
+    : defaultTitle;
+
+  const description = (isCustom && project.metaDescription?.trim())
+    ? project.metaDescription.trim()
+    : defaultDesc;
+
+  const keywords = (isCustom && project.metaKeywords?.trim())
+    ? project.metaKeywords.trim()
+    : defaultKeywords;
 
   let absoluteImageUrl = `${baseUrl}/placeholder.jpg`;
   if (project.image) {
@@ -48,6 +64,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     metadataBase: new URL(baseUrl),
     title,
     description,
+    keywords,
     openGraph: {
       title,
       description,
