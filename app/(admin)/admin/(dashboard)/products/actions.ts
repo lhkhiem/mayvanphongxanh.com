@@ -43,6 +43,7 @@ export type ProductInput = {
   isFeatured?: boolean
   isContactPrice?: boolean
   vatStatus?: string
+  isSeoCustom?: boolean
   metaTitle: string
   metaDescription: string
   metaKeywords: string
@@ -250,6 +251,7 @@ export async function createProduct(input: ProductInput) {
         isFeatured: input.isFeatured || false,
         isContactPrice: input.isContactPrice || false,
         vatStatus: input.vatStatus || 'INCLUDED',
+        isSeoCustom: input.isSeoCustom ?? false,
         metaTitle: input.metaTitle || null,
         metaDescription: input.metaDescription || null,
         metaKeywords: input.metaKeywords || null,
@@ -355,6 +357,7 @@ export async function updateProduct(id: number, input: ProductInput) {
           isFeatured: input.isFeatured ?? false,
           isContactPrice: input.isContactPrice ?? false,
           vatStatus: input.vatStatus || 'INCLUDED',
+          isSeoCustom: input.isSeoCustom ?? false,
           metaTitle: input.metaTitle || null,
           metaDescription: input.metaDescription || null,
           metaKeywords: input.metaKeywords || null,

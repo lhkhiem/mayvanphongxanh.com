@@ -86,6 +86,7 @@ model Product {
   rentalTerms    Json?
 
   // SEO
+  isSeoCustom     Boolean @default(false)
   metaTitle       String?
   metaDescription String?
   metaKeywords    String?

@@ -24,10 +24,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
   
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mayvanphongxanh.com';
-  const title = dbProduct.metaTitle?.trim() || `${dbProduct.name} - Máy Văn Phòng Xanh`;
-  const rawDesc = dbProduct.metaDescription?.trim() || (dbProduct.description ? dbProduct.description.replace(/<[^>]+>/g, '').trim() : '');
-  const description = rawDesc.slice(0, 160) || `Mua ${dbProduct.name} chính hãng giá tốt nhất tại Máy Văn Phòng Xanh.`;
-  
+
+  const isCustom = dbProduct.isSeoCustom;
+
+  const defaultTitle = `${dbProduct.name} - Máy Văn Phòng Xanh`;
+  const defaultDesc = (dbProduct.description ? dbProduct.description.replace(/<[^>]+>/g, '').trim().slice(0, 160) : '') || `Mua ${dbProduct.name} chính hãng giá tốt nhất tại Máy Văn Phòng Xanh.`;
+  const defaultKeywords = `${dbProduct.name}, máy văn phòng xanh, thiết bị văn phòng`;
+
+  const title = (isCustom && dbProduct.metaTitle?.trim())
+    ? dbProduct.metaTitle.trim()
+    : defaultTitle;
+
+  const description = (isCustom && dbProduct.metaDescription?.trim())
+    ? dbProduct.metaDescription.trim()
+    : defaultDesc;
+
+  const keywords = (isCustom && dbProduct.metaKeywords?.trim())
+    ? dbProduct.metaKeywords.trim()
+    : defaultKeywords;
+
   const rawImages = (dbProduct.images as string[] || []).map(cleanUrl).filter(Boolean);
   const variantImgs = (dbProduct.variants || []).flatMap(v => (v.images as string[] || []).map(cleanUrl).filter(Boolean));
   let imageRel = rawImages[0] || variantImgs[0] || '/placeholder.jpg';
@@ -42,6 +57,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     metadataBase: new URL(baseUrl),
     title,
     description,
+    keywords,
     openGraph: {
       title,
       description,

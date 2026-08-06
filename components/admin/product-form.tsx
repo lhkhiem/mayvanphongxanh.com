@@ -89,6 +89,7 @@ export function ProductForm({
     isFeatured: initialData?.isFeatured ?? false,
     isContactPrice: initialData?.isContactPrice ?? false,
     vatStatus: initialData?.vatStatus || 'INCLUDED',
+    isSeoCustom: initialData?.isSeoCustom ?? false,
     metaTitle: initialData?.metaTitle || '',
     metaDescription: initialData?.metaDescription || '',
     metaKeywords: initialData?.metaKeywords || '',
@@ -1011,35 +1012,157 @@ export function ProductForm({
         {tab === 'seo' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] p-5 shadow-sm space-y-4">
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700">Cài đặt SEO & Chia sẻ mạng xã hội</h2>
-              <div>
-                <div className="flex justify-between items-center mb-1.5">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">SEO Title (Tiêu đề chia sẻ)</label>
-                  <span className="text-xs text-gray-400">{(form.metaTitle || '').length}/60</span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100 dark:border-gray-700">
+                <div>
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                    <LucideIcons.Globe className="h-4 w-4 text-emerald-500" />
+                    Cài đặt SEO & Chia sẻ mạng xã hội
+                  </h2>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Chuyển đổi giữa chế độ SEO tự động từ sản phẩm hoặc tùy chỉnh các trường thông tin.
+                  </p>
                 </div>
-                <input type="text" value={form.metaTitle || ''} onChange={(e) => setForm({ ...form, metaTitle: e.target.value })} maxLength={60} placeholder={form.name || "Tiêu đề trang chia sẻ..."} className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" />
-                <p className="text-xs text-gray-400 mt-1">Khuyên dùng 50 - 60 ký tự. Tự động lấy tên sản phẩm nếu để trống.</p>
-              </div>
-              <div>
-                <div className="flex justify-between items-center mb-1.5">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Meta Description (Mô tả chia sẻ)</label>
-                  <span className="text-xs text-gray-400">{(form.metaDescription || '').length}/160</span>
+
+                {/* Switch Toggle for Custom SEO */}
+                <div className="flex items-center gap-2.5 bg-gray-100 dark:bg-gray-800/80 p-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-700 shrink-0">
+                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    {form.isSeoCustom ? "SEO Tùy chỉnh (ON)" : "SEO Tự động (OFF)"}
+                  </span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={form.isSeoCustom || false}
+                    onClick={() => setForm({ ...form, isSeoCustom: !form.isSeoCustom })}
+                    className={cn(
+                      "relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                      form.isSeoCustom ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-600"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                        form.isSeoCustom ? "translate-x-4" : "translate-x-0"
+                      )}
+                    />
+                  </button>
                 </div>
-                <textarea value={form.metaDescription || ''} onChange={(e) => setForm({ ...form, metaDescription: e.target.value })} maxLength={160} rows={4} placeholder="Nhập mô tả thu hút khi gửi liên kết qua Zalo, Facebook..." className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-sm resize-none" />
-                <p className="text-xs text-gray-400 mt-1">Khuyên dùng 120 - 160 ký tự. Hiển thị dưới dạng tóm tắt liên kết khi gửi qua Zalo / Facebook.</p>
               </div>
-              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
-                <LucideIcons.Info className="w-4 h-4 shrink-0 mt-0.5" />
-                <span><strong>Hình ảnh chia sẻ:</strong> Tự động lấy <strong>Ảnh đại diện sản phẩm</strong> (ảnh đầu tiên trong tab Hình ảnh).</span>
-              </div>
+
+              {/* Option 1: Default Mode Notice (when isSeoCustom is OFF) */}
+              {!form.isSeoCustom ? (
+                <div className="bg-emerald-50/60 dark:bg-emerald-950/20 p-4 rounded-xl border border-emerald-200/70 dark:border-emerald-900/40 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
+                      OFF: SEO Mặc định sản phẩm
+                    </span>
+                    <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+                      Hệ thống tự động sử dụng thông tin sản phẩm
+                    </span>
+                  </div>
+                  <ul className="text-xs text-gray-600 dark:text-gray-300 space-y-2 pl-4 list-disc">
+                    <li>
+                      <strong>SEO Title:</strong> Tự động lấy tên sản phẩm: <code>{form.name ? `${form.name} - Máy Văn Phòng Xanh` : 'Tên sản phẩm - Máy Văn Phòng Xanh'}</code>
+                    </li>
+                    <li>
+                      <strong>Meta Description:</strong> Tự động trích xuất từ Mô tả sản phẩm ({form.description ? `${form.description.replace(/<[^>]+>/g, '').trim().slice(0, 100)}...` : 'Chưa có mô tả'}).
+                    </li>
+                    <li>
+                      <strong>SEO Keywords:</strong> Tự động tạo từ tên sản phẩm, thương hiệu và danh mục.
+                    </li>
+                    <li>
+                      <strong>Ảnh đại diện chia sẻ:</strong> Tự động sử dụng <strong>Ảnh đại diện sản phẩm</strong> (ảnh đầu tiên trong tab Hình ảnh).
+                    </li>
+                  </ul>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 pt-2 italic border-t border-emerald-100 dark:border-emerald-900/30 mt-2">
+                    💡 Bạn có thể bật công tắc <strong>"SEO Tùy chỉnh (ON)"</strong> ở góc phải phía trên để tự nhập Tiêu đề, Mô tả và Từ khóa riêng cho sản phẩm này.
+                  </p>
+                </div>
+              ) : (
+                /* Option 2: Custom SEO Input Fields (when isSeoCustom is ON) */
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-1">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-600 text-white">
+                      ON: SEO Tùy chỉnh
+                    </span>
+                    <span className="text-xs text-gray-500">Đang sử dụng các trường nhập liệu dưới đây</span>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                        SEO Title (Tiêu đề chia sẻ)
+                      </label>
+                      <span className="text-xs text-gray-400">{(form.metaTitle || '').length}/60</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={form.metaTitle || ''}
+                      onChange={(e) => setForm({ ...form, metaTitle: e.target.value })}
+                      maxLength={60}
+                      placeholder={form.name ? `${form.name} - Máy Văn Phòng Xanh` : "Tiêu đề trang chia sẻ..."}
+                      className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
+                    />
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      Khuyên dùng 50 - 60 ký tự. Để trống sẽ tự động dùng tên sản phẩm.
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                        Meta Description (Mô tả chia sẻ)
+                      </label>
+                      <span className="text-xs text-gray-400">{(form.metaDescription || '').length}/160</span>
+                    </div>
+                    <textarea
+                      value={form.metaDescription || ''}
+                      onChange={(e) => setForm({ ...form, metaDescription: e.target.value })}
+                      maxLength={160}
+                      rows={4}
+                      placeholder="Nhập mô tả thu hút khi gửi liên kết qua Zalo, Facebook..."
+                      className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm resize-none"
+                    />
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      Khuyên dùng 120 - 160 ký tự. Hiển thị dưới dạng tóm tắt liên kết khi chia sẻ qua Zalo / Facebook / Google.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                      SEO Keywords (Từ khóa SEO)
+                    </label>
+                    <input
+                      type="text"
+                      value={form.metaKeywords || ''}
+                      onChange={(e) => setForm({ ...form, metaKeywords: e.target.value })}
+                      placeholder="Nhập các từ khóa phân cách bằng dấu phẩy..."
+                      className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
+                    />
+                    <p className="text-[11px] text-gray-400 mt-1">
+                      Ví dụ: <code>máy in canon, máy in 2900, máy văn phòng xanh</code>
+                    </p>
+                  </div>
+
+                  <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                    <LucideIcons.Info className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span><strong>Hình ảnh chia sẻ:</strong> Tự động sử dụng <strong>Ảnh đại diện sản phẩm</strong> (ảnh đầu tiên trong tab Hình ảnh).</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Social Share Live Preview Card */}
             <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a303d] p-5 shadow-sm space-y-4">
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
-                <LucideIcons.Share2 className="w-4 h-4 text-primary" /> Xem trước hiển thị khi chia sẻ (Zalo / Facebook)
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 pb-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <LucideIcons.Share2 className="w-4 h-4 text-emerald-500" />
+                  Xem trước hiển thị (Zalo / Facebook / Google)
+                </span>
+                <span className="text-[11px] font-normal px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                  {form.isSeoCustom ? "Trạng thái: SEO Tùy chỉnh" : "Trạng thái: SEO Mặc định"}
+                </span>
               </h2>
-              
+
               <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-800/40 shadow-sm">
                 <div className="relative aspect-video w-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
                   {(form.images && form.images.length > 0 && form.images[0]) ? (
@@ -1054,14 +1177,18 @@ export function ProductForm({
                     Ảnh đại diện
                   </div>
                 </div>
-                
+
                 <div className="p-4 space-y-1.5 bg-white dark:bg-[#2a303d]">
                   <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">MAYVANPHONGXANH.COM</div>
                   <h3 className="font-bold text-base text-gray-900 dark:text-gray-100 line-clamp-2 leading-snug">
-                    {form.metaTitle || form.name || 'Tiêu đề sản phẩm khi chia sẻ'}
+                    {form.isSeoCustom
+                      ? (form.metaTitle?.trim() || form.name || 'Tiêu đề sản phẩm khi chia sẻ')
+                      : (form.name ? `${form.name} - Máy Văn Phòng Xanh` : 'Tiêu đề sản phẩm khi chia sẻ')}
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
-                    {form.metaDescription || (form.description ? form.description.replace(/<[^>]+>/g, '').trim() : '') || 'Mô tả tóm tắt liên kết hiển thị khi gửi qua Zalo, Facebook Messenger hoặc đăng bài...'}
+                    {form.isSeoCustom
+                      ? (form.metaDescription?.trim() || (form.description ? form.description.replace(/<[^>]+>/g, '').trim() : '') || 'Mô tả tóm tắt liên kết hiển thị khi gửi qua Zalo, Facebook Messenger...')
+                      : ((form.description ? form.description.replace(/<[^>]+>/g, '').trim() : '') || 'Mô tả tóm tắt liên kết hiển thị khi gửi qua Zalo, Facebook Messenger...')}
                   </p>
                 </div>
               </div>
