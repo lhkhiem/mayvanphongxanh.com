@@ -36,10 +36,10 @@ export function DashboardClient({
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
             <LayoutDashboard className="w-7 h-7 text-primary" />
-            Tổng Quan Dashboard Bán Hàng, Nội Dung & SEO
+            Trung Tâm Điều Hành Doanh Số & Tăng Trưởng SEO
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Hệ thống báo cáo thời gian thực MayVanPhongXanh.com
+            Hệ thống phân tích dữ liệu & theo dõi hiệu suất thời gian thực | MayVanPhongXanh.com
           </p>
         </div>
 
