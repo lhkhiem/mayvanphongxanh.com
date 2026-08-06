@@ -3,10 +3,17 @@
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { logAuditAction } from "@/lib/audit-logger"
+import { auth } from "@/auth"
 
 export async function createRole(data: FormData) {
+  const session = await auth()
+  if (session?.user?.role !== "Admin") {
+    return { error: "Bạn không có quyền thực hiện thao tác này." }
+  }
+
   const name = data.get("name") as string
   const description = data.get("description") as string
+  const permissionIds = data.getAll("permissionIds") as string[]
 
   if (!name) {
     return { error: "Tên nhóm quyền không được để trống." }
@@ -22,7 +29,10 @@ export async function createRole(data: FormData) {
       data: {
         name,
         description,
-        isSystem: false
+        isSystem: false,
+        permissions: {
+          create: permissionIds.map(permissionId => ({ permissionId }))
+        }
       }
     })
 
@@ -30,8 +40,8 @@ export async function createRole(data: FormData) {
       action: "CREATE",
       entity: "ROLE",
       entityId: role.id,
-      details: `Tạo nhóm quyền (vai trò) mới: ${name}`,
-      metadata: { name, description }
+      details: `Tạo nhóm quyền mới: ${name} với ${permissionIds.length} quyền hạn`,
+      metadata: { name, description, permissionCount: permissionIds.length }
     })
 
     revalidatePath("/admin/roles")
@@ -42,8 +52,14 @@ export async function createRole(data: FormData) {
 }
 
 export async function updateRole(id: string, data: FormData) {
+  const session = await auth()
+  if (session?.user?.role !== "Admin") {
+    return { error: "Bạn không có quyền thực hiện thao tác này." }
+  }
+
   const name = data.get("name") as string
   const description = data.get("description") as string
+  const permissionIds = data.getAll("permissionIds") as string[]
 
   if (!name) {
     return { error: "Tên nhóm quyền không được để trống." }
@@ -63,12 +79,26 @@ export async function updateRole(id: string, data: FormData) {
       })
     }
 
+    // Sync role permissions
+    await prisma.rolePermission.deleteMany({
+      where: { roleId: id }
+    })
+
+    if (permissionIds.length > 0) {
+      await prisma.rolePermission.createMany({
+        data: permissionIds.map(permissionId => ({
+          roleId: id,
+          permissionId
+        }))
+      })
+    }
+
     await logAuditAction({
       action: "UPDATE",
       entity: "ROLE",
       entityId: id,
-      details: `Cập nhật nhóm quyền: ${role?.name || name}`,
-      metadata: { name, description }
+      details: `Cập nhật nhóm quyền: ${role?.name || name} (${permissionIds.length} quyền hạn)`,
+      metadata: { name, description, permissionCount: permissionIds.length }
     })
 
     revalidatePath("/admin/roles")
@@ -79,6 +109,11 @@ export async function updateRole(id: string, data: FormData) {
 }
 
 export async function deleteRole(id: string) {
+  const session = await auth()
+  if (session?.user?.role !== "Admin") {
+    return { error: "Bạn không có quyền thực hiện thao tác này." }
+  }
+
   try {
     const role = await prisma.role.findUnique({ where: { id }, include: { users: true } })
     

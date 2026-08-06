@@ -135,7 +135,7 @@ export default function AdminLoginPage() {
                 {isLoading ? "Đang xử lý..." : "Đăng nhập"}
               </button>
               
-              <Link href="#" className="text-[#5856d6] hover:text-[#4f4dbf] text-sm hover:underline">
+              <Link href="/admin/forgot-password" className="text-[#5856d6] hover:text-[#4f4dbf] text-sm hover:underline">
                 Quên mật khẩu?
               </Link>
             </div>

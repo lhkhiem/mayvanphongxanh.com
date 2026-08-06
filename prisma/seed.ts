@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client'
 import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { products, categories as mockCategories, testimonials, blogPosts, companyInfo, projects } from '../lib/mockData'
+import { SYSTEM_PERMISSIONS } from '../lib/permissions'
 import bcrypt from 'bcryptjs'
 import "dotenv/config"
 
@@ -50,7 +51,18 @@ async function main() {
   await prisma.role.deleteMany()
   await prisma.permission.deleteMany()
   
-  // 0. Seed Roles and Admin User
+  // 0. Seed Roles, Permissions and Admin User
+  console.log('Seed Permissions...')
+  const createdPerms: Record<string, string> = {}
+  for (const perm of SYSTEM_PERMISSIONS) {
+    const p = await prisma.permission.upsert({
+      where: { code: perm.code },
+      update: { name: perm.name, module: perm.module },
+      create: { code: perm.code, name: perm.name, module: perm.module }
+    })
+    createdPerms[perm.code] = p.id
+  }
+
   console.log('Seed Roles and Admin User...')
   const adminRole = await prisma.role.create({
     data: {
@@ -59,6 +71,25 @@ async function main() {
       isSystem: true
     }
   })
+  
+  const modifyRole = await prisma.role.create({
+    data: {
+      name: 'Modify',
+      description: 'Biên tập viên - Cập nhật nội dung & sản phẩm',
+      isSystem: true
+    }
+  })
+
+  // Grant non-system permissions to Modify role by default
+  const nonSystemPerms = SYSTEM_PERMISSIONS.filter(p => p.module !== "SYSTEM")
+  for (const p of nonSystemPerms) {
+    const permId = createdPerms[p.code]
+    if (permId) {
+      await prisma.rolePermission.create({
+        data: { roleId: modifyRole.id, permissionId: permId }
+      })
+    }
+  }
   
   const hashedPassword = await bcrypt.hash('admin', 10)
   await prisma.user.create({

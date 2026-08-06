@@ -21,7 +21,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
-          include: { role: true }
+          include: {
+            role: {
+              include: {
+                permissions: {
+                  include: { permission: true }
+                }
+              }
+            }
+          }
         })
 
         if (!user || !user.password) {
@@ -53,6 +61,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         const userRole = user.role?.name || "User"
+        const userPermissions = userRole === "Admin"
+          ? ["*"]
+          : user.role?.permissions.map(rp => rp.permission.code) || []
 
         await logAuditAction({
           action: "LOGIN",
@@ -70,6 +81,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: user.name,
           email: user.email,
           role: userRole,
+          permissions: userPermissions,
         }
       },
     }),

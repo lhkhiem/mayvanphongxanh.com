@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -34,6 +35,8 @@ interface SidebarItem {
   icon?: any;
   isHeader?: boolean;
   badge?: string;
+  adminOnly?: boolean;
+  permissionCode?: string;
 }
 
 const sidebarNavItems: SidebarItem[] = [
@@ -50,26 +53,31 @@ const sidebarNavItems: SidebarItem[] = [
     title: "Sản phẩm",
     href: "/admin/products",
     icon: Box,
+    permissionCode: "VIEW_PRODUCTS",
   },
   {
     title: "Danh mục",
     href: "/admin/categories",
     icon: Tags,
+    permissionCode: "MANAGE_CATEGORIES",
   },
   {
     title: "Thương hiệu",
     href: "/admin/brands",
     icon: Layers,
+    permissionCode: "MANAGE_BRANDS",
   },
   {
     title: "Chính sách",
     href: "/admin/policies",
     icon: ShieldCheck,
+    permissionCode: "MANAGE_PRODUCTS",
   },
   {
     title: "Quản lý kho",
     href: "/admin/inventory",
     icon: Warehouse,
+    permissionCode: "MANAGE_INVENTORY",
   },
   {
     title: "DỊCH VỤ & CHO THUÊ",
@@ -79,16 +87,19 @@ const sidebarNavItems: SidebarItem[] = [
     title: "Thuê máy",
     href: "/admin/rentals",
     icon: CalendarClock,
+    permissionCode: "MANAGE_RENTALS",
   },
   {
     title: "Sửa chữa & Bảo hành",
     href: "/admin/maintenance",
     icon: Wrench,
+    permissionCode: "MANAGE_MAINTENANCE",
   },
   {
     title: "Dịch vụ trọn gói",
     href: "/admin/services",
     icon: Layers,
+    permissionCode: "MANAGE_SERVICES",
   },
   {
     title: "KINH DOANH",
@@ -98,12 +109,13 @@ const sidebarNavItems: SidebarItem[] = [
     title: "Đơn hàng",
     href: "/admin/orders",
     icon: ShoppingCart,
-
+    permissionCode: "VIEW_ORDERS",
   },
   {
     title: "Hóa đơn & Thu chi",
     href: "/admin/invoices",
     icon: Receipt,
+    permissionCode: "VIEW_ORDERS",
   },
   {
     title: "KHÁCH HÀNG",
@@ -113,11 +125,13 @@ const sidebarNavItems: SidebarItem[] = [
     title: "Danh sách",
     href: "/admin/customers",
     icon: Users,
+    permissionCode: "MANAGE_CUSTOMERS",
   },
   {
     title: "Liên hệ",
     href: "/admin/feedback",
     icon: MessageSquare,
+    permissionCode: "MANAGE_CUSTOMERS",
   },
   {
     title: "NỘI DUNG",
@@ -127,70 +141,88 @@ const sidebarNavItems: SidebarItem[] = [
     title: "Bài viết & Tin tức",
     href: "/admin/posts",
     icon: Newspaper,
+    permissionCode: "MANAGE_POSTS",
   },
   {
     title: "Danh mục Bài viết",
     href: "/admin/post-categories",
     icon: Tags,
+    permissionCode: "MANAGE_POSTS",
   },
   {
     title: "Trang Giới Thiệu",
     href: "/admin/about",
     icon: FileText,
+    permissionCode: "MANAGE_POSTS",
   },
   {
     title: "Dự án tiêu biểu",
     href: "/admin/projects",
     icon: Briefcase,
+    permissionCode: "MANAGE_PROJECTS",
   },
   {
     title: "Đối tác",
     href: "/admin/partners",
     icon: Handshake,
+    permissionCode: "MANAGE_PARTNERS",
   },
   {
     title: "Câu hỏi thường gặp",
     href: "/admin/faqs",
     icon: HelpCircle,
+    permissionCode: "MANAGE_FAQS",
   },
   {
     title: "Đánh giá khách hàng",
     href: "/admin/testimonials",
     icon: Star,
+    permissionCode: "MANAGE_FAQS",
   },
   {
     title: "Sliders & Banners",
     href: "/admin/sliders",
     icon: ImageIcon,
+    permissionCode: "MANAGE_SLIDERS",
   },
   {
     title: "Thư viện Media",
     href: "/admin/media",
     icon: ImageIcon,
+    permissionCode: "MANAGE_POSTS",
   },
   {
     title: "HỆ THỐNG",
     isHeader: true,
+    adminOnly: true,
   },
   {
     title: "Quản trị viên",
     href: "/admin/staff",
     icon: UserCog,
+    adminOnly: true,
+    permissionCode: "MANAGE_STAFF",
   },
   {
     title: "Phân quyền",
     href: "/admin/roles",
     icon: ShieldCheck,
+    adminOnly: true,
+    permissionCode: "MANAGE_ROLES",
   },
   {
     title: "Nhật ký hoạt động",
     href: "/admin/logs",
     icon: History,
+    adminOnly: true,
+    permissionCode: "VIEW_LOGS",
   },
   {
     title: "Cài đặt chung",
     href: "/admin/settings",
     icon: Settings,
+    adminOnly: true,
+    permissionCode: "MANAGE_SETTINGS",
   },
 ];
 
@@ -202,6 +234,27 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ isOpen, isUnfoldable, setIsOpen }: AdminSidebarProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const userRole = session?.user?.role;
+  const userPermissions = session?.user?.permissions || [];
+  const isAdmin = userRole === "Admin" || userPermissions.includes("*");
+
+  const hasPermission = (code?: string) => {
+    if (isAdmin) return true;
+    if (!code) return true;
+    return userPermissions.includes(code);
+  };
+
+  const navItems = sidebarNavItems.filter((item, index) => {
+    if (item.adminOnly && !isAdmin) return false;
+    if (item.isHeader) {
+      const nextItems = sidebarNavItems.slice(index + 1);
+      const nextHeaderIdx = nextItems.findIndex(i => i.isHeader);
+      const groupItems = nextHeaderIdx === -1 ? nextItems : nextItems.slice(0, nextHeaderIdx);
+      return groupItems.some(i => hasPermission(i.permissionCode) && (!i.adminOnly || isAdmin));
+    }
+    return hasPermission(item.permissionCode);
+  });
 
   return (
     <>
@@ -237,7 +290,7 @@ export function AdminSidebar({ isOpen, isUnfoldable, setIsOpen }: AdminSidebarPr
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden py-4 custom-scrollbar">
           <nav className="grid items-start px-3 text-sm font-medium gap-1">
-            {sidebarNavItems.map((item, index) => {
+            {navItems.map((item, index) => {
               if (item.isHeader) {
                 return (
                   <div

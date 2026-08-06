@@ -1,7 +1,14 @@
 import { prisma } from "@/lib/db"
 import { StaffTable } from "./staff-table"
+import { auth } from "@/auth"
+import { redirect } from "next/navigation"
 
 export default async function StaffPage() {
+  const session = await auth()
+  if (session?.user?.role !== "Admin") {
+    redirect("/admin")
+  }
+
   const staff = await prisma.user.findMany({
     where: { roleId: { not: null } },
     include: { role: true },

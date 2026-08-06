@@ -1,7 +1,14 @@
 import { prisma } from "@/lib/db"
 import { SettingsForm } from "./settings-form"
+import { auth } from "@/auth"
+import { redirect } from "next/navigation"
 
 export default async function SettingsPage() {
+  const session = await auth()
+  if (session?.user?.role !== "Admin") {
+    redirect("/admin")
+  }
+
   const settingsData = await prisma.setting.findMany()
   
   const settingsMap: Record<string, string> = {}

@@ -440,3 +440,57 @@ export async function sendOrderNotification(order: OrderNotificationData) {
   }
 }
 
+export async function sendRootVerificationOtpEmail({ email, code }: { email: string; code: string }) {
+  const subject = `🔐 [Xác Thực Root] Mã OTP thiết lập Tài Khoản Root Tối Cao: ${code}`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+      <div style="background-color: #1e1b4b; color: #ffffff; padding: 24px; text-align: center;">
+        <h2 style="margin: 0; font-size: 20px; text-transform: uppercase;">MÃ XÁC THỰC ROOT SYSTEM</h2>
+        <p style="margin: 6px 0 0 0; font-size: 13px; color: #a5b4fc;">Máy Văn Phòng Xanh - Security Protocol</p>
+      </div>
+      <div style="padding: 28px; color: #334155; line-height: 1.6;">
+        <p>Xin chào,</p>
+        <p>Bạn vừa yêu cầu khởi tạo / nâng cấp địa chỉ email <strong>${email}</strong> thành <strong>Tài Khoản Root Tối Cao</strong> của hệ thống.</p>
+        <div style="background-color: #f8fafc; border: 2px dashed #6366f1; padding: 20px; text-align: center; margin: 24px 0; border-radius: 8px;">
+          <p style="margin: 0; font-size: 13px; color: #64748b; font-weight: bold;">MÃ OTP XÁC THỰC 6 CHỮ SỐ</p>
+          <div style="font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #4338ca; margin: 10px 0;">${code}</div>
+          <p style="margin: 0; font-size: 12px; color: #ef4444;">* Mã này có hiệu lực trong 15 phút. Tuyệt đối không chia sẻ cho bất kỳ ai.</p>
+        </div>
+        <p style="font-size: 13px; color: #64748b;">Sau khi xác nhận mã OTP này, tài khoản Root sẽ được kích hoạt. Email này sẽ bị khóa cố định và không thể thay đổi sau này để đảm bảo an toàn tuyệt đối.</p>
+      </div>
+      <div style="background-color: #f1f5f9; padding: 16px; text-align: center; font-size: 12px; color: #64748b;">
+        © ${new Date().getFullYear()} Máy Văn Phòng Xanh. All rights reserved.
+      </div>
+    </div>
+  `;
+
+  return await sendEmail({ to: email, subject, html });
+}
+
+export async function sendPasswordResetEmail({ email, resetUrl, name }: { email: string; resetUrl: string; name?: string | null }) {
+  const subject = `🔑 [Máy Văn Phòng Xanh] Khôi Phục Mật Khẩu Tài Khoản`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+      <div style="background-color: #0f172a; color: #ffffff; padding: 24px; text-align: center;">
+        <h2 style="margin: 0; font-size: 20px;">Yêu Cầu Đặt Lại Mật Khẩu</h2>
+        <p style="margin: 6px 0 0 0; font-size: 13px; color: #94a3b8;">Máy Văn Phòng Xanh</p>
+      </div>
+      <div style="padding: 28px; color: #334155; line-height: 1.6;">
+        <p>Xin chào <strong>${name || email}</strong>,</p>
+        <p>Chúng tôi nhận được yêu cầu khôi phục mật khẩu cho tài khoản liên kết với email <strong>${email}</strong>.</p>
+        <p>Vui lòng bấm vào nút bên dưới để tiến hành đặt mật khẩu mới:</p>
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${resetUrl}" style="background-color: #2563eb; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 15px; display: inline-block; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);">Đặt Lại Mật Khẩu</a>
+        </div>
+        <p style="font-size: 13px; color: #64748b;">Hoặc copy đường dẫn sau dán vào trình duyệt:<br/><a href="${resetUrl}" style="color: #2563eb; word-break: break-all;">${resetUrl}</a></p>
+        <p style="font-size: 12px; color: #ef4444; margin-top: 20px;">* Đường dẫn này chỉ có hiệu lực trong vòng 60 phút. Nếu bạn không yêu cầu khôi phục mật khẩu, vui lòng bỏ qua email này.</p>
+      </div>
+      <div style="background-color: #f1f5f9; padding: 16px; text-align: center; font-size: 12px; color: #64748b;">
+        © ${new Date().getFullYear()} Máy Văn Phòng Xanh. All rights reserved.
+      </div>
+    </div>
+  `;
+
+  return await sendEmail({ to: email, subject, html });
+}
+
