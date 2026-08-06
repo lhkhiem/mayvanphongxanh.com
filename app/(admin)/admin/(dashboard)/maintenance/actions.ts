@@ -3,6 +3,7 @@
 import { Prisma, WarrantyEventType, WarrantyStatus } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
+import { logAuditAction } from "@/lib/audit-logger"
 
 const PAGE_SIZE_MAX = 100
 
@@ -166,6 +167,15 @@ export async function createWarrantyRecord(input: WarrantyInput) {
         },
       },
     })
+
+    await logAuditAction({
+      action: "CREATE",
+      entity: "WARRANTY",
+      entityId: record.id,
+      details: `Kích hoạt bảo hành điện tử (Serial: ${data.serialNumber}, SP: ${data.productName}, KH: ${data.customerName})`,
+      metadata: { serialNumber: data.serialNumber, customerName: data.customerName }
+    })
+
     revalidatePath("/admin/maintenance")
     return { success: true, data: record }
   } catch (error) {
@@ -184,6 +194,15 @@ export async function updateWarrantyRecord(id: string, input: WarrantyInput) {
       where: { id },
       data,
     })
+
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "WARRANTY",
+      entityId: id,
+      details: `Cập nhật phiếu bảo hành Serial: ${data.serialNumber} (KH: ${data.customerName})`,
+      metadata: { serialNumber: data.serialNumber, status: data.status }
+    })
+
     revalidatePath("/admin/maintenance")
     return { success: true }
   } catch (error) {
@@ -197,7 +216,16 @@ export async function updateWarrantyRecord(id: string, input: WarrantyInput) {
 
 export async function deleteWarrantyRecord(id: string) {
   try {
+    const record = await prisma.warrantyRecord.findUnique({ where: { id } })
     await prisma.warrantyRecord.delete({ where: { id } })
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "WARRANTY",
+      entityId: id,
+      details: `Xóa phiếu bảo hành ID #${id} (Serial: ${record?.serialNumber || 'N/A'})`
+    })
+
     revalidatePath("/admin/maintenance")
     return { success: true }
   } catch (error) {
@@ -229,6 +257,15 @@ export async function addWarrantyEvent(input: {
         eventDate,
       },
     })
+
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "WARRANTY",
+      entityId: input.warrantyId,
+      details: `Thêm nhật ký sửa chữa/bảo hành (${input.type}): ${title}`,
+      metadata: { eventType: input.type, title }
+    })
+
     revalidatePath("/admin/maintenance")
     return { success: true }
   } catch (error) {

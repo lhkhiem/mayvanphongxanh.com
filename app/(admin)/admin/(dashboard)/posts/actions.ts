@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { Prisma } from "@prisma/client"
+import { logAuditAction } from "@/lib/audit-logger"
 
 export async function getPosts(filter?: 'all' | 'published' | 'drafts', categoryId?: string | number) {
   try {
@@ -61,6 +62,15 @@ export async function createPost(data: any) {
         publishedAt: data.isActive ? new Date() : null,
       }
     })
+
+    await logAuditAction({
+      action: "CREATE",
+      entity: "POST",
+      entityId: post.id,
+      details: `Tạo bài viết mới: ${data.title}`,
+      metadata: { title: data.title, slug: data.slug }
+    })
+
     revalidatePath("/admin/posts")
     revalidatePath("/tin-tuc")
     return { success: true, data: post }
@@ -91,7 +101,6 @@ export async function updatePost(id: string, data: any) {
       isTrending: data.isTrending,
     }
 
-    // Only update publishedAt if it's changing from draft to published
     if (data.isActive && !data.wasActive) {
       updateData.publishedAt = new Date()
     }
@@ -100,6 +109,15 @@ export async function updatePost(id: string, data: any) {
       where: { id },
       data: updateData
     })
+
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "POST",
+      entityId: id,
+      details: `Cập nhật bài viết: ${data.title}`,
+      metadata: { title: data.title, slug: data.slug }
+    })
+
     revalidatePath("/admin/posts")
     revalidatePath("/tin-tuc")
     return { success: true, data: post }
@@ -123,6 +141,14 @@ export async function togglePostActive(id: string, currentActiveStatus: boolean)
         publishedAt: !currentActiveStatus ? new Date() : null
       }
     })
+
+    await logAuditAction({
+      action: "STATUS_CHANGE",
+      entity: "POST",
+      entityId: id,
+      details: `Thay đổi trạng thái bài viết ID #${id} thành ${!currentActiveStatus ? 'Xuất bản' : 'Nháp'}`
+    })
+
     revalidatePath("/admin/posts")
     revalidatePath("/tin-tuc")
     return { success: true, data: post }
@@ -171,6 +197,14 @@ export async function deletePost(id: string) {
     await prisma.post.delete({
       where: { id }
     })
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "POST",
+      entityId: id,
+      details: `Xóa bài viết ID #${id}`
+    })
+
     revalidatePath("/admin/posts")
     return { success: true }
   } catch (error) {

@@ -2,6 +2,7 @@
 
 import { prisma as db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { logAuditAction } from "@/lib/audit-logger";
 
 export type SliderFormData = {
   image: string;
@@ -55,6 +56,15 @@ export async function createSlider(data: SliderFormData) {
         isActive: data.isActive,
       },
     });
+
+    await logAuditAction({
+      action: "CREATE",
+      entity: "SLIDER",
+      entityId: slider.id,
+      details: `Tạo Slider mới: ${data.title || "Không có tiêu đề"}`,
+      metadata: { title: data.title, image: data.image }
+    });
+
     revalidatePath("/");
     return { data: slider };
   } catch (error: any) {
@@ -79,6 +89,14 @@ export async function updateSlider(id: number, data: SliderFormData) {
         isActive: data.isActive,
       },
     });
+
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "SLIDER",
+      entityId: id,
+      details: `Cập nhật Slider ID #${id}: ${data.title || "Không có tiêu đề"}`
+    });
+
     revalidatePath("/");
     return { data: slider };
   } catch (error: any) {
@@ -89,6 +107,14 @@ export async function updateSlider(id: number, data: SliderFormData) {
 export async function deleteSlider(id: number) {
   try {
     await db.slider.delete({ where: { id } });
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "SLIDER",
+      entityId: id,
+      details: `Xóa Slider ID #${id}`
+    });
+
     revalidatePath("/");
     return { success: true };
   } catch (error: any) {
@@ -102,6 +128,14 @@ export async function toggleSliderActive(id: number, currentStatus: boolean) {
       where: { id },
       data: { isActive: !currentStatus },
     });
+
+    await logAuditAction({
+      action: "STATUS_CHANGE",
+      entity: "SLIDER",
+      entityId: id,
+      details: `Thay đổi trạng thái Slider ID #${id} thành ${!currentStatus ? 'Hiển thị' : 'Ẩn'}`
+    });
+
     revalidatePath("/");
     return { success: true };
   } catch (error: any) {
@@ -135,6 +169,14 @@ export async function createBanner(data: BannerFormData) {
         isActive: data.isActive,
       },
     });
+
+    await logAuditAction({
+      action: "CREATE",
+      entity: "BANNER",
+      entityId: banner.id,
+      details: `Tạo Banner mới: ${data.title}`
+    });
+
     revalidatePath("/");
     return { data: banner };
   } catch (error: any) {
@@ -156,6 +198,14 @@ export async function updateBanner(id: number, data: BannerFormData) {
         isActive: data.isActive,
       },
     });
+
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "BANNER",
+      entityId: id,
+      details: `Cập nhật Banner ID #${id}: ${data.title}`
+    });
+
     revalidatePath("/");
     return { data: banner };
   } catch (error: any) {
@@ -166,6 +216,14 @@ export async function updateBanner(id: number, data: BannerFormData) {
 export async function deleteBanner(id: number) {
   try {
     await db.banner.delete({ where: { id } });
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "BANNER",
+      entityId: id,
+      details: `Xóa Banner ID #${id}`
+    });
+
     revalidatePath("/");
     return { success: true };
   } catch (error: any) {
@@ -179,6 +237,14 @@ export async function toggleBannerActive(id: number, currentStatus: boolean) {
       where: { id },
       data: { isActive: !currentStatus },
     });
+
+    await logAuditAction({
+      action: "STATUS_CHANGE",
+      entity: "BANNER",
+      entityId: id,
+      details: `Thay đổi trạng thái Banner ID #${id} thành ${!currentStatus ? 'Hiển thị' : 'Ẩn'}`
+    });
+
     revalidatePath("/");
     return { success: true };
   } catch (error: any) {

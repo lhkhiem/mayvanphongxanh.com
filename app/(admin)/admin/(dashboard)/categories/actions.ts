@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { Prisma } from "@prisma/client"
+import { logAuditAction } from "@/lib/audit-logger"
 
 export type CategoryWithChildren = {
   id: number
@@ -130,6 +131,13 @@ export async function createCategory(data: CategoryFormData) {
         metaImage: data.metaImage || null,
       },
     })
+    await logAuditAction({
+      action: "CREATE",
+      entity: "CATEGORY",
+      entityId: category.id,
+      details: `Tạo danh mục mới: ${category.name}`,
+      metadata: { name: category.name, slug: category.slug }
+    })
     revalidatePath("/admin/categories")
     revalidatePath("/")
     return { success: true, data: category }
@@ -174,6 +182,13 @@ export async function updateCategory(id: number, data: CategoryFormData) {
         metaImage: data.metaImage || null,
       },
     })
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "CATEGORY",
+      entityId: id,
+      details: `Cập nhật danh mục: ${category.name}`,
+      metadata: { name: category.name, slug: category.slug }
+    })
     revalidatePath("/admin/categories")
     revalidatePath("/")
     return { success: true, data: category }
@@ -209,6 +224,12 @@ export async function toggleCategoryActive(id: number, current: boolean) {
     const category = await prisma.category.update({
       where: { id },
       data: { isActive: !current },
+    })
+    await logAuditAction({
+      action: "STATUS_CHANGE",
+      entity: "CATEGORY",
+      entityId: id,
+      details: `Thay đổi trạng thái danh mục ID #${id} thành ${!current ? 'Hoạt động' : 'Ẩn'}`
     })
     revalidatePath("/admin/categories")
     revalidatePath("/")
@@ -249,6 +270,12 @@ export async function deleteCategory(id: number) {
     }
 
     await prisma.category.delete({ where: { id } })
+    await logAuditAction({
+      action: "DELETE",
+      entity: "CATEGORY",
+      entityId: id,
+      details: `Xóa danh mục ID #${id}`
+    })
     revalidatePath("/admin/categories")
     revalidatePath("/")
     return { success: true }

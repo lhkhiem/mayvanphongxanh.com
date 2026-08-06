@@ -25,9 +25,18 @@ import {
   HelpCircle,
   Handshake,
   Star,
+  History,
 } from "lucide-react";
 
-const sidebarNavItems = [
+interface SidebarItem {
+  title: string;
+  href?: string;
+  icon?: any;
+  isHeader?: boolean;
+  badge?: string;
+}
+
+const sidebarNavItems: SidebarItem[] = [
   {
     title: "Tổng quan",
     href: "/admin",
@@ -172,6 +181,11 @@ const sidebarNavItems = [
     title: "Phân quyền",
     href: "/admin/roles",
     icon: ShieldCheck,
+  },
+  {
+    title: "Nhật ký hoạt động",
+    href: "/admin/logs",
+    icon: History,
   },
   {
     title: "Cài đặt chung",

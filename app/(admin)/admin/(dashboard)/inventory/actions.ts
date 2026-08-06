@@ -3,6 +3,7 @@
 import { InventoryLogType, Prisma } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
+import { logAuditAction } from "@/lib/audit-logger"
 
 const PAGE_SIZE_DEFAULT = 20
 
@@ -29,7 +30,6 @@ export async function getInventoryProducts(params?: InventoryListParams) {
     const skip = (page - 1) * pageSize
     const search = params?.search?.trim()
 
-    // Handle category filtering with hierarchy (including subcategories)
     let categoryCondition: Prisma.IntFilter | number | undefined = undefined
     if (params?.categoryId && params.categoryId !== "all") {
       const selectedCatId = Number(params.categoryId)
@@ -50,7 +50,6 @@ export async function getInventoryProducts(params?: InventoryListParams) {
       categoryCondition = { in: Array.from(targetCategoryIds) }
     }
 
-    // Build Prisma query condition
     const where: Prisma.ProductVariantWhereInput = {
       product: {
         deletedAt: null,
@@ -66,7 +65,6 @@ export async function getInventoryProducts(params?: InventoryListParams) {
       ]
     }
 
-    // Filter by stock status using raw SQL or Prisma conditions
     if (params?.stockStatus === "out_of_stock") {
       where.stockQuantity = 0
     }
@@ -120,7 +118,6 @@ export async function getInventoryProducts(params?: InventoryListParams) {
       }),
     ])
 
-    // Post-filter for low_stock / in_stock if needed (since threshold is column-dependent)
     let filteredVariants = variants
     if (params?.stockStatus === "low_stock") {
       filteredVariants = variants.filter(
@@ -192,7 +189,7 @@ export async function getInventoryStats() {
 export type AdjustStockInput = {
   variantId: string
   type: "IMPORT" | "EXPORT" | "ADJUSTMENT"
-  changeQuantity: number // Số lượng thay đổi (dương cho Nhập, âm cho Xuất hoặc chênh lệch kiểm kê)
+  changeQuantity: number
   reason?: string
   referenceId?: string
 }
@@ -235,7 +232,15 @@ export async function adjustStock(input: AdjustStockInput) {
         },
       })
 
-      return { updatedVariant, log }
+      return { updatedVariant, log, variantName: variant.product?.name || variant.sku }
+    })
+
+    await logAuditAction({
+      action: "INVENTORY",
+      entity: "INVENTORY",
+      entityId: variantId,
+      details: `${type === 'IMPORT' ? 'Nhập kho' : type === 'EXPORT' ? 'Xuất kho' : 'Điều chỉnh'} kho hàng (${changeQuantity > 0 ? '+' : ''}${changeQuantity}) cho ${result.variantName}`,
+      metadata: { type, changeQuantity, reason, referenceId }
     })
 
     revalidatePath("/admin/inventory")
@@ -256,6 +261,13 @@ export async function updateVariantThreshold(variantId: string, lowStockThreshol
     await prisma.productVariant.update({
       where: { id: variantId },
       data: { lowStockThreshold },
+    })
+
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "INVENTORY",
+      entityId: variantId,
+      details: `Cập nhật ngưỡng cảnh báo kho cho biến thể ID #${variantId} thành ${lowStockThreshold}`
     })
 
     revalidatePath("/admin/inventory")

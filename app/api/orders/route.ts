@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { Prisma, PaymentMethod } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { sendOrderNotification } from '@/lib/mailer'
+import { logAuditAction } from '@/lib/audit-logger'
 
 type OrderRequestItem = {
   id?: number
@@ -225,6 +226,14 @@ export async function POST(request: Request) {
       })
     }, {
       isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    })
+
+    await logAuditAction({
+      action: "CREATE",
+      entity: "ORDER",
+      entityId: order.id,
+      details: `Đặt đơn hàng mới #${order.id.slice(0, 8)} (${order.customerName} - ${order.customerPhone}) - Tổng: ${order.totalAmount.toLocaleString('vi-VN')}đ`,
+      metadata: { orderId: order.id, totalAmount: order.totalAmount, customerPhone: order.customerPhone }
     })
 
     // Gửi email thông báo cho Khách hàng & Admin

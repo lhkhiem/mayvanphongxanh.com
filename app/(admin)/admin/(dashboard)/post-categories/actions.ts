@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { Prisma } from "@prisma/client"
+import { logAuditAction } from "@/lib/audit-logger"
 
 export async function getPostCategories() {
   try {
@@ -39,6 +40,15 @@ export async function createPostCategory(data: { name: string, slug: string, ord
         order: newOrder,
       }
     })
+
+    await logAuditAction({
+      action: "CREATE",
+      entity: "POST_CATEGORY",
+      entityId: category.id,
+      details: `Tạo danh mục bài viết mới: ${data.name}`,
+      metadata: { name: data.name, slug: data.slug }
+    })
+
     revalidatePath("/admin/post-categories")
     revalidatePath("/tin-tuc")
     return { success: true, data: category }
@@ -63,6 +73,15 @@ export async function updatePostCategory(id: number, data: { name: string, slug:
         ...(data.order !== undefined ? { order: data.order } : {}),
       }
     })
+
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "POST_CATEGORY",
+      entityId: id,
+      details: `Cập nhật danh mục bài viết: ${data.name}`,
+      metadata: { name: data.name, slug: data.slug }
+    })
+
     revalidatePath("/admin/post-categories")
     revalidatePath("/tin-tuc")
     return { success: true, data: category }
@@ -116,6 +135,14 @@ export async function deletePostCategory(id: number) {
     await prisma.postCategory.delete({
       where: { id }
     })
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "POST_CATEGORY",
+      entityId: id,
+      details: `Xóa danh mục bài viết ID #${id}`
+    })
+
     revalidatePath("/admin/post-categories")
     revalidatePath("/tin-tuc")
     return { success: true }

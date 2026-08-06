@@ -3,6 +3,7 @@
 import { RentalStatus, Prisma } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
+import { logAuditAction } from "@/lib/audit-logger"
 
 const RENTAL_PAGE_SIZE_MAX = 100
 
@@ -58,10 +59,19 @@ export async function getRentals(params?: RentalListParams) {
 
 export async function updateRentalInfo(id: string, data: { serialNumber?: string, endDate?: Date | null, notes?: string, status?: RentalStatus }) {
   try {
-    await prisma.rentalMachine.update({
+    const rental = await prisma.rentalMachine.update({
       where: { id },
       data,
     })
+
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "RENTAL",
+      entityId: id,
+      details: `Cập nhật hợp đồng thuê máy của KH ${rental.customerName} (${rental.productName})`,
+      metadata: { serialNumber: data.serialNumber, status: data.status }
+    })
+
     revalidatePath("/admin/rentals")
     return { success: true }
   } catch (error) {
@@ -72,9 +82,18 @@ export async function updateRentalInfo(id: string, data: { serialNumber?: string
 
 export async function deleteRental(id: string) {
   try {
+    const rental = await prisma.rentalMachine.findUnique({ where: { id } })
     await prisma.rentalMachine.delete({
       where: { id }
     })
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "RENTAL",
+      entityId: id,
+      details: `Xóa hồ sơ cho thuê máy: ${rental?.productName || id} (KH: ${rental?.customerName || 'N/A'})`
+    })
+
     revalidatePath("/admin/rentals")
     return { success: true }
   } catch(error) {

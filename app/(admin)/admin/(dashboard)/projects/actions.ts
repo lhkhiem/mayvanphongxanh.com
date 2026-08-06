@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { Prisma } from "@prisma/client"
+import { logAuditAction } from "@/lib/audit-logger"
 
 export async function getProjects(filter?: 'all' | 'published' | 'drafts') {
   try {
@@ -48,6 +49,14 @@ export async function createProject(data: any) {
         isActive: data.isActive,
       }
     })
+
+    await logAuditAction({
+      action: "CREATE",
+      entity: "PROJECT",
+      entityId: project.id,
+      details: `Tạo dự án tiêu biểu mới: ${data.title}`
+    })
+
     revalidatePath("/admin/projects")
     return { success: true, data: project }
   } catch (error) {
@@ -71,6 +80,14 @@ export async function updateProject(id: number, data: any) {
       where: { id },
       data: updateData
     })
+
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "PROJECT",
+      entityId: id,
+      details: `Cập nhật dự án ID #${id}: ${data.title}`
+    })
+
     revalidatePath("/admin/projects")
     return { success: true, data: project }
   } catch (error) {
@@ -87,6 +104,14 @@ export async function toggleProjectActive(id: number, currentActiveStatus: boole
         isActive: !currentActiveStatus
       }
     })
+
+    await logAuditAction({
+      action: "STATUS_CHANGE",
+      entity: "PROJECT",
+      entityId: id,
+      details: `Thay đổi trạng thái dự án ID #${id} thành ${!currentActiveStatus ? 'Hiển thị' : 'Ẩn'}`
+    })
+
     revalidatePath("/admin/projects")
     return { success: true, data: project }
   } catch (error) {
@@ -100,6 +125,14 @@ export async function deleteProject(id: number) {
     await prisma.project.delete({
       where: { id }
     })
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "PROJECT",
+      entityId: id,
+      details: `Xóa dự án ID #${id}`
+    })
+
     revalidatePath("/admin/projects")
     return { success: true }
   } catch (error) {

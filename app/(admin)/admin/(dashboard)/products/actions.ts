@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { Prisma } from "@prisma/client"
+import { logAuditAction } from "@/lib/audit-logger"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -280,6 +281,14 @@ export async function createProduct(input: ProductInput) {
 
     await normalizeCategoryOrders(input.categoryId)
 
+    await logAuditAction({
+      action: "CREATE",
+      entity: "PRODUCT",
+      entityId: product.id,
+      details: `Tạo sản phẩm mới: ${product.name}`,
+      metadata: { name: product.name, slug: product.slug, categoryId: product.categoryId }
+    })
+
     revalidatePath("/admin/products")
     revalidatePath("/")
     revalidatePath("/san-pham")
@@ -414,6 +423,14 @@ export async function updateProduct(id: number, input: ProductInput) {
     if (input.slug) {
       revalidatePath(`/san-pham/${input.slug}`)
     }
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "PRODUCT",
+      entityId: id,
+      details: `Cập nhật sản phẩm: ${input.name}`,
+      metadata: { name: input.name, slug: input.slug }
+    })
+
     return { success: true }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -446,6 +463,12 @@ export async function updateProductOrders(items: { id: number; order: number }[]
 export async function toggleProductActive(id: number, current: boolean) {
   try {
     await prisma.product.update({ where: { id }, data: { isActive: !current } })
+    await logAuditAction({
+      action: "STATUS_CHANGE",
+      entity: "PRODUCT",
+      entityId: id,
+      details: `Thay đổi trạng thái sản phẩm ID #${id} thành ${!current ? 'Hoạt động' : 'Ẩn'}`
+    })
     revalidatePath("/admin/products")
     revalidatePath("/")
     revalidatePath("/san-pham")
@@ -465,6 +488,13 @@ export async function deleteProduct(id: number) {
       data: { deletedAt: new Date() },
     })
     if (prod) await normalizeCategoryOrders(prod.categoryId)
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "PRODUCT",
+      entityId: id,
+      details: `Xóa sản phẩm ID #${id}`
+    })
 
     revalidatePath("/admin/products")
     revalidatePath("/admin/categories")

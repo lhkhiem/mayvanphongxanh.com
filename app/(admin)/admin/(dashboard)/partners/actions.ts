@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { logAuditAction } from "@/lib/audit-logger";
 
 // --- CERTIFICATES ---
 
@@ -44,10 +45,17 @@ export async function createCertificate(data: {
       }
     });
     
-    // Automatically set isPartner = true for the brand
     await prisma.brand.update({
       where: { id: data.brandId },
       data: { isPartner: true }
+    });
+
+    await logAuditAction({
+      action: "CREATE",
+      entity: "PARTNER",
+      entityId: cert.id,
+      details: `Tạo chứng nhận đối tác mới (Badge: ${data.badge})`,
+      metadata: { badge: data.badge, brandId: data.brandId }
     });
 
     revalidatePath('/admin/partners');
@@ -86,10 +94,16 @@ export async function updateCertificate(id: number, data: {
       }
     });
     
-    // Automatically set isPartner = true for the brand
     await prisma.brand.update({
       where: { id: data.brandId },
       data: { isPartner: true }
+    });
+
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "PARTNER",
+      entityId: id,
+      details: `Cập nhật chứng nhận đối tác ID #${id}`,
     });
 
     revalidatePath('/admin/partners');
@@ -104,6 +118,14 @@ export async function updateCertificate(id: number, data: {
 export async function deleteCertificate(id: number) {
   try {
     await prisma.partnerCertificate.delete({ where: { id } });
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "PARTNER",
+      entityId: id,
+      details: `Xóa chứng nhận đối tác ID #${id}`
+    });
+
     revalidatePath('/admin/partners');
     revalidatePath('/doi-tac');
     return { success: true };
@@ -144,6 +166,14 @@ export async function createBenefit(data: {
         isActive: data.isActive !== undefined ? data.isActive : true,
       }
     });
+
+    await logAuditAction({
+      action: "CREATE",
+      entity: "PARTNER",
+      entityId: benefit.id,
+      details: `Tạo quyền lợi đối tác mới: ${data.title}`
+    });
+
     revalidatePath('/admin/partners');
     revalidatePath('/doi-tac');
     return { data: benefit };
@@ -171,6 +201,14 @@ export async function updateBenefit(id: number, data: {
         isActive: data.isActive,
       }
     });
+
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "PARTNER",
+      entityId: id,
+      details: `Cập nhật quyền lợi đối tác ID #${id}: ${data.title}`
+    });
+
     revalidatePath('/admin/partners');
     revalidatePath('/doi-tac');
     return { data: benefit };
@@ -183,6 +221,14 @@ export async function updateBenefit(id: number, data: {
 export async function deleteBenefit(id: number) {
   try {
     await prisma.partnerBenefit.delete({ where: { id } });
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "PARTNER",
+      entityId: id,
+      details: `Xóa quyền lợi đối tác ID #${id}`
+    });
+
     revalidatePath('/admin/partners');
     revalidatePath('/doi-tac');
     return { success: true };
@@ -200,6 +246,14 @@ export async function toggleBrandPartner(brandId: number, isPartner: boolean) {
       where: { id: brandId },
       data: { isPartner }
     });
+
+    await logAuditAction({
+      action: "STATUS_CHANGE",
+      entity: "BRAND",
+      entityId: brandId,
+      details: `Cập nhật trạng thái đối tác của thương hiệu ID #${brandId} sang ${isPartner ? 'Đại lý/Đối tác' : 'Bình thường'}`
+    });
+
     revalidatePath('/admin/partners');
     revalidatePath('/admin/brands');
     revalidatePath('/doi-tac');

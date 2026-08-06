@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { sendRegisterNotification } from "@/lib/mailer";
+import { logAuditAction } from "@/lib/audit-logger";
 
 export async function POST(request: Request) {
   try {
@@ -51,6 +52,17 @@ export async function POST(request: Request) {
         email,
         password: hashedPassword,
       },
+    });
+
+    await logAuditAction({
+      action: "CREATE",
+      entity: "USER",
+      entityId: newUser.id,
+      userId: newUser.id,
+      userName: name,
+      userEmail: email,
+      userRole: "Customer",
+      details: `Đăng ký tài khoản người dùng mới: ${email} (${name})`
     });
 
     // 4. Đồng bộ tạo Customer profile (nếu có SĐT)

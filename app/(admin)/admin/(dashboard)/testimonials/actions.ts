@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { logAuditAction } from "@/lib/audit-logger";
 
 export type TestimonialFormData = {
   name: string;
@@ -40,6 +41,14 @@ export async function createTestimonial(data: TestimonialFormData) {
       },
     });
 
+    await logAuditAction({
+      action: "CREATE",
+      entity: "TESTIMONIAL",
+      entityId: testimonial.id,
+      details: `Tạo đánh giá khách hàng mới từ: ${data.name}`,
+      metadata: { name: data.name, rating: data.rating }
+    });
+
     revalidatePath("/");
     revalidatePath("/admin/testimonials");
     return { data: testimonial };
@@ -66,6 +75,14 @@ export async function updateTestimonial(id: number, data: TestimonialFormData) {
       },
     });
 
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "TESTIMONIAL",
+      entityId: id,
+      details: `Cập nhật đánh giá của khách hàng: ${data.name}`,
+      metadata: { name: data.name, rating: data.rating }
+    });
+
     revalidatePath("/");
     revalidatePath("/admin/testimonials");
     return { data: testimonial };
@@ -78,6 +95,14 @@ export async function updateTestimonial(id: number, data: TestimonialFormData) {
 export async function deleteTestimonial(id: number) {
   try {
     await prisma.testimonial.delete({ where: { id } });
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "TESTIMONIAL",
+      entityId: id,
+      details: `Xóa đánh giá khách hàng ID #${id}`
+    });
+
     revalidatePath("/");
     revalidatePath("/admin/testimonials");
     return { success: true };
@@ -93,6 +118,14 @@ export async function toggleTestimonialActive(id: number, currentStatus: boolean
       where: { id },
       data: { isActive: !currentStatus },
     });
+
+    await logAuditAction({
+      action: "STATUS_CHANGE",
+      entity: "TESTIMONIAL",
+      entityId: id,
+      details: `Thay đổi trạng thái đánh giá ID #${id} thành ${!currentStatus ? 'Hiển thị' : 'Ẩn'}`
+    });
+
     revalidatePath("/");
     revalidatePath("/admin/testimonials");
     return { success: true, data: testimonial };

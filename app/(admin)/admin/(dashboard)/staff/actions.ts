@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import bcrypt from "bcryptjs"
+import { logAuditAction } from "@/lib/audit-logger"
 
 export async function createStaff(data: FormData) {
   const name = data.get("name") as string
@@ -22,13 +23,21 @@ export async function createStaff(data: FormData) {
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    await prisma.user.create({
+    const newUser = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
         roleId,
       }
+    })
+
+    await logAuditAction({
+      action: "CREATE",
+      entity: "USER",
+      entityId: newUser.id,
+      details: `Tạo tài khoản quản trị viên mới: ${email} (${name})`,
+      metadata: { email, name, roleId }
     })
 
     revalidatePath("/admin/staff")
@@ -60,6 +69,14 @@ export async function updateStaff(id: string, data: FormData) {
       data: updateData
     })
 
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "USER",
+      entityId: id,
+      details: `Cập nhật thông tin quản trị viên: ${email}`,
+      metadata: { email, name, roleId }
+    })
+
     revalidatePath("/admin/staff")
     return { success: true }
   } catch (error) {
@@ -76,9 +93,18 @@ export async function deleteStaff(id: string) {
     }
 
     await prisma.user.delete({ where: { id } })
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "USER",
+      entityId: id,
+      details: `Xóa tài khoản quản trị viên: ${user?.email || id}`
+    })
+
     revalidatePath("/admin/staff")
     return { success: true }
   } catch (error) {
     return { error: "Lỗi hệ thống. Không thể xóa." }
   }
 }
+

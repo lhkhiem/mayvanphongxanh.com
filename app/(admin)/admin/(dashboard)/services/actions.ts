@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { Prisma } from "@prisma/client"
+import { logAuditAction } from "@/lib/audit-logger"
 
 export async function getServices(filter?: 'all' | 'published' | 'drafts') {
   try {
@@ -95,6 +96,14 @@ export async function createService(data: any) {
 
     await normalizeServicesOrders()
 
+    await logAuditAction({
+      action: "CREATE",
+      entity: "SERVICE",
+      entityId: service.id,
+      details: `Tạo dịch vụ mới: ${data.title}`,
+      metadata: { title: data.title, slug: data.slug }
+    })
+
     revalidatePath("/admin/services")
     return { success: true, data: service }
   } catch (error) {
@@ -148,6 +157,14 @@ export async function updateService(id: number, data: any) {
 
     await normalizeServicesOrders()
 
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "SERVICE",
+      entityId: id,
+      details: `Cập nhật dịch vụ: ${data.title}`,
+      metadata: { title: data.title, slug: data.slug }
+    })
+
     revalidatePath("/admin/services")
     return { success: true, data: service }
   } catch (error) {
@@ -169,6 +186,14 @@ export async function toggleServiceActive(id: number, currentActiveStatus: boole
         isActive: !currentActiveStatus
       }
     })
+
+    await logAuditAction({
+      action: "STATUS_CHANGE",
+      entity: "SERVICE",
+      entityId: id,
+      details: `Thay đổi trạng thái dịch vụ ID #${id} thành ${!currentActiveStatus ? 'Hoạt động' : 'Ẩn'}`
+    })
+
     revalidatePath("/admin/services")
     return { success: true, data: service }
   } catch (error) {
@@ -183,6 +208,13 @@ export async function deleteService(id: number) {
       where: { id }
     })
     await normalizeServicesOrders()
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "SERVICE",
+      entityId: id,
+      details: `Xóa dịch vụ ID #${id}`
+    })
 
     revalidatePath("/admin/services")
     return { success: true }
@@ -234,6 +266,13 @@ export async function duplicateService(id: number) {
 
     await normalizeServicesOrders()
 
+    await logAuditAction({
+      action: "CREATE",
+      entity: "SERVICE",
+      entityId: newService.id,
+      details: `Nhân bản dịch vụ: ${newTitle}`
+    })
+
     revalidatePath("/admin/services")
     return { success: true, data: newService }
   } catch (error) {
@@ -244,5 +283,3 @@ export async function duplicateService(id: number) {
     return { error: "Lỗi hệ thống. Không thể sao chép dịch vụ." }
   }
 }
-
-

@@ -676,3 +676,29 @@ model PartnerBenefit {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// ==========================================
+// AUDIT LOGS (Nhật ký hoạt động hệ thống)
+// ==========================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  userName  String?
+  userEmail String?
+  userRole  String?
+  action    String   // e.g. CREATE, UPDATE, DELETE, LOGIN, LOGOUT, STATUS_CHANGE
+  entity    String   // e.g. PRODUCT, CATEGORY, ORDER, USER, ROLE, SETTING, INVENTORY
+  entityId  String?
+  details   String?  @db.Text
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId])
+  @@index([action])
+  @@index([entity])
+}
+

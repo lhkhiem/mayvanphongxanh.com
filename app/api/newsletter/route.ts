@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendRegisterNotification } from "@/lib/mailer";
 import { cookies } from "next/headers";
+import { logAuditAction } from "@/lib/audit-logger";
 
 function sanitizeText(str: string): string {
   if (!str) return "";
@@ -15,7 +16,6 @@ function sanitizeText(str: string): string {
 
 export async function POST(request: Request) {
   try {
-    // Rate limit check (60s cooldown)
     const cookieStore = await cookies();
     const lastSubmit = cookieStore.get("mvpx_last_newsletter_submit");
     const now = Date.now();
@@ -32,7 +32,6 @@ export async function POST(request: Request) {
 
     const { email, honeypot } = await request.json();
 
-    // Honeypot check (Bẫy Bot)
     if (honeypot && honeypot.trim() !== "") {
       return NextResponse.json({ message: "Đăng ký nhận tin thành công!" }, { status: 200 });
     }
@@ -49,7 +48,6 @@ export async function POST(request: Request) {
 
     const cleanEmail = sanitizeText(emailStr);
 
-    // Check if already subscribed in DB via Prisma (Safe against SQL Injection)
     const existing = await prisma.newsletterSubscription.findUnique({
       where: { email: cleanEmail },
     });
@@ -59,6 +57,13 @@ export async function POST(request: Request) {
         await prisma.newsletterSubscription.update({
           where: { email: cleanEmail },
           data: { isActive: true },
+        });
+
+        await logAuditAction({
+          action: "UPDATE",
+          entity: "CUSTOMER",
+          userEmail: cleanEmail,
+          details: `Khách hàng kích hoạt lại đăng ký nhận tin tức: ${cleanEmail}`
         });
 
         sendRegisterNotification({ email: cleanEmail, name: "Đăng ký nhận tin tức" }).catch(() => {});
@@ -71,12 +76,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create new subscription record
-    await prisma.newsletterSubscription.create({
+    const sub = await prisma.newsletterSubscription.create({
       data: { email: cleanEmail },
     });
 
-    // Set rate limit cookie
+    await logAuditAction({
+      action: "CREATE",
+      entity: "CUSTOMER",
+      entityId: sub.id,
+      userEmail: cleanEmail,
+      details: `Khách hàng mới đăng ký nhận khuyến mãi/tin tức: ${cleanEmail}`
+    });
+
     cookieStore.set("mvpx_last_newsletter_submit", now.toString(), {
       maxAge: 60,
       httpOnly: true,

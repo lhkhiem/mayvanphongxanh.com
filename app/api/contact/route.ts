@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { sendContactNotification } from "@/lib/mailer";
 import { cookies } from "next/headers";
 import { verifyCaptchaToken } from "@/lib/captcha";
+import { logAuditAction } from "@/lib/audit-logger";
 
 function sanitizeText(str: string): string {
   if (!str) return "";
@@ -108,6 +109,14 @@ export async function POST(request: Request) {
         service: cleanService,
         message: cleanMessage,
       },
+    });
+
+    await logAuditAction({
+      action: "CREATE",
+      entity: "CUSTOMER",
+      entityId: contactRequest.id,
+      details: `Khách hàng gửi yêu cầu tư vấn/liên hệ: ${cleanName} (${cleanPhone} - ${cleanService})`,
+      metadata: { name: cleanName, phone: cleanPhone, service: cleanService }
     });
 
     // 7. Set rate limit cookie

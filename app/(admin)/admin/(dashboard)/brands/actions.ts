@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { slugify } from "@/lib/utils"; // Giả sử có hàm slugify hoặc mình có thể dùng generateSlug nếu cần
+import { logAuditAction } from "@/lib/audit-logger";
 
 export async function getBrands() {
   try {
@@ -29,7 +29,6 @@ export async function createBrand(data: { name: string; slug?: string; logo?: st
   try {
     const finalSlug = data.slug || data.name.toLowerCase().replace(/[\s_]+/g, '-').replace(/[^\w-]/g, '');
 
-    // Check if slug exists
     const existing = await prisma.brand.findUnique({ where: { slug: finalSlug } });
     if (existing) {
       return { error: "Slug này đã tồn tại, vui lòng chọn slug khác" };
@@ -43,6 +42,14 @@ export async function createBrand(data: { name: string; slug?: string; logo?: st
         description: data.description,
       }
     });
+
+    await logAuditAction({
+      action: "CREATE",
+      entity: "BRAND",
+      entityId: brand.id,
+      details: `Tạo thương hiệu mới: ${data.name}`,
+      metadata: { name: data.name, slug: finalSlug }
+    });
     
     revalidatePath('/admin/brands');
     revalidatePath('/admin/products');
@@ -55,7 +62,6 @@ export async function createBrand(data: { name: string; slug?: string; logo?: st
 
 export async function updateBrand(id: number, data: { name: string; slug: string; logo?: string; description?: string; isActive?: boolean }) {
   try {
-    // Check if slug exists and belongs to another brand
     const existing = await prisma.brand.findUnique({ where: { slug: data.slug } });
     if (existing && existing.id !== id) {
       return { error: "Slug này đã tồn tại, vui lòng chọn slug khác" };
@@ -70,6 +76,14 @@ export async function updateBrand(id: number, data: { name: string; slug: string
         description: data.description,
         isActive: data.isActive,
       }
+    });
+
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "BRAND",
+      entityId: id,
+      details: `Cập nhật thương hiệu: ${data.name}`,
+      metadata: { name: data.name, slug: data.slug }
     });
     
     revalidatePath('/admin/brands');
@@ -103,6 +117,13 @@ export async function deleteBrand(id: number) {
     }
 
     await prisma.brand.delete({ where: { id } });
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "BRAND",
+      entityId: id,
+      details: `Xóa thương hiệu: ${brand.name} (ID #${id})`
+    });
     
     revalidatePath('/admin/brands');
     revalidatePath('/admin/products');

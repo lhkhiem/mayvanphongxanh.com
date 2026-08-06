@@ -2,6 +2,7 @@
 
 import { prisma as db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { logAuditAction } from "@/lib/audit-logger";
 
 export type FaqFormData = {
   question: string;
@@ -36,6 +37,15 @@ export async function createFaq(data: FaqFormData) {
         isActive: data.isActive,
       },
     });
+
+    await logAuditAction({
+      action: "CREATE",
+      entity: "FAQ",
+      entityId: faq.id,
+      details: `Tạo câu hỏi thường gặp mới: "${data.question.slice(0, 50)}..."`,
+      metadata: { question: data.question, category: data.category }
+    });
+
     revalidatePath("/");
     revalidatePath("/hoi-dap");
     return { data: faq };
@@ -56,6 +66,15 @@ export async function updateFaq(id: number, data: FaqFormData) {
         isActive: data.isActive,
       },
     });
+
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "FAQ",
+      entityId: id,
+      details: `Cập nhật câu hỏi FAQ ID #${id}: "${data.question.slice(0, 50)}..."`,
+      metadata: { question: data.question, category: data.category }
+    });
+
     revalidatePath("/");
     revalidatePath("/hoi-dap");
     return { data: faq };
@@ -67,6 +86,14 @@ export async function updateFaq(id: number, data: FaqFormData) {
 export async function deleteFaq(id: number) {
   try {
     await db.faq.delete({ where: { id } });
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "FAQ",
+      entityId: id,
+      details: `Xóa câu hỏi FAQ ID #${id}`,
+    });
+
     revalidatePath("/");
     revalidatePath("/hoi-dap");
     return { success: true };
@@ -81,6 +108,14 @@ export async function toggleFaqActive(id: number, currentStatus: boolean) {
       where: { id },
       data: { isActive: !currentStatus },
     });
+
+    await logAuditAction({
+      action: "STATUS_CHANGE",
+      entity: "FAQ",
+      entityId: id,
+      details: `Thay đổi trạng thái FAQ ID #${id} thành ${!currentStatus ? 'Hiển thị' : 'Ẩn'}`,
+    });
+
     revalidatePath("/");
     revalidatePath("/hoi-dap");
     return { success: true };
@@ -99,6 +134,13 @@ export async function renameFaqCategory(oldCategory: string, newCategory: string
       where: { category: oldCategory },
       data: { category: trimmedNew },
     });
+
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "FAQ",
+      details: `Đổi tên danh mục FAQ từ "${oldCategory}" sang "${trimmedNew}"`,
+    });
+
     revalidatePath("/");
     revalidatePath("/hoi-dap");
     return { success: true };
@@ -113,6 +155,13 @@ export async function deleteFaqCategory(categoryName: string) {
       where: { category: categoryName },
       data: { category: null },
     });
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "FAQ",
+      details: `Xóa danh mục FAQ "${categoryName}"`,
+    });
+
     revalidatePath("/");
     revalidatePath("/hoi-dap");
     return { success: true };

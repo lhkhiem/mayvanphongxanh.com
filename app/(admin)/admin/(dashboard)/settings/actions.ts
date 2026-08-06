@@ -3,9 +3,11 @@
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { sendTestEmail } from "@/lib/mailer"
+import { logAuditAction } from "@/lib/audit-logger"
 
 export async function updateSettings(data: FormData) {
   try {
+    const updatedKeys: string[] = []
     for (const [key, value] of data.entries()) {
       if (typeof value === "string") {
         await prisma.setting.upsert({
@@ -13,8 +15,8 @@ export async function updateSettings(data: FormData) {
           update: { value },
           create: { key, value }
         })
+        updatedKeys.push(key)
 
-        // Đồng bộ key giữa company_logo / site_logo và company_favicon / site_favicon
         if (key === 'company_logo') {
           await prisma.setting.upsert({ where: { key: 'site_logo' }, update: { value }, create: { key: 'site_logo', value } })
         } else if (key === 'site_logo') {
@@ -26,6 +28,14 @@ export async function updateSettings(data: FormData) {
         }
       }
     }
+
+    await logAuditAction({
+      action: "CONFIG_CHANGE",
+      entity: "SETTING",
+      details: `Cập nhật cấu hình website (${updatedKeys.length} cài đặt)`,
+      metadata: { updatedKeys }
+    })
+
     revalidatePath("/", "layout")
     return { success: true }
   } catch (error) {
@@ -37,6 +47,13 @@ export async function sendTestEmailAction(toEmail: string) {
   if (!toEmail || !toEmail.includes("@")) {
     return { error: "Địa chỉ email không hợp lệ." }
   }
-  return await sendTestEmail(toEmail)
+  const result = await sendTestEmail(toEmail)
+  if (result.success) {
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "SETTING",
+      details: `Gửi email thử nghiệm hệ thống tới: ${toEmail}`
+    })
+  }
+  return result
 }
-

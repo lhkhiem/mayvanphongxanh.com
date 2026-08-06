@@ -3,6 +3,7 @@
 import { OrderStatus, PaymentStatus, Prisma } from "@prisma/client"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/db"
+import { logAuditAction } from "@/lib/audit-logger"
 
 const ORDER_PAGE_SIZE_MAX = 100
 
@@ -258,6 +259,14 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
       }
     }
 
+    await logAuditAction({
+      action: "STATUS_CHANGE",
+      entity: "ORDER",
+      entityId: id,
+      details: `Cập nhật trạng thái đơn hàng #${id.slice(0, 8)} sang ${status}`,
+      metadata: { orderId: id, newStatus: status, customerName: updatedOrder.customerName }
+    })
+
     revalidatePath("/admin/orders")
     revalidatePath("/admin/rentals")
     revalidatePath("/admin/inventory")
@@ -274,6 +283,15 @@ export async function updateOrderPaymentStatus(id: string, paymentStatus: Paymen
       where: { id },
       data: { paymentStatus },
     })
+
+    await logAuditAction({
+      action: "STATUS_CHANGE",
+      entity: "ORDER",
+      entityId: id,
+      details: `Cập nhật trạng thái thanh toán đơn hàng #${id.slice(0, 8)} sang ${paymentStatus}`,
+      metadata: { orderId: id, paymentStatus }
+    })
+
     revalidatePath("/admin/orders")
     return { success: true }
   } catch (error) {

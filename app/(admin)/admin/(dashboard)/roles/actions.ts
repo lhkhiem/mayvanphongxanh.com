@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
+import { logAuditAction } from "@/lib/audit-logger"
 
 export async function createRole(data: FormData) {
   const name = data.get("name") as string
@@ -17,12 +18,20 @@ export async function createRole(data: FormData) {
       return { error: "Tên nhóm quyền này đã tồn tại." }
     }
 
-    await prisma.role.create({
+    const role = await prisma.role.create({
       data: {
         name,
         description,
         isSystem: false
       }
+    })
+
+    await logAuditAction({
+      action: "CREATE",
+      entity: "ROLE",
+      entityId: role.id,
+      details: `Tạo nhóm quyền (vai trò) mới: ${name}`,
+      metadata: { name, description }
     })
 
     revalidatePath("/admin/roles")
@@ -43,7 +52,6 @@ export async function updateRole(id: string, data: FormData) {
   try {
     const role = await prisma.role.findUnique({ where: { id } })
     if (role?.isSystem) {
-      // Cho phép sửa mô tả nhưng không cho sửa tên của quyền hệ thống
       await prisma.role.update({
         where: { id },
         data: { description }
@@ -54,6 +62,14 @@ export async function updateRole(id: string, data: FormData) {
         data: { name, description }
       })
     }
+
+    await logAuditAction({
+      action: "UPDATE",
+      entity: "ROLE",
+      entityId: id,
+      details: `Cập nhật nhóm quyền: ${role?.name || name}`,
+      metadata: { name, description }
+    })
 
     revalidatePath("/admin/roles")
     return { success: true }
@@ -75,6 +91,14 @@ export async function deleteRole(id: string) {
     }
 
     await prisma.role.delete({ where: { id } })
+
+    await logAuditAction({
+      action: "DELETE",
+      entity: "ROLE",
+      entityId: id,
+      details: `Xóa nhóm quyền: ${role?.name || id}`
+    })
+
     revalidatePath("/admin/roles")
     return { success: true }
   } catch (error) {
