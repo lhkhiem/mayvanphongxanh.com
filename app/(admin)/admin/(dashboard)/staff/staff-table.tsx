@@ -23,6 +23,10 @@ export function StaffTable({ data, roles }: { data: any[], roles: any[] }) {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [selectedStaff, setSelectedStaff] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [addRoleId, setAddRoleId] = useState<string>(roles[0]?.id || "")
+  const [editRoleId, setEditRoleId] = useState<string>("")
+
+  const roleItems = roles.map(r => ({ value: r.id, label: r.name }))
 
   const filteredData = data.filter(s => 
     s.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -74,8 +78,14 @@ export function StaffTable({ data, roles }: { data: any[], roles: any[] }) {
     setIsLoading(false)
   }
 
+  const openAdd = () => {
+    setAddRoleId(roles[0]?.id || "")
+    setIsAddOpen(true)
+  }
+
   const openEdit = (staff: any) => {
     setSelectedStaff(staff)
+    setEditRoleId(staff.roleId || roles[0]?.id || "")
     setIsEditOpen(true)
   }
 
@@ -99,7 +109,7 @@ export function StaffTable({ data, roles }: { data: any[], roles: any[] }) {
         </div>
         
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger render={<Button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700" />}>
+          <DialogTrigger render={<Button onClick={openAdd} className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700" />}>
             <Plus className="mr-2 h-4 w-4" /> Thêm mới
           </DialogTrigger>
           <DialogContent>
@@ -113,16 +123,22 @@ export function StaffTable({ data, roles }: { data: any[], roles: any[] }) {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Email</label>
-                <Input type="email" name="email" placeholder="email@example.com" required />
+                <Input type="email" name="email" placeholder="admin@mvpx.vn" required />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Mật khẩu</label>
-                <Input type="password" name="password" required minLength={6} />
+                <Input type="password" name="password" placeholder="••••••••" required minLength={6} />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Vai trò (Phân quyền)</label>
-                <Select name="roleId" required defaultValue={roles[0]?.id}>
-                  <SelectTrigger>
+                <Select 
+                  name="roleId" 
+                  items={roleItems}
+                  value={addRoleId} 
+                  onValueChange={(val) => val && setAddRoleId(val as string)}
+                  required
+                >
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Chọn vai trò" />
                   </SelectTrigger>
                   <SelectContent>
@@ -217,12 +233,18 @@ export function StaffTable({ data, roles }: { data: any[], roles: any[] }) {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Mật khẩu mới (Để trống nếu không đổi)</label>
-                <Input type="password" name="password" minLength={6} placeholder="********" />
+                <Input type="password" name="password" minLength={6} placeholder="••••••••" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Vai trò (Phân quyền)</label>
-                <Select name="roleId" required defaultValue={selectedStaff.roleId}>
-                  <SelectTrigger>
+                <Select 
+                  name="roleId" 
+                  items={roleItems}
+                  value={editRoleId} 
+                  onValueChange={(val) => val && setEditRoleId(val as string)}
+                  required
+                >
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Chọn vai trò" />
                   </SelectTrigger>
                   <SelectContent>
