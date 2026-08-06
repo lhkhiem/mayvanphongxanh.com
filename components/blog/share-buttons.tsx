@@ -70,7 +70,7 @@ export function ShareButtons({ title, excerpt, slug, url, className = "" }: Shar
 
   return (
     <div className={`flex items-center gap-1.5 flex-wrap ${className}`}>
-      <span className="text-[11px] font-semibold text-gray-500 mr-0.5 flex items-center shrink-0">
+      <span className="text-xs font-semibold text-gray-500 mr-1 flex items-center shrink-0">
         Chia sẻ:
       </span>
 
@@ -78,36 +78,29 @@ export function ShareButtons({ title, excerpt, slug, url, className = "" }: Shar
       <button
         type="button"
         onClick={handleFacebookShare}
-        className="h-6.5 px-2.5 rounded-full bg-[#1877f2] hover:bg-[#166fe5] text-white flex items-center justify-center gap-1 transition-all shadow-2xs active:scale-95 cursor-pointer shrink-0 font-medium text-[11px]"
+        className="w-7.5 h-7.5 rounded-full bg-[#1877f2] hover:bg-[#166fe5] text-white flex items-center justify-center transition-all shadow-xs active:scale-90 cursor-pointer shrink-0"
         title="Chia sẻ lên Facebook"
       >
-        <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+        <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
           <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
         </svg>
-        <span>Facebook</span>
       </button>
 
       {/* 2. Copy Link Button */}
       <button
         type="button"
         onClick={handleCopyLink}
-        className={`h-6.5 px-2.5 rounded-full border text-[11px] flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer shrink-0 font-medium ${
+        className={`w-7.5 h-7.5 rounded-full border flex items-center justify-center transition-all active:scale-90 cursor-pointer shrink-0 ${
           copied
             ? "bg-emerald-50 border-emerald-300 text-emerald-600"
-            : "bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
+            : "bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-600 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
         }`}
         title={copied ? "Đã sao chép liên kết!" : "Sao chép liên kết"}
       >
         {copied ? (
-          <>
-            <Check className="w-3 h-3 text-emerald-600" />
-            <span>Đã chép</span>
-          </>
+          <Check className="w-3.5 h-3.5 text-emerald-600" />
         ) : (
-          <>
-            <Copy className="w-3 h-3 text-gray-500 dark:text-gray-400" />
-            <span>Sao chép</span>
-          </>
+          <Copy className="w-3.5 h-3.5 text-gray-600 dark:text-gray-300" />
         )}
       </button>
 
@@ -115,11 +108,10 @@ export function ShareButtons({ title, excerpt, slug, url, className = "" }: Shar
       <button
         type="button"
         onClick={handleGeneralShare}
-        className="h-6.5 px-2.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 text-[11px] flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer shrink-0 font-medium"
-        title="Chia sẻ qua ứng dụng khác"
+        className="w-7.5 h-7.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 flex items-center justify-center transition-all active:scale-90 cursor-pointer shrink-0"
+        title="Tùy chọn chia sẻ khác"
       >
-        <Share2 className="w-3 h-3 text-emerald-600" />
-        <span>Chia sẻ</span>
+        <Share2 className="w-3.5 h-3.5 text-emerald-600" />
       </button>
     </div>
   );
